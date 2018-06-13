@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 
 lib = File.expand_path("../lib", __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
@@ -6,10 +7,10 @@ require "job-iteration/version"
 Gem::Specification.new do |spec|
   spec.name          = "job-iteration"
   spec.version       = JobIteration::VERSION
-  spec.authors       = ["Shopify"]
+  spec.authors       = %w(Shopify)
   spec.email         = ["ops-accounts+shipit@shopify.com"]
 
-  spec.summary       = %q{Makes your background jobs interruptible and resumable.}
+  spec.summary       = 'Makes your background jobs interruptible and resumable.'
   spec.description   = spec.summary
   spec.homepage      = "https://github.com/shopify/job-iteration"
   spec.license       = "MIT"
@@ -19,7 +20,7 @@ Gem::Specification.new do |spec|
   end
   spec.bindir        = "exe"
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
-  spec.require_paths = ["lib"]
+  spec.require_paths = %w(lib)
 
   spec.add_development_dependency "bundler", "~> 1.16"
   spec.add_development_dependency "rake", "~> 10.0"

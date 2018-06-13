@@ -1,16 +1,16 @@
 
 lib = File.expand_path("../lib", __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
-require "job/iteration/version"
+require "job-iteration/version"
 
 Gem::Specification.new do |spec|
   spec.name          = "job-iteration"
-  spec.version       = Job::Iteration::VERSION
+  spec.version       = JobIteration::VERSION
   spec.authors       = ["Shopify"]
   spec.email         = ["ops-accounts+shipit@shopify.com"]
 
   spec.summary       = %q{Makes your background jobs interruptible and resumable.}
-  spec.description   = summary
+  spec.description   = spec.summary
   spec.homepage      = "https://github.com/shopify/job-iteration"
   spec.license       = "MIT"
 

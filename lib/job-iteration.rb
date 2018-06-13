@@ -1,7 +1,5 @@
-require "job/iteration/version"
+require "job-iteration/version"
 
-module Job
-  module Iteration
-    # Your code goes here...
-  end
+module JobIteration
+  # Your code goes here...
 end

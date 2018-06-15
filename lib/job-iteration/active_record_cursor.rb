@@ -1,0 +1,90 @@
+module JobIteration
+  class ActiveRecordCursor
+    include Comparable
+
+    attr_reader :position
+    attr_accessor :reached_end
+
+    class ConditionNotSupportedError < ArgumentError
+      def initialize
+        super(
+          "The relation cannot use ORDER BY or LIMIT due to the way how iteration with a cursor is designed. " \
+          "You can use other ways to limit the number of rows, e.g. a WHERE condition on the primary key column."
+        )
+      end
+    end
+
+    def initialize(relation, columns = nil, position = nil)
+      columns ||= "#{relation.table_name}.#{relation.primary_key}"
+      @columns = Array.wrap(columns)
+      self.position = Array.wrap(position)
+      raise ArgumentError, "Must specify at least one column" if columns.length < 1
+      raise ArgumentError, "You need to specify fully-qualified columns if you join a table" if relation.joins_values.present? && !@columns.all? { |column| column.to_s.include?('.') }
+
+      if relation.arel.orders.present? || relation.arel.taken.present?
+        raise ConditionNotSupportedError
+      end
+
+      @base_relation = relation.reorder(@columns.join(','))
+      @reached_end = false
+    end
+
+    def <=>(other)
+      if reached_end != other.reached_end
+        reached_end ? 1 : -1
+      else
+        position <=> other.position
+      end
+    end
+
+    def position=(position)
+      raise "Cursor position cannot contain nil values" if position.any?(&:nil?)
+      @position = position
+    end
+
+    def update_from_record(record)
+      self.position = @columns.map do |column|
+        method = column.to_s.split('.').last
+        record.send(method.to_sym)
+      end
+    end
+
+    def next_batch(batch_size)
+      return nil if @reached_end
+
+      relation = @base_relation.limit(batch_size)
+
+      if (conditions = self.conditions).any?
+        relation = relation.where(*conditions)
+      end
+
+      records = relation.to_a
+
+      update_from_record(records.last) unless records.empty?
+      @reached_end = records.size < batch_size
+
+      records.empty? ? nil : records
+    end
+
+    protected
+
+    def conditions
+      conditions = nil
+      i = @position.size - 1
+      column = @columns[i]
+      if @columns.size == @position.size
+        conditions = "#{column} > ?"
+      else
+        conditions = "#{column} >= ?"
+      end
+      while i > 0
+        i -= 1
+        column = @columns[i]
+        conditions = "#{column} > ? OR (#{column} = ? AND (#{conditions}))"
+      end
+      ret = @position.reduce([conditions]) { |params, value| params << value << value }
+      ret.pop
+      ret
+    end
+  end
+end

@@ -13,8 +13,6 @@ class JobIteration::IterationTest < Minitest::Test
     self.on_start_called = 0
     cattr_accessor :on_complete_called, instance_accessor: false
     self.on_complete_called = 0
-    cattr_accessor :shop_current_selected, instance_accessor: false
-    self.shop_current_selected = []
     cattr_accessor :on_shutdown_called, instance_accessor: false
     self.on_shutdown_called = 0
 
@@ -33,7 +31,7 @@ class JobIteration::IterationTest < Minitest::Test
 
   class IterationJobsWithParams < SimpleIterationJob
     def build_enumerator(params, cursor:)
-      enumerator_builder.build_times_enumerator(params.fetch(:times, 2), cursor: cursor)
+      enumerator_builder.build_times_enumerator(params[0].fetch(:times, 2), cursor: cursor)
     end
 
     def each_iteration(_record, params)
@@ -44,15 +42,26 @@ class JobIteration::IterationTest < Minitest::Test
   class ActiveRecordIterationJob < SimpleIterationJob
     def build_enumerator(_params, cursor:)
       enumerator_builder.build_active_record_enumerator_on_records(
-        Post.where(country: 'CA'),
+        Product.all,
         cursor: cursor,
-        on_lock: :ignore
       )
     end
 
     def each_iteration(record, _params)
       self.class.records_performed << record
-      self.class.shop_current_selected << Post.current.present?
+    end
+  end
+
+  class BatchActiveRecordIterationJob < SimpleIterationJob
+    def build_enumerator(_params, cursor:)
+      enumerator_builder.build_active_record_enumerator_on_batches(
+        Product.all,
+        cursor: cursor,
+      )
+    end
+
+    def each_iteration(record, _params)
+      self.class.records_performed << record
     end
   end
 
@@ -66,7 +75,7 @@ class JobIteration::IterationTest < Minitest::Test
   class AbortingBatchActiveRecordIterationJob < SimpleIterationJob
     def build_enumerator(_params, cursor:)
       enumerator_builder.build_active_record_enumerator_on_batches(
-        Post.all,
+        Product.all,
         cursor: cursor,
         batch_size: 2
       )
@@ -81,7 +90,7 @@ class JobIteration::IterationTest < Minitest::Test
   class OrderedActiveRecordIterationJob < SimpleIterationJob
     def build_enumerator(_params, cursor:)
       enumerator_builder.build_active_record_enumerator_on_records(
-        Post.order('country DESC'),
+        Product.order('country DESC'),
         cursor: cursor
       )
     end
@@ -93,7 +102,7 @@ class JobIteration::IterationTest < Minitest::Test
   class LimitActiveRecordIterationJob < SimpleIterationJob
     def build_enumerator(_params, cursor:)
       enumerator_builder.build_active_record_enumerator_on_records(
-        Post.limit(5),
+        Product.limit(5),
         cursor: cursor
       )
     end
@@ -135,7 +144,7 @@ class JobIteration::IterationTest < Minitest::Test
   class MultipleColumnsActiveRecordIterationJob < SimpleIterationJob
     def build_enumerator(_params, cursor:)
       enumerator_builder.build_active_record_enumerator_on_records(
-        Post.all,
+        Product.all,
         cursor: cursor,
         columns: [:updated_at, :id],
         batch_size: 2
@@ -162,7 +171,7 @@ class JobIteration::IterationTest < Minitest::Test
 
     def build_enumerator(_params, cursor:)
       enumerator_builder.build_active_record_enumerator_on_records(
-        Post.where(country: 'CA'),
+        Product.all,
         cursor: cursor
       )
     end
@@ -187,7 +196,7 @@ class JobIteration::IterationTest < Minitest::Test
 
   class JobWithBuildEnumeratorReturningActiveRecordRelation < SimpleIterationJob
     def build_enumerator(*)
-      Post.all
+      Product.all
     end
 
     def each_iteration(*)
@@ -244,7 +253,7 @@ class JobIteration::IterationTest < Minitest::Test
     end
     assert_jobs_in_queue 1, :default
 
-    processed_shops = Post.where(country: 'CA').order("id ASC").pluck(:id)
+    processed_shops = Product.order("id ASC").pluck(:id)
 
     attempt, cursor = last_interrupted_job(FailingIterationJob, :default)
     expected_cursor = processed_shops[2]
@@ -321,75 +330,50 @@ class JobIteration::IterationTest < Minitest::Test
     assert_equal 2, ActiveRecordIterationJob.on_shutdown_called
   end
 
-  def test_each_iteration_sets_shop_current_when_records_are_shops
-    iterate_exact_times(2.times)
-
-    push(ActiveRecordIterationJob)
-
-    assert ActiveRecordIterationJob.shop_current_selected.all?
-  end
-
   def test_podded_batches_complete
-    shop = shops(:snowdevil)
-    push(PoddedBatchedIterationJob, shop_id: shop.id)
-    ids_process_order = shop.customers.reorder("id ASC").pluck(:id)
+    push(BatchActiveRecordIterationJob)
+    ids_process_order = Product.order("id ASC").pluck(:id)
 
     work_one_job
     assert_jobs_in_queue 0, :default
 
-    assert_equal [3, 3, 1], PoddedBatchedIterationJob.records_performed.map(&:size)
-    assert_equal ids_process_order, PoddedBatchedIterationJob.records_performed.flatten.map(&:id)
-  end
-
-  def test_podded_batches_all_shops_locked_doesnt_yield
-    push(PoddedMultiShopBatchedIterationJob)
-
-    shops = Post.where(id: Customer.pluck(:shop_id)).to_a
-
-    lock_shops(*shops) do
-      work_one_job
-    end
-
-    assert_jobs_in_queue 0, :default
-
-    assert_equal [], PoddedBatchedIterationJob.records_performed
-    assert_equal 1, ActiveRecordIterationJob.on_complete_called
-    assert_equal 1, ActiveRecordIterationJob.on_shutdown_called
+    assert_equal [3, 3, 1], BatchActiveRecordIterationJob.records_performed.map(&:size)
+    assert_equal ids_process_order, BatchActiveRecordIterationJob.records_performed.flatten.map(&:id)
   end
 
   def test_podded_batches
     iterate_exact_times(1.times)
 
     shop = shops(:snowdevil)
-    push(PoddedBatchedIterationJob, shop_id: shop.id)
+    push(BatchActiveRecordIterationJob, shop_id: shop.id)
     ids_process_order = shop.customers.reorder("id ASC").pluck(:id)
 
     work_one_job
-    assert_equal 1, PoddedBatchedIterationJob.records_performed.size
-    assert_equal 3, PoddedBatchedIterationJob.records_performed.flatten.size
-    assert_equal 1, PoddedBatchedIterationJob.on_start_called
+    assert_equal 1, BatchActiveRecordIterationJob.records_performed.size
+    assert_equal 3, BatchActiveRecordIterationJob.records_performed.flatten.size
+    assert_equal 1, BatchActiveRecordIterationJob.on_start_called
 
-    attempt, cursor = last_interrupted_job(PoddedBatchedIterationJob, :default)
+    attempt, cursor = last_interrupted_job(BatchActiveRecordIterationJob, :default)
     assert_equal 0, attempt
     assert_equal ids_process_order[2], cursor
 
     work_one_job
-    assert_equal 2, PoddedBatchedIterationJob.records_performed.size
-    assert_equal 6, PoddedBatchedIterationJob.records_performed.flatten.size
-    assert_equal 1, PoddedBatchedIterationJob.on_start_called
+    assert_equal 2, BatchActiveRecordIterationJob.records_performed.size
+    assert_equal 6, BatchActiveRecordIterationJob.records_performed.flatten.size
+    assert_equal 1, BatchActiveRecordIterationJob.on_start_called
 
-    attempt, cursor = last_interrupted_job(PoddedBatchedIterationJob, :default)
+    attempt, cursor = last_interrupted_job(BatchActiveRecordIterationJob, :default)
     assert_equal 0, attempt
     assert_equal ids_process_order[5], cursor
     continue_iterating
 
     work_one_job
     assert_jobs_in_queue 0, :default
-    assert_equal 3, PoddedBatchedIterationJob.records_performed.size
-    assert_equal 7, PoddedBatchedIterationJob.records_performed.flatten.size
+    assert_equal 3, BatchActiveRecordIterationJob.records_performed.size
+    assert_equal 7, BatchActiveRecordIterationJob.records_performed.flatten.size
 
-    assert_equal 1, PoddedBatchedIterationJob.on_start_called
-    assert_equal 1, PoddedBatchedIterationJob.on_complete_called
+    assert_equal 1, BatchActiveRecordIterationJob.on_start_called
+    assert_equal 1, BatchActiveRecordIterationJob.on_complete_called
   end
 
   def test_plain_enumerable
@@ -480,32 +464,23 @@ class JobIteration::IterationTest < Minitest::Test
     assert_equal 1, PoddedIterationJob.on_complete_called
   end
 
-  def test_master_table_job
-    push(MasterTableIterationJob)
-
-    work_one_job
-
-    assert_jobs_in_queue 0, MasterTableIterationJob.queue_name
-    assert_equal Proxy.count, MasterTableIterationJob.records_performed.size
-  end
-
   def test_multiple_columns
     iterate_exact_times(3.times)
 
-    push(MultipleColumnsIterationJob)
+    push(MultipleColumnsActiveRecordIteration)
 
     1.upto(3) do |iter|
       work_one_job
-      _, cursor = last_interrupted_job(MultipleColumnsIterationJob, :default)
+      _, cursor = last_interrupted_job(MultipleColumnsActiveRecordIteration, :default)
 
-      last_processed_record = MultipleColumnsIterationJob.records_performed.last
+      last_processed_record = MultipleColumnsActiveRecordIteration.records_performed.last
       assert_equal [last_processed_record.title, last_processed_record.vendor,
                     last_processed_record.id, last_processed_record.updated_at.to_s(:db)], cursor
 
-      assert_equal iter * 3, MultipleColumnsIterationJob.records_performed.size
+      assert_equal iter * 3, MultipleColumnsActiveRecordIteration.records_performed.size
     end
 
-    assert_equal Product.all.order('title, vendor, id').limit(9), MultipleColumnsIterationJob.records_performed
+    assert_equal Product.all.order('title, vendor, id').limit(9), MultipleColumnsActiveRecordIteration.records_performed
   end
 
   def test_single_iteration
@@ -629,11 +604,11 @@ class JobIteration::IterationTest < Minitest::Test
   end
 
   def test_aborting_in_batched_job
-    push(AbortingBatchIterationJob)
+    push(AbortingBatchActiveRecordIterationJob)
     work_one_job
-    assert_equal 2, AbortingBatchIterationJob.records_performed.size
-    assert_equal [2, 2], AbortingBatchIterationJob.records_performed.map(&:size)
-    assert_equal 1, AbortingBatchIterationJob.on_complete_called
+    assert_equal 2, AbortingBatchActiveRecordIterationJob.records_performed.size
+    assert_equal [2, 2], AbortingBatchActiveRecordIterationJob.records_performed.map(&:size)
+    assert_equal 1, AbortingBatchActiveRecordIterationJob.on_complete_called
   end
 
   def test_check_for_exit_after_iteration
@@ -650,7 +625,7 @@ class JobIteration::IterationTest < Minitest::Test
   end
 
   def test_iteration_job_with_build_enumerator_returning_array
-    push(IterationJobWithBuildEnumeratorReturningArray)
+    push(JobWithBuildEnumeratorReturningArray )
 
     error = assert_raises(ArgumentError) do
       work_one_job

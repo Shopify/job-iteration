@@ -3,9 +3,10 @@
 $LOAD_PATH.unshift File.expand_path("../../lib", __FILE__)
 require "minitest/autorun"
 
-require "sidekiq"
 require "job-iteration"
 require "job-iteration/test_helper"
+
+require "sidekiq"
 require "active_job"
 require "active_record"
 require "pry"
@@ -35,10 +36,10 @@ end
 
 ActiveJob::Base.queue_adapter = :iteration_test
 
-class Post < ActiveRecord::Base
+class Product < ActiveRecord::Base
 end
 
-class Minitest::Test
+class ActiveSupport::TestCase
   def setup
     insert_fixtures
     super
@@ -50,10 +51,10 @@ class Minitest::Test
 
   def insert_fixtures
     ActiveRecord::Base.establish_connection adapter: "sqlite3", database: ":memory:"
-    ActiveRecord::Base.connection.create_table :posts, force: true do |t|
+    ActiveRecord::Base.connection.create_table Product.table_name, force: true do |t|
       t.string :name
       t.timestamps
     end
-    %w(first second third last).each { |name| Post.create!(name: name) }
+    %w(first second third last).each { |name| Product.create!(name: name) }
   end
 end

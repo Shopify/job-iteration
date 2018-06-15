@@ -1,4 +1,6 @@
 # frozen_string_literal: true
+require_relative "./active_record_enumerator"
+
 module JobIteration
   class EnumeratorBuilder
     extend Forwardable
@@ -129,7 +131,7 @@ module JobIteration
         raise ArgumentError, "scope must be an ActiveRecord::Relation"
       end
 
-      JobIteration::EnumeratorBuilder::ActiveRecordEnumerator.new(
+      JobIteration::ActiveRecordEnumerator.new(
         scope,
         **{
           columns: columns,

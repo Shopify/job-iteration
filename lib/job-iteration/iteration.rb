@@ -68,8 +68,8 @@ module JobIteration
       self.total_time = job_data['total_time'] || 0
     end
 
-    def perform(params)
-      interruptible_perform(params)
+    def perform(*params)
+      interruptible_perform(*params)
     end
 
     private
@@ -78,7 +78,7 @@ module JobIteration
       JobIteration::EnumeratorBuilder.new(self)
     end
 
-    def interruptible_perform(params)
+    def interruptible_perform(*params)
       assert_implements_methods!
 
       self.start_time = Time.now.utc
@@ -89,7 +89,7 @@ module JobIteration
       end
 
       unless enumerator
-        logger.info "[BackgroundQueue::Iteration] `build_enumerator` returned nil. " \
+        logger.info "[JobIteration::Iteration] `build_enumerator` returned nil. " \
           "Skipping the job."
         return
       end
@@ -137,7 +137,7 @@ module JobIteration
 
     def shutdown_and_reenqueue
       ActiveSupport::Notifications.instrument("interrupted.iteration", iteration_instrumentation_tags)
-      logger.info "[BackgroundQueue::Iteration] cursor_position=#{cursor_position} Worker received " \
+      logger.info "[JobIteration::Iteration] cursor_position=#{cursor_position} Worker received " \
         "signal to shut down which is usually caused by restarts or unhealthy server. " \
         "Interrupting the job and re-enqueuing job to process from where it left off."
 
@@ -191,13 +191,13 @@ module JobIteration
     def output_interrupt_summary
       adjust_total_time
 
-      message = "[BackgroundQueue::Iteration] Completed. times_interrupted=%d total_time=%.3f"
+      message = "[JobIteration::Iteration] Job completed. times_interrupted=%d total_time=%.3f"
       logger.info Kernel.format(message, times_interrupted, total_time)
     end
 
-    #     def job_should_exit?
-    #       return true if start_time && (Time.now.utc - start_time) > ::BackgroundQueue.max_job_runtime
-    #       super
-    #     end
+        # def job_should_exit?
+        #   return true if start_time && (Time.now.utc - start_time) > ::JobIteration.max_job_runtime
+        #   super
+        # end
   end
 end

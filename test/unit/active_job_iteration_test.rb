@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 require 'test_helper'
 
-class JobIteration::IterationTest < Minitest::Test
+class JobIteration::IterationTest < ActiveSupport::TestCase
   include JobIteration::TestHelper
 
   class SimpleIterationJob < ActiveJob::Base
@@ -248,66 +248,36 @@ class JobIteration::IterationTest < Minitest::Test
   def test_failing_job
     push(FailingIterationJob)
 
-    assert_raises(RuntimeError) do
-      work_one_job
-    end
-    assert_jobs_in_queue 1, :default
+    work_one_job
+    assert_jobs_in_queue 1
 
-    processed_shops = Product.order("id ASC").pluck(:id)
+    processed_shops = Product.order(:id).pluck(:id)
 
-    attempt, cursor = last_interrupted_job(FailingIterationJob, :default)
-    expected_cursor = processed_shops[2]
-    assert_equal 1, attempt
-    assert_equal expected_cursor, cursor
+    job = peek_into_queue
+    assert_equal processed_shops[2], job.cursor_position
+    assert_equal 1, job.executions
     assert_equal 3, FailingIterationJob.records_performed.size
     assert_equal 1, FailingIterationJob.on_start_called
 
-    assert_raises(RuntimeError) do
-      work_one_job
-    end
-    assert_jobs_in_queue 1, :default
+    work_one_job
 
-    attempt, cursor = last_interrupted_job(FailingIterationJob, :default)
-    expected_cursor = processed_shops[5]
-    assert_equal 2, attempt
-    assert_equal expected_cursor, cursor
+    job = peek_into_queue
+    assert_equal processed_shops[5], job.cursor_position
+    assert_equal 2, job.executions
 
     assert_equal 6, FailingIterationJob.records_performed.size
     assert_equal 1, FailingIterationJob.on_start_called
     assert_equal 0, FailingIterationJob.on_complete_called
 
-    # two more retries
-    2.times { assert_raises(RuntimeError) { work_one_job } }
-    assert_jobs_in_queue 0, :default
+    # last attempt
+    assert_raises(RuntimeError) do
+      work_one_job
+    end
+    assert_jobs_in_queue 0
   end
 
-  def test_iteration_lock_queue_job
-    iterate_exact_times(1.times)
-    shop = shops(:snowdevil)
-    lock_queue = IterationLockQueueJob.new(shop_id: shop.id).lock_queue
-
-    3.times { |i| push(IterationLockQueueJob, n: i, shop_id: shop.id) }
-
-    assert_jobs_in_queue 1, :default
-    assert_tasks_in_lock_queue [0, 1, 2], lock_queue
-
-    work_one_job
-    _, cursor = last_interrupted_job(IterationLockQueueJob, :default)
-
-    assert_nil cursor
-    assert_jobs_in_queue 1, :default
-    assert_equal 1, IterationLockQueueJob.on_start_called
-    assert_tasks_in_lock_queue [1, 2], lock_queue
-
-    continue_iterating
-    work_one_job
-
-    assert_equal 1, IterationLockQueueJob.on_start_called
-    assert_jobs_in_queue 0, :default
-    assert_tasks_in_lock_queue [], lock_queue
-  end
-
-  def test_shops
+  def test_active_record_job
+    puts Product.all.inspect
     iterate_exact_times(2.times)
 
     push(ActiveRecordIterationJob)
@@ -316,14 +286,14 @@ class JobIteration::IterationTest < Minitest::Test
     work_one_job
 
     assert_equal 2, ActiveRecordIterationJob.records_performed.size
-    attempt, cursor = last_interrupted_job(ActiveRecordIterationJob, :default)
-    assert_equal 0, attempt
+    times_interrupted, cursor = last_interrupted_job(ActiveRecordIterationJob)
+    assert_equal 1, times_interrupted
     assert cursor
 
     work_one_job
     assert_equal 4, ActiveRecordIterationJob.records_performed.size
-    attempt, cursor = last_interrupted_job(ActiveRecordIterationJob, :default)
-    assert_equal 0, attempt
+    times_interrupted, cursor = last_interrupted_job(ActiveRecordIterationJob)
+    assert_equal 2, times_interrupted
     assert cursor
 
     assert_equal 0, ActiveRecordIterationJob.on_complete_called
@@ -353,7 +323,7 @@ class JobIteration::IterationTest < Minitest::Test
     assert_equal 3, BatchActiveRecordIterationJob.records_performed.flatten.size
     assert_equal 1, BatchActiveRecordIterationJob.on_start_called
 
-    attempt, cursor = last_interrupted_job(BatchActiveRecordIterationJob, :default)
+    attempt, cursor = last_interrupted_job(BatchActiveRecordIterationJob)
     assert_equal 0, attempt
     assert_equal ids_process_order[2], cursor
 
@@ -362,7 +332,7 @@ class JobIteration::IterationTest < Minitest::Test
     assert_equal 6, BatchActiveRecordIterationJob.records_performed.flatten.size
     assert_equal 1, BatchActiveRecordIterationJob.on_start_called
 
-    attempt, cursor = last_interrupted_job(BatchActiveRecordIterationJob, :default)
+    attempt, cursor = last_interrupted_job(BatchActiveRecordIterationJob)
     assert_equal 0, attempt
     assert_equal ids_process_order[5], cursor
     continue_iterating
@@ -385,7 +355,7 @@ class JobIteration::IterationTest < Minitest::Test
     assert_equal [1, 2, 3], EnumerableIterationJob.records_performed
     assert_equal 1, EnumerableIterationJob.on_start_called
 
-    attempt, cursor = last_interrupted_job(EnumerableIterationJob, :default)
+    attempt, cursor = last_interrupted_job(EnumerableIterationJob)
     assert_equal 0, attempt
     assert_equal 2, cursor
 
@@ -496,6 +466,7 @@ class JobIteration::IterationTest < Minitest::Test
   end
 
   def test_reports_each_iteration_runtime
+    skip "statsd is coming"
     push(SingleIterationJob)
 
     expected_tags = ["job_class:#{SingleIterationJob.name.underscore}"]
@@ -542,7 +513,7 @@ class JobIteration::IterationTest < Minitest::Test
     params = { 'walrus' => 'best' }
     push(IterationJobsWithParams, params)
     work_one_job
-    assert_equal [params, params], IterationJobsWithParams.records_performed
+    assert_equal [[params], [params]], IterationJobsWithParams.records_performed
   end
 
   def test_passes_params_to_each_iteration_without_extra_information_on_interruption
@@ -558,6 +529,7 @@ class JobIteration::IterationTest < Minitest::Test
   end
 
   def test_emits_metric_when_interrupted
+    skip "statsd is coming"
     iterate_exact_times(2.times, job: ActiveRecordIterationJob)
 
     push(ActiveRecordIterationJob)
@@ -568,6 +540,7 @@ class JobIteration::IterationTest < Minitest::Test
   end
 
   def test_emits_metric_when_resumed
+    skip "statsd is coming"
     iterate_exact_times(2.times)
 
     push(ActiveRecordIterationJob)
@@ -634,25 +607,30 @@ class JobIteration::IterationTest < Minitest::Test
   end
 
   def test_iteration_job_with_build_enumerator_returning_relation
-    push(IterationJobWithBuildEnumeratorReturningActiveRecordRelation)
+    push(JobWithBuildEnumeratorReturningActiveRecordRelation)
 
     error = assert_raises(ArgumentError) do
       work_one_job
     end
-    assert_match(/#build_enumerator is expected to return Enumerator object, but returned Shop::ActiveRecord_Relation/, error.to_s)
+    assert_match(/#build_enumerator is expected to return Enumerator object, but returned Product::ActiveRecord_Relation/, error.to_s)
   end
 
   private
 
-  def last_interrupted_job(job_class, queue)
-    jobs = jobs_in_queue(queue)
+  def last_interrupted_job(job_class, queue = nil)
+    jobs = ActiveJob::Base.queue_adapter.enqueued_jobs
     assert_equal 1, jobs.size
 
     job = jobs.last
-    assert_equal job_class.name, job["class"]
+    assert_equal job_class.name, job["job_class"]
 
-    args = job["args"]
-    [args[0]["attempt"], args[0]["cursor_position"]]
+    [job["times_interrupted"], job["cursor_position"]]
+  end
+
+  def peek_into_queue
+    jobs = ActiveJob::Base.queue_adapter.enqueued_jobs
+    assert_operator jobs.size, :>, 0
+    ActiveJob::Base.deserialize(jobs.last)
   end
 
   def push(job, *args)
@@ -662,5 +640,9 @@ class JobIteration::IterationTest < Minitest::Test
   def work_one_job
     job = ActiveJob::Base.queue_adapter.enqueued_jobs.pop
     ActiveJob::Base.execute(job)
+  end
+
+  def assert_jobs_in_queue(size, queue = nil)
+    assert_equal size, ActiveJob::Base.queue_adapter.enqueued_jobs.size
   end
 end

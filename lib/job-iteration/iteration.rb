@@ -96,7 +96,7 @@ module JobIteration
 
       assert_enumerator!(enumerator)
 
-      if times_interrupted == 0
+      if executions == 1 && times_interrupted == 0
         run_callbacks :start
       else
         ActiveSupport::Notifications.instrument("resumed.iteration", iteration_instrumentation_tags)
@@ -146,9 +146,14 @@ module JobIteration
 
       self.already_in_queue = true if respond_to?(:already_in_queue=)
       run_callbacks :shutdown
-      retry_job unless enqueued # calling this method simply reenqueues self. It doesn't eat the retry budget.
+      push_back_to_queue
 
       true
+    end
+
+    # calling #retry_job simply reenqueues self. It doesn't eat the retry budget.
+    def push_back_to_queue
+      retry_job
     end
 
     def adjust_total_time
@@ -195,9 +200,10 @@ module JobIteration
       logger.info Kernel.format(message, times_interrupted, total_time)
     end
 
-        # def job_should_exit?
-        #   return true if start_time && (Time.now.utc - start_time) > ::JobIteration.max_job_runtime
-        #   super
-        # end
+    def job_should_exit?
+      # return true if start_time && (Time.now.utc - start_time) > ::JobIteration.max_job_runtime
+
+      JobIteration.interruption_adapter.shutdown?
+    end
   end
 end

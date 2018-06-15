@@ -16,38 +16,25 @@ module JobIteration
 
     private
 
-    def iterate_exact_times(n_times, job:)
-      job.any_instance.stubs(:job_should_exit?).returns(StoppingSupervisor.new(n_times.size))
+    def iterate_exact_times(n_times)
+      JobIteration.stubs(:interruption_adapter).returns(StoppingSupervisor.new(n_times.size))
     end
 
-    def iterate_once(job:)
+    def iterate_once
       iterate_exact_times(1.times)
     end
 
-    def continue_iterating(job:)
-      stub_supervisor_shutdown_to_return(false)
+    def continue_iterating
+      stub_shutdown_adapter_to_return(false)
     end
 
-    def mark_job_worker_as_interrupted(job:)
-      stub_supervisor_shutdown_to_return(true)
+    def mark_job_worker_as_interrupted
+      stub_shutdown_adapter_to_return(true)
     end
 
-    def stub_supervisor_shutdown_to_return(value)
-      fakesupervisor = mock
-      fakesupervisor.stubs(shutdown?: value)
-      job.any_instance.stubs(:job_should_exit?).returns(fakesupervisor)
-    end
-
-    def last_job_cursor(job_class)
-      # enqueued_jobs
-      jobs = jobs_in_queue(job_class.queue_name)
-      assert_predicate jobs, :any?
-
-      job = jobs.last
-      assert_equal job_class.name, job.fetch("class")
-
-      args = job.fetch("args")
-      args[0].fetch("cursor_position")
+    def stub_shutdown_adapter_to_return(value)
+      adapter = mock.stubs(shutdown?: false)
+      JobIteration.stubs(:interruption_adapter).returns(adapter)
     end
   end
 end

@@ -459,19 +459,11 @@ class JobIteration::IterationTest < ActiveSupport::TestCase
   end
 
   def test_log_completion_data
-    skip "should log things"
-    iterate_exact_times(2.times)
+    push(IterationJobsWithParams, times: 3)
 
-    push(IterationJobsWithParams)
-
-    # assert_no_logs(:info, /\[JobIteration::Iteration\] Completed./, BackgroundQueue) do
-    work_one_job
-    # end
-
-    # expected_log = /\[JobIteration::Iteration\] Completed. times_interrupted=1 total_time=\d\.\d{3}/
-    # assert_logs(:info, expected_log, BackgroundQueue) do
-    work_one_job
-    # end
+    assert_logged(%{[JobIteration::Iteration] Job completed}) do
+      work_one_job
+    end
   end
 
   def test_aborting_in_each_iteration_job

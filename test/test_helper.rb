@@ -50,7 +50,7 @@ module LoggingHelpers
   def assert_logged(message)
     old_logger = ActiveJob::Base.logger
     log = StringIO.new
-    ActiveJob::Base.logger = log
+    ActiveJob::Base.logger = Logger.new(log)
 
     begin
       yield

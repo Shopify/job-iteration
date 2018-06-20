@@ -370,7 +370,7 @@ class JobIteration::IterationTest < ActiveSupport::TestCase
       assert_equal iter * 3, MultipleColumnsActiveRecordIterationJob.records_performed.size
     end
 
-    assert_equal Product.all.order('updated_at, id').limit(9), MultipleColumnsActiveRecordIterationJob.records_performed
+    assert_equal Product.all.order('updated_at, id').limit(9).to_a, MultipleColumnsActiveRecordIterationJob.records_performed
   end
 
   def test_single_iteration

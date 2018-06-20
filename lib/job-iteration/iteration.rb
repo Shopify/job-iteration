@@ -121,6 +121,7 @@ module JobIteration
         end
 
         if job_should_exit?
+          self.executions -= 1 if self.executions > 1
           shutdown_and_reenqueue
           return false
         end

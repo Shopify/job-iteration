@@ -38,7 +38,7 @@ ActiveJob::Base.queue_adapter = :iteration_test
 class Product < ActiveRecord::Base
 end
 
-ActiveRecord::Base.establish_connection adapter: "sqlite3", database: ":memory:"
+ActiveRecord::Base.establish_connection adapter: "mysql2", database: "job_iteration_test", username: 'root'
 ActiveRecord::Base.connection.create_table Product.table_name, force: true do |t|
   t.string :name
   t.timestamps

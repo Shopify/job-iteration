@@ -77,6 +77,20 @@ class JobIteration::ActiveRecordEnumeratorTest < ActiveSupport::TestCase
     assert_equal([shops, shops.last.id], enum.first)
   end
 
+  test "cursor can be used to resume on multiple columns" do
+    enum = build_enumerator(columns: [:created_at, :id]).batches
+    shops = Product.order(:created_at, :id).take(2)
+
+    cursor = [shops.last.created_at.to_s(:db), shops.last.id]
+    assert_equal([shops, cursor], enum.first)
+
+    enum = build_enumerator(columns: [:created_at, :id], cursor: cursor).batches
+    shops = Product.order(:created_at, :id).offset(2).take(2)
+
+    cursor = [shops.last.created_at.to_s(:db), shops.last.id]
+    assert_equal([shops, cursor], enum.first)
+  end
+
   private
 
   def build_enumerator(relation: Product.all, batch_size: 2, columns: nil, cursor: nil)

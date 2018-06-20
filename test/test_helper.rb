@@ -46,15 +46,34 @@ end
 
 DatabaseCleaner.strategy = :truncation
 
+module LoggingHelpers
+  def assert_logged(message)
+    old_logger = ActiveJob::Base.logger
+    log = StringIO.new
+    ActiveJob::Base.logger = log
+
+    begin
+      yield
+
+      log.rewind
+      assert_match message, log.read
+    ensure
+      ActiveJob::Base.logger = old_logger
+    end
+  end
+end
+
+ActiveJob::Base.logger = Logger.new(IO::NULL)
+
 class ActiveSupport::TestCase
+  include LoggingHelpers
+
   setup do
     insert_fixtures
-
-    @job_logger = StringIO.new
-    ActiveJob::Base.logger = Logger.new(@job_logger)
   end
 
   teardown do
+    ActiveJob::Base.queue_adapter.enqueued_jobs = []
     DatabaseCleaner.clean
   end
 

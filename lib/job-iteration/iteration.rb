@@ -201,7 +201,7 @@ module JobIteration
     end
 
     def job_should_exit?
-      # return true if start_time && (Time.now.utc - start_time) > ::JobIteration.max_job_runtime
+      return true if ::JobIteration.max_job_runtime && start_time && (Time.now.utc - start_time) > ::JobIteration.max_job_runtime
 
       JobIteration.interruption_adapter.shutdown?
     end

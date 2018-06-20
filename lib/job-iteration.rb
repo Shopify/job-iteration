@@ -23,10 +23,8 @@ module JobIteration
 
   def load_integrations
     INTEGRATIONS.each do |integration|
-      begin
-        require "job-iteration/integrations/#{integration}"
-      rescue LoadError
-      end
+      require "job-iteration/integrations/#{integration}"
+    rescue LoadError
     end
   end
 end

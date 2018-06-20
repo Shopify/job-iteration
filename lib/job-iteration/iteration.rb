@@ -120,11 +120,10 @@ module JobIteration
           self.cursor_position = index
         end
 
-        if job_should_exit?
-          self.executions -= 1 if self.executions > 1
-          shutdown_and_reenqueue
-          return false
-        end
+        next unless job_should_exit?
+        self.executions -= 1 if executions > 1
+        shutdown_and_reenqueue
+        return false
       end
 
       true

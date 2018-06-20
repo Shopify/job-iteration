@@ -465,12 +465,12 @@ class JobIteration::IterationTest < ActiveSupport::TestCase
     push(IterationJobsWithParams)
 
     # assert_no_logs(:info, /\[JobIteration::Iteration\] Completed./, BackgroundQueue) do
-      work_one_job
+    work_one_job
     # end
 
     # expected_log = /\[JobIteration::Iteration\] Completed. times_interrupted=1 total_time=\d\.\d{3}/
     # assert_logs(:info, expected_log, BackgroundQueue) do
-      work_one_job
+    work_one_job
     # end
   end
 
@@ -503,7 +503,7 @@ class JobIteration::IterationTest < ActiveSupport::TestCase
   end
 
   def test_iteration_job_with_build_enumerator_returning_array
-    push(JobWithBuildEnumeratorReturningArray )
+    push(JobWithBuildEnumeratorReturningArray)
 
     error = assert_raises(ArgumentError) do
       work_one_job
@@ -522,7 +522,7 @@ class JobIteration::IterationTest < ActiveSupport::TestCase
 
   private
 
-  def last_interrupted_job(job_class, queue = nil)
+  def last_interrupted_job(job_class, _queue = nil)
     jobs = ActiveJob::Base.queue_adapter.enqueued_jobs
     assert_equal 1, jobs.size
 
@@ -547,7 +547,7 @@ class JobIteration::IterationTest < ActiveSupport::TestCase
     ActiveJob::Base.execute(job)
   end
 
-  def assert_jobs_in_queue(size, queue = nil)
+  def assert_jobs_in_queue(size, _queue = nil)
     assert_equal size, ActiveJob::Base.queue_adapter.enqueued_jobs.size
   end
 end

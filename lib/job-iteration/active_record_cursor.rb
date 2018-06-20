@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module JobIteration
   class ActiveRecordCursor
     include Comparable
@@ -18,7 +20,7 @@ module JobIteration
       columns ||= "#{relation.table_name}.#{relation.primary_key}"
       @columns = Array.wrap(columns)
       self.position = Array.wrap(position)
-      raise ArgumentError, "Must specify at least one column" if columns.length < 1
+      raise ArgumentError, "Must specify at least one column" if columns.empty?
       raise ArgumentError, "You need to specify fully-qualified columns if you join a table" if relation.joins_values.present? && !@columns.all? { |column| column.to_s.include?('.') }
 
       if relation.arel.orders.present? || relation.arel.taken.present?
@@ -72,10 +74,10 @@ module JobIteration
       conditions = nil
       i = @position.size - 1
       column = @columns[i]
-      if @columns.size == @position.size
-        conditions = "#{column} > ?"
+      conditions = if @columns.size == @position.size
+        "#{column} > ?"
       else
-        conditions = "#{column} >= ?"
+        "#{column} >= ?"
       end
       while i > 0
         i -= 1

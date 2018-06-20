@@ -32,7 +32,7 @@ module JobIteration
       stub_shutdown_adapter_to_return(true)
     end
 
-    def stub_shutdown_adapter_to_return(value)
+    def stub_shutdown_adapter_to_return(_value)
       adapter = mock
       adapter.stubs(:shutdown?).returns(false)
       JobIteration.stubs(:interruption_adapter).returns(adapter)

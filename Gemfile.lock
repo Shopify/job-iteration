@@ -77,6 +77,7 @@ DEPENDENCIES
   activerecord
   bundler (~> 1.16)
   database_cleaner
+  globalid
   job-iteration!
   minitest (~> 5.0)
   mocha

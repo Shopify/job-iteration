@@ -78,14 +78,14 @@ module JobIteration
       JobIteration::EnumeratorBuilder.new(self)
     end
 
-    def interruptible_perform(*params)
+    def interruptible_perform(*arguments)
       assert_implements_methods!
 
       self.start_time = Time.now.utc
 
       enumerator = nil
       ActiveSupport::Notifications.instrument("build_enumerator.iteration", iteration_instrumentation_tags) do
-        enumerator = build_enumerator(params, cursor: cursor_position)
+        enumerator = build_enumerator(*arguments, cursor: cursor_position)
       end
 
       unless enumerator
@@ -103,7 +103,7 @@ module JobIteration
       end
 
       catch(:abort) do
-        return unless iterate_with_enumerator(enumerator, params)
+        return unless iterate_with_enumerator(enumerator, arguments)
       end
 
       run_callbacks :shutdown
@@ -112,11 +112,11 @@ module JobIteration
       output_interrupt_summary
     end
 
-    def iterate_with_enumerator(enumerator, params)
-      params = params.dup.freeze
+    def iterate_with_enumerator(enumerator, arguments)
+      arguments = arguments.dup.freeze
       enumerator.each do |iteration, index|
         record_unit_of_work do
-          each_iteration(iteration, params)
+          each_iteration(iteration, *arguments)
           self.cursor_position = index
         end
 

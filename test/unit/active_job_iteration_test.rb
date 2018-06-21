@@ -29,9 +29,19 @@ class JobIteration::IterationTest < ActiveSupport::TestCase
     end
   end
 
-  class IterationJobsWithParams < SimpleIterationJob
+  class MultiArgumentIterationJob < SimpleIterationJob
+    def build_enumerator(one_arg, another_arg, cursor:)
+      enumerator_builder.build_times_enumerator(2, cursor: cursor)
+    end
+
+    def each_iteration(item, one_arg, another_arg)
+      self.class.records_performed << [item, one_arg, another_arg]
+    end
+  end
+
+  class ParamsIterationJob < SimpleIterationJob
     def build_enumerator(params, cursor:)
-      enumerator_builder.build_times_enumerator(params[0].fetch(:times, 2), cursor: cursor)
+      enumerator_builder.build_times_enumerator(params.fetch(:times, 2), cursor: cursor)
     end
 
     def each_iteration(_record, params)
@@ -40,20 +50,20 @@ class JobIteration::IterationTest < ActiveSupport::TestCase
   end
 
   class ActiveRecordIterationJob < SimpleIterationJob
-    def build_enumerator(_params, cursor:)
+    def build_enumerator(cursor:)
       enumerator_builder.build_active_record_enumerator_on_records(
         Product.all,
         cursor: cursor,
       )
     end
 
-    def each_iteration(record, _params)
+    def each_iteration(record)
       self.class.records_performed << record
     end
   end
 
   class BatchActiveRecordIterationJob < SimpleIterationJob
-    def build_enumerator(_params, cursor:)
+    def build_enumerator(cursor:)
       enumerator_builder.build_active_record_enumerator_on_batches(
         Product.all,
         cursor: cursor,
@@ -61,7 +71,7 @@ class JobIteration::IterationTest < ActiveSupport::TestCase
       )
     end
 
-    def each_iteration(record, _params)
+    def each_iteration(record)
       self.class.records_performed << record
     end
   end
@@ -74,7 +84,7 @@ class JobIteration::IterationTest < ActiveSupport::TestCase
   end
 
   class AbortingBatchActiveRecordIterationJob < SimpleIterationJob
-    def build_enumerator(_params, cursor:)
+    def build_enumerator(cursor:)
       enumerator_builder.build_active_record_enumerator_on_batches(
         Product.all,
         cursor: cursor,
@@ -82,14 +92,14 @@ class JobIteration::IterationTest < ActiveSupport::TestCase
       )
     end
 
-    def each_iteration(record, _params)
+    def each_iteration(record)
       self.class.records_performed << record
       throw(:abort) if self.class.records_performed.size == 2
     end
   end
 
   class OrderedActiveRecordIterationJob < SimpleIterationJob
-    def build_enumerator(_params, cursor:)
+    def build_enumerator(cursor:)
       enumerator_builder.build_active_record_enumerator_on_records(
         Product.order('country DESC'),
         cursor: cursor
@@ -101,7 +111,7 @@ class JobIteration::IterationTest < ActiveSupport::TestCase
   end
 
   class LimitActiveRecordIterationJob < SimpleIterationJob
-    def build_enumerator(_params, cursor:)
+    def build_enumerator(cursor:)
       enumerator_builder.build_active_record_enumerator_on_records(
         Product.limit(5),
         cursor: cursor
@@ -128,7 +138,7 @@ class JobIteration::IterationTest < ActiveSupport::TestCase
   class PrivateIterationJob < SimpleIterationJob
     private
 
-    def build_enumerator(_params, cursor:)
+    def build_enumerator(cursor:)
       enumerator_builder.build_times_enumerator(3, cursor: cursor)
     end
 
@@ -143,7 +153,7 @@ class JobIteration::IterationTest < ActiveSupport::TestCase
   end
 
   class MultipleColumnsActiveRecordIterationJob < SimpleIterationJob
-    def build_enumerator(_params, cursor:)
+    def build_enumerator(cursor:)
       enumerator_builder.build_active_record_enumerator_on_records(
         Product.all,
         cursor: cursor,
@@ -152,17 +162,17 @@ class JobIteration::IterationTest < ActiveSupport::TestCase
       )
     end
 
-    def each_iteration(record, _params)
+    def each_iteration(record)
       self.class.records_performed << record
     end
   end
 
   class SingleIterationJob < SimpleIterationJob
-    def build_enumerator(_params, cursor:)
+    def build_enumerator(cursor:)
       enumerator_builder.build_once_enumerator(cursor: cursor)
     end
 
-    def each_iteration(record, _params)
+    def each_iteration(record)
       self.class.records_performed << record
     end
   end
@@ -170,14 +180,14 @@ class JobIteration::IterationTest < ActiveSupport::TestCase
   class FailingIterationJob < SimpleIterationJob
     retry_on RuntimeError, attempts: 3, wait: 0
 
-    def build_enumerator(_params, cursor:)
+    def build_enumerator(cursor:)
       enumerator_builder.build_active_record_enumerator_on_records(
         Product.all,
         cursor: cursor
       )
     end
 
-    def each_iteration(shop, _params)
+    def each_iteration(shop)
       @called ||= 0
       raise if @called > 2
       self.class.records_performed << shop
@@ -413,23 +423,47 @@ class JobIteration::IterationTest < ActiveSupport::TestCase
     assert_match(/cannot redefine #perform/, error.to_s)
   end
 
+  def test_supports_multiple_job_arguments_and_global_id
+    MultiArgumentIterationJob.perform_later(Product.first, nil)
+
+    work_one_job
+
+    expected = [
+      [0, Product.first, nil],
+      [1, Product.first, nil]
+    ]
+    assert_equal expected, MultiArgumentIterationJob.records_performed
+  end
+
+  def test_supports_multiple_job_arguments
+    MultiArgumentIterationJob.perform_later(2, %w(a b c))
+
+    work_one_job
+
+    expected = [
+      [0, 2, %w(a b c)],
+      [1, 2, %w(a b c)]
+    ]
+    assert_equal expected, MultiArgumentIterationJob.records_performed
+  end
+
   def test_passes_params_to_each_iteration
     params = { 'walrus' => 'best' }
-    push(IterationJobsWithParams, params)
+    push(ParamsIterationJob, params)
     work_one_job
-    assert_equal [[params], [params]], IterationJobsWithParams.records_performed
+    assert_equal [params, params], ParamsIterationJob.records_performed
   end
 
   def test_passes_params_to_each_iteration_without_extra_information_on_interruption
     iterate_exact_times(1.times)
     params = { 'walrus' => 'yes', 'morewalrus' => 'si' }
-    push(IterationJobsWithParams, params)
+    push(ParamsIterationJob, params)
 
     work_one_job
-    assert_equal [params], IterationJobsWithParams.records_performed
+    assert_equal [params], ParamsIterationJob.records_performed
 
     work_one_job
-    assert_equal [params, params], IterationJobsWithParams.records_performed
+    assert_equal [params, params], ParamsIterationJob.records_performed
   end
 
   def test_emits_metric_when_interrupted
@@ -459,7 +493,7 @@ class JobIteration::IterationTest < ActiveSupport::TestCase
   end
 
   def test_log_completion_data
-    push(IterationJobsWithParams, times: 3)
+    push(ParamsIterationJob, times: 3)
 
     assert_logged(%{[JobIteration::Iteration] Job completed}) do
       work_one_job
@@ -481,15 +515,9 @@ class JobIteration::IterationTest < ActiveSupport::TestCase
     assert_equal 1, AbortingBatchActiveRecordIterationJob.on_complete_called
   end
 
-  def test_check_for_exit_after_iteration
-    # supervisor = Class.new
-    # Podding::Resque::WorkerSupervisor.stubs(:instance).returns(supervisor)
-
-    push(IterationJobsWithParams, times: 3)
-
-    # calls = sequence("calls")
-    IterationJobsWithParams.any_instance.expects(:job_should_exit?).times(3).returns(false)
-    # supervisor.expects(shutdown?: true).in_sequence(calls)
+  def test_checks_for_exit_after_iteration
+    push(ParamsIterationJob, times: 3)
+    ParamsIterationJob.any_instance.expects(:job_should_exit?).times(3).returns(false)
 
     work_one_job
   end

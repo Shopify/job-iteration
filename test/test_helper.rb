@@ -69,8 +69,9 @@ end
 
 ActiveJob::Base.logger = Logger.new(IO::NULL)
 
-class ActiveSupport::TestCase
+class IterationUnitTest < ActiveSupport::TestCase
   include LoggingHelpers
+  include JobIteration::TestHelper
 
   setup do
     insert_fixtures

@@ -146,18 +146,13 @@ module JobIteration
 
       self.already_in_queue = true if respond_to?(:already_in_queue=)
       run_callbacks :shutdown
-      push_back_to_queue
+      enqueue
 
       true
     end
 
-    # calling #retry_job simply reenqueues self. It doesn't eat the retry budget.
-    def push_back_to_queue
-      retry_job
-    end
-
     def adjust_total_time
-      self.total_time += Time.now.utc.to_f - start_time.to_f
+      self.total_time += (Time.now.utc.to_f - start_time.to_f).round(6)
     end
 
     def assert_enumerator!(enum)
@@ -196,7 +191,7 @@ module JobIteration
     def output_interrupt_summary
       adjust_total_time
 
-      message = "[JobIteration::Iteration] Job completed. times_interrupted=%d total_time=%.3f"
+      message = "[JobIteration::Iteration] Completed iterating. times_interrupted=%d total_time=%.3f"
       logger.info Kernel.format(message, times_interrupted, total_time)
     end
 

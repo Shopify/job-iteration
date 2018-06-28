@@ -46,7 +46,7 @@ module JobIteration
       unless enumerable.is_a?(Array)
         raise ArgumentError, "enumerable must be an Array"
       end
-      if enumerable.any? { |i| i.is_a?(ActiveRecord::Base) }
+      if enumerable.any? { |i| defined?(ActiveRecord) && i.is_a?(ActiveRecord::Base) }
         raise ArgumentError, "array cannot contain ActiveRecord objects"
       end
       drop =
@@ -120,6 +120,7 @@ module JobIteration
     end
 
     alias_method :once, :build_once_enumerator
+    alias_method :times, :build_times_enumerator
     alias_method :array, :build_array_enumerator
     alias_method :active_record_on_records, :build_active_record_enumerator_on_records
     alias_method :active_record_on_batches, :build_active_record_enumerator_on_batches

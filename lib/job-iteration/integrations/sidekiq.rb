@@ -4,8 +4,10 @@ require 'sidekiq'
 
 module JobIteration
   module Integrations
-    module Sidekiq
-      def job_should_exit?
+    module SidekiqInterruptionAdapter
+      extend self
+
+      def shutdown?
         if defined?(Sidekiq::CLI) && Sidekiq::CLI.instance
           Sidekiq::CLI.instance.launcher.stopping?
         else
@@ -13,7 +15,7 @@ module JobIteration
         end
       end
     end
+
+    JobIteration.interruption_adapter = SidekiqInterruptionAdapter
   end
 end
-
-Sidekiq::Worker.prepend(JobIteration::Integrations::Sidekiq)

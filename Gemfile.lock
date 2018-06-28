@@ -78,12 +78,14 @@ DEPENDENCIES
   bundler (~> 1.16)
   database_cleaner
   globalid
+  i18n
   job-iteration!
   minitest (~> 5.0)
   mocha
   mysql2 (~> 0.4.4)
   pry
   rake (~> 10.0)
+  redis
   rubocop
   sidekiq
 

@@ -1,9 +1,7 @@
 # frozen_string_literal: true
 require 'test_helper'
 
-class JobIteration::IterationTest < ActiveSupport::TestCase
-  include JobIteration::TestHelper
-
+class JobIteration::IterationTest < IterationUnitTest
   class SimpleIterationJob < ActiveJob::Base
     include JobIteration::Iteration
 

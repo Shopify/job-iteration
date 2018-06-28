@@ -18,7 +18,6 @@ module JobIteration
       false
     end
   end
-
   self.interruption_adapter = AlwaysRunningInterruptionAdapter
 
   def load_integrations

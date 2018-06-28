@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-class JobIteration::ActiveRecordEnumeratorTest < ActiveSupport::TestCase
+class JobIteration::ActiveRecordEnumeratorTest < IterationUnitTest
   test "#records yields every record with their cursor position" do
     enum = build_enumerator.records
     shop_id_tuples = Product.all.order(:id).take(3).map { |shop| [shop, shop.id] }

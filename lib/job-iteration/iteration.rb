@@ -137,9 +137,7 @@ module JobIteration
 
     def shutdown_and_reenqueue
       ActiveSupport::Notifications.instrument("interrupted.iteration", iteration_instrumentation_tags)
-      logger.info "[JobIteration::Iteration] cursor_position=#{cursor_position} Worker received " \
-        "signal to shut down which is usually caused by restarts or unhealthy server. " \
-        "Interrupting the job and re-enqueuing job to process from where it left off."
+      logger.info "[JobIteration::Iteration] Interrupting and re-enqueueing the job cursor_position=#{cursor_position}"
 
       adjust_total_time
       self.times_interrupted += 1
@@ -196,7 +194,9 @@ module JobIteration
     end
 
     def job_should_exit?
-      return true if ::JobIteration.max_job_runtime && start_time && (Time.now.utc - start_time) > ::JobIteration.max_job_runtime
+      if ::JobIteration.max_job_runtime && start_time && (Time.now.utc - start_time) > ::JobIteration.max_job_runtime
+        return true
+      end
 
       JobIteration.interruption_adapter.shutdown?
     end

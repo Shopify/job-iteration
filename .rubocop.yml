@@ -3,3 +3,6 @@ inherit_from:
 
 AllCops:
   TargetRubyVersion: 2.5.1
+Lint/HandleExceptions:
+  Exclude:
+    - lib/job-iteration.rb

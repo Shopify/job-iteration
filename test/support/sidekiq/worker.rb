@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class MyWorker < ActiveJob::Base
   include JobIteration::Iteration
 

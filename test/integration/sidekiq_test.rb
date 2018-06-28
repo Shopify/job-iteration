@@ -9,9 +9,7 @@ class SidekiqIntegrationTest < ActiveSupport::TestCase
   setup do
     @original_adapter = ActiveJob::Base.queue_adapter
     ActiveJob::Base.queue_adapter = :sidekiq
-    Sidekiq.redis do |conn|
-      conn.flushdb
-    end
+    Sidekiq.redis(&:flushdb)
   end
 
   teardown do
@@ -47,5 +45,4 @@ class SidekiqIntegrationTest < ActiveSupport::TestCase
   ensure
     Process.wait(pid)
   end
-
 end

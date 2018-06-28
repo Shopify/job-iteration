@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'job-iteration'
 require 'active_job'
 require 'i18n'

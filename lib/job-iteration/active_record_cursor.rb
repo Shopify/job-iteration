@@ -21,7 +21,9 @@ module JobIteration
       @columns = Array.wrap(columns)
       self.position = Array.wrap(position)
       raise ArgumentError, "Must specify at least one column" if columns.empty?
-      raise ArgumentError, "You need to specify fully-qualified columns if you join a table" if relation.joins_values.present? && !@columns.all? { |column| column.to_s.include?('.') }
+      if relation.joins_values.present? && !@columns.all? { |column| column.to_s.include?('.') }
+        raise ArgumentError, "You need to specify fully-qualified columns if you join a table"
+      end
 
       if relation.arel.orders.present? || relation.arel.taken.present?
         raise ConditionNotSupportedError
@@ -71,7 +73,6 @@ module JobIteration
     protected
 
     def conditions
-      conditions = nil
       i = @position.size - 1
       column = @columns[i]
       conditions = if @columns.size == @position.size

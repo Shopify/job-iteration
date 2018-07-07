@@ -3,6 +3,8 @@ inherit_from:
 
 AllCops:
   TargetRubyVersion: 2.5.1
+  Exclude:
+    - 'vendor/bundle/**/*'
 Lint/HandleExceptions:
   Exclude:
     - lib/job-iteration.rb

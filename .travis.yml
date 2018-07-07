@@ -1,4 +1,8 @@
-sudo: false
+services:
+  - mysql
+  - redis-server
+before_install:
+  - mysql -e 'CREATE DATABASE job_iteration_test;'
 language: ruby
 rvm:
   - 2.4.4

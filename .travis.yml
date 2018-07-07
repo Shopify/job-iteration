@@ -1,14 +1,14 @@
 services:
   - mysql
   - redis-server
-before_install:
-  - mysql -e 'CREATE DATABASE job_iteration_test;'
 language: ruby
 rvm:
   - 2.4.4
   - 2.5.1
-before_install: gem install bundler -v 1.16.0
+before_install:
+  - gem install bundler -v 1.16.0
+  - mysql -e 'CREATE DATABASE job_iteration_test;'
 script:
-  - bundle exec rubocop
   - bundle exec rake test
+  - bundle exec rubocop
 

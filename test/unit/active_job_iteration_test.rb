@@ -495,7 +495,7 @@ module JobIteration
     def test_log_completion_data
       push(ParamsIterationJob, times: 3)
 
-      assert_logged(%([JobIteration::Iteration] Job completed)) do
+      assert_logged(%([JobIteration::Iteration] Completed iterating)) do
         work_one_job
       end
     end

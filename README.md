@@ -105,7 +105,7 @@ end
 
 ## Requirements
 
-ActiveJob is the primary requirement for Iteration. It's not yet compatible with [vanilla](https://github.com/mperham/sidekiq/wiki/Active-Job) Sidekiq API.
+ActiveJob is the primary requirement for Iteration. While there's nothing that prevents it, Iteration is not yet compatible with [vanilla](https://github.com/mperham/sidekiq/wiki/Active-Job) Sidekiq API.
 
 ### API
 
@@ -113,7 +113,7 @@ Iteration job must respond to `build_enumerator` and `each_iteration` methods. `
 
 ### Sidekiq adapter
 
-Unless you are running on Heroku, we recommend you to time Sidekiq's [timeout](https://github.com/mperham/sidekiq/wiki/Deployment#overview) option from the default 8 seconds to 25-30 seconds, to allow the last `each_iteration` to complete and gracefully shutdown.
+Unless you are running on Heroku, we recommend you to tune Sidekiq's [timeout](https://github.com/mperham/sidekiq/wiki/Deployment#overview) option from the default 8 seconds to 25-30 seconds, to allow the last `each_iteration` to complete and gracefully shutdown.
 
 ### Resque adapter
 

@@ -1,0 +1,15 @@
+# frozen_string_literal: true
+
+# $LOAD_PATH.unshift File.dirname(__FILE__) + '/../../lib'
+# $LOAD_PATH.unshift File.dirname(__FILE__) unless $LOAD_PATH.include?(File.dirname(__FILE__))
+require 'resque/tasks'
+
+require 'job-iteration'
+require 'job-iteration/integrations/resque'
+require 'active_job'
+require 'i18n'
+
+require_relative '../jobs'
+
+I18n.available_locales = [:en]
+ActiveJob::Base.queue_adapter = :resque

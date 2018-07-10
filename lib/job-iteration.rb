@@ -30,4 +30,4 @@ module JobIteration
   end
 end
 
-JobIteration.load_integrations
+JobIteration.load_integrations unless ENV['ITERATION_DISABLE_AUTOCONFIGURE']

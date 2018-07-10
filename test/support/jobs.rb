@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class MyWorker < ActiveJob::Base
+class IterationJob < ActiveJob::Base
   include JobIteration::Iteration
 
   def build_enumerator(cursor:)
@@ -8,6 +8,7 @@ class MyWorker < ActiveJob::Base
   end
 
   def each_iteration(omg)
+    puts "adapter: #{JobIteration.interruption_adapter}"
     if omg == 0 || omg == 2
       Process.kill("TERM", Process.pid)
     end
@@ -15,7 +16,7 @@ class MyWorker < ActiveJob::Base
   end
 end
 
-class TerminateWorker < ActiveJob::Base
+class TerminateJob < ActiveJob::Base
   def perform
     Process.kill("TERM", Process.pid)
   end

@@ -3,25 +3,24 @@
 require 'test_helper'
 
 require 'sidekiq/api'
-require_relative '../support/sidekiq/worker'
+require_relative '../support/jobs'
 
 class SidekiqIntegrationTest < ActiveSupport::TestCase
   setup do
     @original_adapter = ActiveJob::Base.queue_adapter
     ActiveJob::Base.queue_adapter = :sidekiq
-    Sidekiq.redis(&:flushdb)
   end
 
   teardown do
     ActiveJob::Base.queue_adapter = @original_adapter
   end
 
-  test "inregrate" do
-    MyWorker.perform_later
+  test "interrupts the job" do
+    IterationJob.perform_later
 
     start_sidekiq_and_wait
 
-    assert_equal 1, Sidekiq::Queue.new.size
+    assert_equal 1, queue_size
 
     job_args = Sidekiq::Queue.new.first.args
     assert_equal 0, job_args.dig(0, "cursor_position")
@@ -29,20 +28,26 @@ class SidekiqIntegrationTest < ActiveSupport::TestCase
 
     start_sidekiq_and_wait
 
-    assert_equal 1, Sidekiq::Queue.new.size
+    assert_equal 1, queue_size
     job_args = Sidekiq::Queue.new.first.args
     assert_equal 2, job_args.dig(0, "cursor_position")
     assert_equal 2, job_args.dig(0, "times_interrupted")
 
-    TerminateWorker.perform_later
+    TerminateJob.perform_later
     start_sidekiq_and_wait
 
-    assert_equal 0, Sidekiq::Queue.new.size
+    assert_equal 0, queue_size
   end
+
+  private
 
   def start_sidekiq_and_wait
     pid = spawn("bundle exec sidekiq -r ./test/support/sidekiq/init.rb -c 1")
   ensure
     Process.wait(pid)
+  end
+
+  def queue_size
+    Sidekiq::Queue.new.size
   end
 end

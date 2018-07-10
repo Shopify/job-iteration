@@ -8,3 +8,6 @@ AllCops:
 Lint/HandleExceptions:
   Exclude:
     - lib/job-iteration.rb
+Style/GlobalVars:
+  Exclude:
+    - lib/job-iteration/integrations/resque.rb

@@ -45,7 +45,7 @@ class NotifyUsersJob < ActiveJob::Base
   include JobIteration::Iteration
 
   def build_enumerator(cursor:)
-    enumerator_builder.active_record_enumerator_on_records(
+    enumerator_builder.active_record_on_records(
       User.all,
       cursor: cursor,
     )
@@ -64,7 +64,7 @@ Check out more examples of Iterations:
 ```ruby
 class BatchesJob < ActiveJob::Iteration
   def build_enumerator(product_id, cursor:)
-    enumerator_builder.active_record_enumerator_on_batches(
+    enumerator_builder.active_record_on_batches(
       Product.find(product_id).comments,
       cursor: cursor,
       batch_size: 100,

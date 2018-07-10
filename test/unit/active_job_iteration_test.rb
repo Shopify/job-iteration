@@ -50,7 +50,7 @@ module JobIteration
 
     class ActiveRecordIterationJob < SimpleIterationJob
       def build_enumerator(cursor:)
-        enumerator_builder.active_record_enumerator_on_records(
+        enumerator_builder.active_record_on_records(
           Product.all,
           cursor: cursor,
         )
@@ -63,7 +63,7 @@ module JobIteration
 
     class BatchActiveRecordIterationJob < SimpleIterationJob
       def build_enumerator(cursor:)
-        enumerator_builder.active_record_enumerator_on_batches(
+        enumerator_builder.active_record_on_batches(
           Product.all,
           cursor: cursor,
           batch_size: 3
@@ -84,7 +84,7 @@ module JobIteration
 
     class AbortingBatchActiveRecordIterationJob < SimpleIterationJob
       def build_enumerator(cursor:)
-        enumerator_builder.active_record_enumerator_on_batches(
+        enumerator_builder.active_record_on_batches(
           Product.all,
           cursor: cursor,
           batch_size: 3
@@ -99,7 +99,7 @@ module JobIteration
 
     class OrderedActiveRecordIterationJob < SimpleIterationJob
       def build_enumerator(cursor:)
-        enumerator_builder.active_record_enumerator_on_records(
+        enumerator_builder.active_record_on_records(
           Product.order('country DESC'),
           cursor: cursor
         )
@@ -111,7 +111,7 @@ module JobIteration
 
     class LimitActiveRecordIterationJob < SimpleIterationJob
       def build_enumerator(cursor:)
-        enumerator_builder.active_record_enumerator_on_records(
+        enumerator_builder.active_record_on_records(
           Product.limit(5),
           cursor: cursor
         )
@@ -153,7 +153,7 @@ module JobIteration
 
     class MultipleColumnsActiveRecordIterationJob < SimpleIterationJob
       def build_enumerator(cursor:)
-        enumerator_builder.active_record_enumerator_on_records(
+        enumerator_builder.active_record_on_records(
           Product.all,
           cursor: cursor,
           columns: [:updated_at, :id],
@@ -180,7 +180,7 @@ module JobIteration
       retry_on RuntimeError, attempts: 3, wait: 0
 
       def build_enumerator(cursor:)
-        enumerator_builder.active_record_enumerator_on_records(
+        enumerator_builder.active_record_on_records(
           Product.all,
           cursor: cursor
         )

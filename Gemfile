@@ -7,8 +7,6 @@ git_source(:github) { |repo_name| "https://github.com/#{repo_name}" }
 # Specify your gem's dependencies in job-iteration.gemspec
 gemspec
 
-gem 'activejob'
-
 # for integration testing
 gem 'sidekiq'
 gem 'resque'

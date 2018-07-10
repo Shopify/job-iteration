@@ -72,7 +72,7 @@ class BatchesJob < ActiveJob::Iteration
   end
 
   def each_iteration(batch_of_comments, product_id)
-    # batch_of_users will contain batches of 100 records
+    # batch_of_comments will contain batches of 100 records
     Comment.where(id: batch_of_comments.map(&:id)).update_all(deleted: true)
   end
 end
@@ -107,13 +107,53 @@ end
 
 ActiveJob is the primary requirement for Iteration. It's not yet compatible with [vanilla](https://github.com/mperham/sidekiq/wiki/Active-Job) Sidekiq API.
 
-### Sidekiq
+### API
+
+Iteration job must respond to `build_enumerator` and `each_iteration` methods. `build_enumerator` must return [Enumerator](http://ruby-doc.org/core-2.5.1/Enumerator.html) object that respects the `cursor` value.
+
+### Sidekiq adapter
 
 Unless you are running on Heroku, we recommend you to time Sidekiq's [timeout](https://github.com/mperham/sidekiq/wiki/Deployment#overview) option from the default 8 seconds to 25-30 seconds, to allow the last `each_iteration` to complete and gracefully shutdown.
 
-### Resque
+### Resque adapter
 
 There a few configuration assumptions that are required for Iteration to work with Resque. `GRACEFUL_TERM` must be enabled (giving the job ability to gracefully interrupt), and `FORK_PER_JOB` is recommended to be disabled (set to `false`).
+
+## FAQ
+
+**Why can't I just iterate in `#perform` method and do whatever I want?** You can, but then your job has to comply with a long list of requirements, such as the ones above. This creates leaky abstractions more easily, when instead we can expose a more powerful abstraction for developers--without exposing the underlying infrastructure.
+
+**What happens when my job is interrupted?** A checkpoint will be persisted to Redis after the current `each_iteration`, and the job will be re-enqueued. Once it's popped off the queue, the worker will work off from the next iteration.
+
+**What happens with retries?** An interruption of a job does not count as a retry. The iteration of job that caused the job to fail will be retried and progress will continue from there on.
+
+**What happens if my iteration takes a long time?** We recommend that a single `each_iteration` should take no longer than 30 seconds. In the future, this may raise.
+
+**Why is it important that `each_iteration` takes less than 30 seconds?** When the job worker is scheduled for restart or shutdown, it gets a notice to finish remaining unit of work. To guarantee that no progress is lost we need to make sure that `each_iteration` completes within a reasonable amount of time.
+
+**What do I do if each iteration takes a long time, because it's doing nested operations?** If your `each_iteration` is complex, we recommend enqueuing another job. We may expose primitives in the future to do this more effectively, but this is not terribly common today. We recommend to read https://goo.gl/UobaaU to learn more about nested operations.
+
+**Why do I use have to use this ugly helper in `build_enumerator`? Why can't you automatically infer it?** This is how the first version of the API worked. We checked the type of object returned by `build_enumerable`, and whether it was ActiveRecord Relation or an Array, we used the matching adapter. This caused opaque type branching in Iteration internals and it didn’t allow developers to craft their own Enumerators and control the cursor value. We made a decision to _always_ return Enumerator instance from `build_enumerator`. Now we provide explicit helpers to convert ActiveRecord Relation or an Array to Enumerator, and for more complex iteration flows developers can build their own `Enumerator` objects.
+
+**What is the difference between Enumerable and Enumerator?** We recomend [this post](http://blog.arkency.com/2014/01/ruby-to-enum-for-enumerator/) to learn more about Enumerators in Ruby.
+
+**My job has a complex flow. How do I write my own Enumerator?** Iteration API takes care of persisting the cursor (that you may use to calculate an offset) and controlling the job state. The power of Enumerator object is that you can use the cursor in any way you want. One example is a cursorless job that pops records from a datastore until the job is interrupted:
+
+```ruby
+class MyJob < ActiveJob::Base
+  include JobIteration::Iteration
+
+  def build_enumerator(cursor:)
+    Enumerator.new do
+      Redis.lpop("mylist") # or: Kafka.poll(timeout: 10.seconds)
+    end
+  end
+
+  def each_iteration(element_from_redis)
+    # ...
+  end
+end
+```
 
 ## Credits
 

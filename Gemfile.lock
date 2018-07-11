@@ -2,6 +2,7 @@ PATH
   remote: .
   specs:
     job-iteration (0.1.0)
+      activejob (~> 5.2)
 
 GEM
   remote: https://rubygems.org/
@@ -92,7 +93,6 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  activejob
   activerecord
   bundler (~> 1.16)
   database_cleaner

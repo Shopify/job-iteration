@@ -1,6 +1,6 @@
 # Job Iteration API
 
-Meet Iteration, an extension for [ActiveJob](https://github.com/rails/rails/tree/master/activejob) that makes your jobs interruptible and resumable, with saving all progress that the job has made (aka checkpoint for jobs).
+Meet Iteration, an extension for [ActiveJob](https://github.com/rails/rails/tree/master/activejob) that makes your jobs interruptible and resumable, saving all progress that the job has made (aka checkpoint for jobs).
 
 ## Background
 
@@ -102,6 +102,11 @@ class CsvJob < ActiveJob::Iteration
   end
 end
 ```
+
+## Guides
+
+* [Iteration: how it works](guides/iteration-how-it-works.md).
+* [Best practices](guides/best-practices.md).
 
 ## Requirements
 

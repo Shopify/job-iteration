@@ -8,7 +8,7 @@ module JobIteration
         @calls = 0
       end
 
-      def shutdown?
+      def call
         @calls += 1
         (@calls % @stop_after_count) == 0
       end
@@ -34,7 +34,7 @@ module JobIteration
 
     def stub_shutdown_adapter_to_return(_value)
       adapter = mock
-      adapter.stubs(:shutdown?).returns(false)
+      adapter.stubs(:call).returns(false)
       JobIteration.stubs(:interruption_adapter).returns(adapter)
     end
   end

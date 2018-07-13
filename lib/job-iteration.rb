@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require "job-iteration/version"
-require "job-iteration/enumerator_builder"
-require "job-iteration/iteration"
+require_relative "./job-iteration/version"
+require_relative "./job-iteration/enumerator_builder"
+require_relative "./job-iteration/iteration"
 
 module JobIteration
   INTEGRATIONS = [:resque, :sidekiq]

@@ -22,7 +22,7 @@ The job would run fairly quickly when you only have a hundred User records. But 
 
 With frequent deploys and worker restarts, it would mean that a job will be either lost of started from the beginning. Some records (especially those in the beginning of the relation) will be processed more than once.
 
-Cloud environments are also unpredictable, and there's no way to guarantee that a single job will have reserved hardware to run for hours and days. What if AWS diagnosed the instance as unhealthy and will restart it in 5 minutes? What if Kubernetes pod is getting [evicted](https://kubernetes.io/docs/concepts/workloads/pods/disruptions/)? Again, all job progress will be lost.
+Cloud environments are also unpredictable, and there's no way to guarantee that a single job will have reserved hardware to run for hours and days. What if AWS diagnosed the instance as unhealthy and will restart it in 5 minutes? What if Kubernetes pod is getting [evicted](https://kubernetes.io/docs/concepts/workloads/pods/disruptions/)? Again, all job progress will be lost. At Shopify, we also use it to interrupt workloads safely when moving tenants between shards and move shards between regions.
 
 Software that is designed for high availability [must be friendly](https://12factor.net/disposability) to interruptions that come from the infrastructure. That's exactly what Iteration brings to ActiveJob. It's been developed at Shopify to safely process long-running jobs, in Cloud, and has been working in production since May 2017.
 

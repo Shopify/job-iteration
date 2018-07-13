@@ -198,7 +198,7 @@ module JobIteration
         return true
       end
 
-      JobIteration.interruption_adapter.shutdown?
+      JobIteration.interruption_adapter.call
     end
   end
 end

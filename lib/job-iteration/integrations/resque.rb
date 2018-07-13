@@ -13,14 +13,6 @@ module JobIteration
     end
     Resque::Worker.prepend(ResqueIterationExtension)
 
-    module ResqueInterruptionAdapter
-      extend self
-
-      def shutdown?
-        $resque_worker.try!(:shutdown?)
-      end
-    end
-
-    JobIteration.interruption_adapter = ResqueInterruptionAdapter
+    JobIteration.interruption_adapter = -> { $resque_worker.try!(:shutdown?) }
   end
 end

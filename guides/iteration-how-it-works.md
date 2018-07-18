@@ -2,6 +2,8 @@
 
 The main idea behind Iteration is to provide an API to describe jobs in interruptible manner, on the contrast with one massive `def perform` that is impossible to interrupt safely.
 
+![](iteration.gif)
+
 Exposing the enumerator and the action to apply allows us to keep the cursor and interrupt between iterations. Let's see how it looks like on example of an ActiveRecord relation (and Enumerator).
 
 1. `build_enumerator` is called, which constructs `ActiveRecordEnumerator` from an ActiveRecord relation (`Product.all`)

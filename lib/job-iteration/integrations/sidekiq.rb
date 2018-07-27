@@ -3,7 +3,7 @@
 require 'sidekiq'
 
 module JobIteration
-  module Integrations
+  module Integrations # @private
     JobIteration.interruption_adapter = -> do
       if defined?(Sidekiq::CLI) && Sidekiq::CLI.instance
         Sidekiq::CLI.instance.launcher.stopping?

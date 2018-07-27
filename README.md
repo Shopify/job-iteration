@@ -18,15 +18,15 @@ class SimpleJob < ActiveJob::Base
 end
 ```
 
-The job would run fairly quickly when you only have a hundred User records. But as the number of records grows, it will take longer for a job to iterate over all Users. Eventually, there will be millions of records to iterate and the job will end up taking hours and days.
+The job would run fairly quickly when you only have a hundred `User` records. But as the number of records grows, it will take longer for a job to iterate over all Users. Eventually, there will be millions of records to iterate and the job will end up taking hours or even days.
 
 With frequent deploys and worker restarts, it would mean that a job will be either lost of started from the beginning. Some records (especially those in the beginning of the relation) will be processed more than once.
 
-Cloud environments are also unpredictable, and there's no way to guarantee that a single job will have reserved hardware to run for hours and days. What if AWS diagnosed the instance as unhealthy and will restart it in 5 minutes? What if Kubernetes pod is getting [evicted](https://kubernetes.io/docs/concepts/workloads/pods/disruptions/)? Again, all job progress will be lost. At Shopify, we also use it to interrupt workloads safely when moving tenants between shards and move shards between regions.
+Cloud environments are also unpredictable, and there's no way to guarantee that a single job will have reserved hardware to run for hours and days. What if AWS diagnosed the instance as unhealthy and will restart it in 5 minutes? What if a Kubernetes pod is getting [evicted](https://kubernetes.io/docs/concepts/workloads/pods/disruptions/)? Again, all job progress will be lost. At Shopify, we also use it to interrupt workloads safely when moving tenants between shards and move shards between regions.
 
-Software that is designed for high availability [must be friendly](https://12factor.net/disposability) to interruptions that come from the infrastructure. That's exactly what Iteration brings to ActiveJob. It's been developed at Shopify to safely process long-running jobs, in Cloud, and has been working in production since May 2017.
+Software that is designed for high availability [must be resilient](https://12factor.net/disposability) to interruptions that come from the infrastructure. That's exactly what Iteration brings to ActiveJob. It's been developed at Shopify to safely process long-running jobs, in Cloud, and has been working in production since May 2017.
 
-We recommend you to watch a [conference talk](https://www.youtube.com/watch?v=XvnWjsmAl60) about the ideas and history behind Iteration API.
+We recommend that you watch one of our [conference talks](https://www.youtube.com/watch?v=XvnWjsmAl60) about the ideas and history behind Iteration API.
 
 ## Getting started
 
@@ -134,11 +134,11 @@ There a few configuration assumptions that are required for Iteration to work wi
 
 **What happens with retries?** An interruption of a job does not count as a retry. The iteration of job that caused the job to fail will be retried and progress will continue from there on.
 
-**What happens if my iteration takes a long time?** We recommend that a single `each_iteration` should take no longer than 30 seconds. In the future, this may raise.
+**What happens if my iteration takes a long time?** We recommend that a single `each_iteration` should take no longer than 30 seconds. In the future, this may raise an exception.
 
 **Why is it important that `each_iteration` takes less than 30 seconds?** When the job worker is scheduled for restart or shutdown, it gets a notice to finish remaining unit of work. To guarantee that no progress is lost we need to make sure that `each_iteration` completes within a reasonable amount of time.
 
-**What do I do if each iteration takes a long time, because it's doing nested operations?** If your `each_iteration` is complex, we recommend enqueuing another job. We may expose primitives in the future to do this more effectively, but this is not terribly common today. We recommend to read https://goo.gl/UobaaU to learn more about nested operations.
+**What do I do if each iteration takes a long time, because it's doing nested operations?** If your `each_iteration` is complex, we recommend enqueuing another job, which will run your nested business logic. We may expose primitives in the future to do this more effectively, but this is not terribly common today. We recommend to read https://goo.gl/UobaaU to learn more about nested operations.
 
 **Why do I use have to use this ugly helper in `build_enumerator`? Why can't you automatically infer it?** This is how the first version of the API worked. We checked the type of object returned by `build_enumerable`, and whether it was ActiveRecord Relation or an Array, we used the matching adapter. This caused opaque type branching in Iteration internals and it didn’t allow developers to craft their own Enumerators and control the cursor value. We made a decision to _always_ return Enumerator instance from `build_enumerator`. Now we provide explicit helpers to convert ActiveRecord Relation or an Array to Enumerator, and for more complex iteration flows developers can build their own `Enumerator` objects.
 

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module JobIteration
-  class ActiveRecordCursor
+  class ActiveRecordCursor # @private
     include Comparable
 
     attr_reader :position

@@ -53,7 +53,7 @@ module JobIteration
       self.total_time = 0.0
     end
 
-    def serialize
+    def serialize # @private
       super.merge(
         'cursor_position' => cursor_position,
         'times_interrupted' => times_interrupted,
@@ -61,14 +61,14 @@ module JobIteration
       )
     end
 
-    def deserialize(job_data)
+    def deserialize(job_data) # @private
       super
       self.cursor_position = job_data['cursor_position']
       self.times_interrupted = job_data['times_interrupted'] || 0
       self.total_time = job_data['total_time'] || 0
     end
 
-    def perform(*params)
+    def perform(*params) # @private
       interruptible_perform(*params)
     end
 

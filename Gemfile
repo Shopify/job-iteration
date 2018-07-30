@@ -22,3 +22,4 @@ gem 'pry'
 gem 'mocha'
 
 gem 'rubocop'
+gem 'yard'

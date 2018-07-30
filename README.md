@@ -1,6 +1,7 @@
 # Job Iteration API
 
-[![Build Status](https://travis-ci.com/Shopify/job-iteration.svg?branch=master)](https://travis-ci.com/Shopify/job-iteration)
+[![Build Status](https://travis-ci.com/Shopify/job-iteration.svg?branch=master)](https://travis-ci.com/Shopify/job-iteration) 
+[![rubydoc](https://img.shields.io/readthedocs/pip/stable.svg)](https://www.rubydoc.info/github/Shopify/job-iteration)
 
 Meet Iteration, an extension for [ActiveJob](https://github.com/rails/rails/tree/master/activejob) that makes your jobs interruptible and resumable, saving all progress that the job has made (aka checkpoint for jobs).
 

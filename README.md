@@ -106,11 +106,15 @@ class CsvJob < ActiveJob::Iteration
 end
 ```
 
+Iteration hooks into Sidekiq and Resque out of the box to support graceful interruption. No extra configuration is required.
+
 ## Guides
 
 * [Iteration: how it works](guides/iteration-how-it-works.md)
 * [Best practices](guides/best-practices.md)
 * [Writing custom enumerator](guides/custom-enumerator.md)
+
+For more detailed documentation, see [rubydoc](https://www.rubydoc.info/github/Shopify/job-iteration).
 
 ## Requirements
 

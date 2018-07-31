@@ -108,8 +108,9 @@ end
 
 ## Guides
 
-* [Iteration: how it works](guides/iteration-how-it-works.md).
-* [Best practices](guides/best-practices.md).
+* [Iteration: how it works](guides/iteration-how-it-works.md)
+* [Best practices](guides/best-practices.md)
+* [Writing custom enumerator](guides/custom-enumerator.md)
 
 ## Requirements
 

@@ -71,6 +71,8 @@ end
 
 ActiveJob::Base.logger = Logger.new(IO::NULL)
 
+Redis.new.ping
+
 module ActiveSupport
   class TestCase
     setup do

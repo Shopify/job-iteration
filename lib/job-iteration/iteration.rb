@@ -120,7 +120,7 @@ module JobIteration
           self.cursor_position = index
         end
 
-        next unless should_interrupt?
+        next unless job_should_exit?
         self.executions -= 1 if executions > 1
         shutdown_and_reenqueue
         return false
@@ -193,12 +193,12 @@ module JobIteration
       logger.info Kernel.format(message, times_interrupted, total_time)
     end
 
-    def should_interrupt?
+    def job_should_exit?
       if ::JobIteration.max_job_runtime && start_time && (Time.now.utc - start_time) > ::JobIteration.max_job_runtime
         return true
       end
 
-      JobIteration.interruption_adapter.call || (respond_to?(:job_should_exit?, true) && job_should_exit?)
+      JobIteration.interruption_adapter.call
     end
   end
 end

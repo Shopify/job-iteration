@@ -214,11 +214,13 @@ module JobIteration
       end
     end
 
-    class JobShouldExitJob < ActiveJob::Base
+    class ParentJobShouldExitJob < ActiveJob::Base
       def job_should_exit?
         true
       end
+    end
 
+    class JobShouldExitJob < ParentJobShouldExitJob
       include JobIteration::Iteration
 
       cattr_accessor :records_performed, instance_accessor: false
@@ -560,9 +562,8 @@ module JobIteration
       assert_match(/#build_enumerator is expected to return Enumerator object/, error.to_s)
     end
 
-    def test_job_should_exit_job
+    def test_respects_job_should_exit_from_parent_class
       JobShouldExitJob.new.perform_now
-
       assert_equal [0], JobShouldExitJob.records_performed
     end
 

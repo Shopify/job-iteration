@@ -198,7 +198,7 @@ module JobIteration
         return true
       end
 
-      JobIteration.interruption_adapter.call
+      JobIteration.interruption_adapter.call || (defined?(super) && super)
     end
   end
 end

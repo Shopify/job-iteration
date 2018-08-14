@@ -214,6 +214,27 @@ module JobIteration
       end
     end
 
+    class ParentJobShouldExitJob < ActiveJob::Base
+      def job_should_exit?
+        true
+      end
+    end
+
+    class JobShouldExitJob < ParentJobShouldExitJob
+      include JobIteration::Iteration
+
+      cattr_accessor :records_performed, instance_accessor: false
+      self.records_performed = []
+
+      def build_enumerator(cursor:)
+        enumerator_builder.times(3, cursor: cursor)
+      end
+
+      def each_iteration(n)
+        self.class.records_performed << n
+      end
+    end
+
     def setup
       SimpleIterationJob.descendants.each do |klass|
         klass.records_performed = []
@@ -221,6 +242,7 @@ module JobIteration
         klass.on_complete_called = 0
         klass.on_shutdown_called = 0
       end
+      JobShouldExitJob.records_performed = []
       super
     end
 
@@ -538,6 +560,11 @@ module JobIteration
         work_one_job
       end
       assert_match(/#build_enumerator is expected to return Enumerator object/, error.to_s)
+    end
+
+    def test_respects_job_should_exit_from_parent_class
+      JobShouldExitJob.new.perform_now
+      assert_equal [0], JobShouldExitJob.records_performed
     end
 
     private

@@ -214,11 +214,13 @@ module JobIteration
       end
     end
 
-    class JobShouldExitJob < ActiveJob::Base
+    class ParentJobShouldExit < ActiveJob::Base
       def job_should_exit?
         true
       end
+    end
 
+    class JobShouldExitJob < ParentJobShouldExit
       include JobIteration::Iteration
 
       cattr_accessor :records_performed, instance_accessor: false

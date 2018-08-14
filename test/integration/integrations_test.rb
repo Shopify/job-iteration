@@ -17,6 +17,20 @@ class IntegrationsTest < ActiveSupport::TestCase
     end
   end
 
+  test "successfully loads one (resque) integration" do
+    with_env("ITERATION_DISABLE_AUTOCONFIGURE", nil) do
+      rubby = <<~RUBBY
+        require 'bundler/setup'
+        # Remove sidekiq, only resque will be left
+        $LOAD_PATH.delete_if { |p| p =~ /sidekiq/ }
+        require 'job-iteration'
+      RUBBY
+      _stdout, _stderr, status = run_ruby(rubby)
+
+      assert_equal true, status.success?
+    end
+  end
+
   private
 
   def run_ruby(body)

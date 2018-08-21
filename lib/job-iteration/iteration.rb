@@ -75,7 +75,7 @@ module JobIteration
     private
 
     def enumerator_builder
-      JobIteration::EnumeratorBuilder.new(self)
+      JobIteration.enumerator_builder.new(self)
     end
 
     def interruptible_perform(*arguments)

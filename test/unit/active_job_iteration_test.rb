@@ -235,6 +235,11 @@ module JobIteration
       end
     end
 
+    class CustomEnumBuilder
+      def initialize(*)
+      end
+    end
+
     def setup
       SimpleIterationJob.descendants.each do |klass|
         klass.records_performed = []
@@ -560,6 +565,16 @@ module JobIteration
         work_one_job
       end
       assert_match(/#build_enumerator is expected to return Enumerator object/, error.to_s)
+    end
+
+    def test_custom_enum_builder
+      original_builder = JobIteration.enumerator_builder
+      JobIteration.enumerator_builder = CustomEnumBuilder
+
+      builder_instance = SimpleIterationJob.new.send(:enumerator_builder)
+      assert_instance_of CustomEnumBuilder, builder_instance
+    ensure
+      JobIteration.enumerator_builder = original_builder
     end
 
     def test_respects_job_should_exit_from_parent_class

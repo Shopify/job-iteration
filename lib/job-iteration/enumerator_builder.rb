@@ -94,12 +94,11 @@ module JobIteration
     #        WHERE (created_at > '$LAST_CREATED_AT_CURSOR'
     #          OR (created_at = '$LAST_CREATED_AT_CURSOR' AND (id > '$LAST_ID_CURSOR')))
     #        ORDER BY created_at, id LIMIT 100
-    def build_active_record_enumerator_on_records(scope, cursor:, columns: nil, batch_size: nil)
+    def build_active_record_enumerator_on_records(scope, cursor:, **args)
       enum = build_active_record_enumerator(
         scope,
         cursor: cursor,
-        columns: columns,
-        batch_size: batch_size,
+        **args
       ).records
       wrap(self, enum)
     end
@@ -110,12 +109,11 @@ module JobIteration
     # +batch_size:+ sets how many records will be fetched in one batch. Defaults to 100.
     #
     # For the rest of arguments, see documentation for #build_active_record_enumerator_on_records
-    def build_active_record_enumerator_on_batches(scope, cursor:, columns: nil, batch_size: nil)
+    def build_active_record_enumerator_on_batches(scope, cursor:, **args)
       enum = build_active_record_enumerator(
         scope,
         cursor: cursor,
-        columns: columns,
-        batch_size: batch_size,
+        **args
       ).batches
       wrap(self, enum)
     end
@@ -128,18 +126,15 @@ module JobIteration
 
     private
 
-    def build_active_record_enumerator(scope, cursor:, columns:, batch_size:)
+    def build_active_record_enumerator(scope, cursor:, **args)
       unless scope.is_a?(ActiveRecord::Relation)
         raise ArgumentError, "scope must be an ActiveRecord::Relation"
       end
 
       JobIteration::ActiveRecordEnumerator.new(
         scope,
-        **{
-          columns: columns,
-          batch_size: batch_size,
-          cursor: cursor,
-        }.compact
+        cursor: cursor,
+        **args
       )
     end
   end

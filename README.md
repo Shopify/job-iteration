@@ -20,7 +20,7 @@ end
 
 The job would run fairly quickly when you only have a hundred `User` records. But as the number of records grows, it will take longer for a job to iterate over all Users. Eventually, there will be millions of records to iterate and the job will end up taking hours or even days.
 
-With frequent deploys and worker restarts, it would mean that a job will be either lost of started from the beginning. Some records (especially those in the beginning of the relation) will be processed more than once.
+With frequent deploys and worker restarts, it would mean that a job will be either lost or restarted from the beginning. Some records (especially those in the beginning of the relation) will be processed more than once.
 
 Cloud environments are also unpredictable, and there's no way to guarantee that a single job will have reserved hardware to run for hours and days. What if AWS diagnosed the instance as unhealthy and will restart it in 5 minutes? What if a Kubernetes pod is getting [evicted](https://kubernetes.io/docs/concepts/workloads/pods/disruptions/)? Again, all job progress will be lost. At Shopify, we also use it to interrupt workloads safely when moving tenants between shards and move shards between regions.
 

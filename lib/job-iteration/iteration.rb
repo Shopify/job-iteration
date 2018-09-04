@@ -144,7 +144,12 @@ module JobIteration
 
       self.already_in_queue = true if respond_to?(:already_in_queue=)
       run_callbacks :shutdown
-      enqueue
+
+      if respond_to?(:enqueued)
+        enqueue unless enqueued
+      else
+        enqueue
+      end
 
       true
     end

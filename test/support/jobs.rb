@@ -8,7 +8,6 @@ class IterationJob < ActiveJob::Base
   end
 
   def each_iteration(omg)
-    puts "adapter: #{JobIteration.interruption_adapter}"
     if omg == 0 || omg == 2
       Process.kill("TERM", Process.pid)
     end

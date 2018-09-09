@@ -582,6 +582,16 @@ module JobIteration
       assert_equal [0], JobShouldExitJob.records_performed
     end
 
+    def test_mark_job_worker_as_interrupted
+      mark_job_worker_as_interrupted
+
+      assert_equal true, JobIteration.interruption_adapter.call
+
+      continue_iterating
+
+      assert_equal false, JobIteration.interruption_adapter.call
+    end
+
     private
 
     def last_interrupted_job(job_class, _queue = nil)

@@ -235,6 +235,16 @@ module JobIteration
       end
     end
 
+    class ReenqueueJob < SingleIterationJob
+      def build_enumerator(cursor:)
+        enumerator_builder.times(3, cursor: cursor)
+      end
+
+      def each_iteration(i)
+        retry_job if i == 1
+      end
+    end
+
     class CustomEnumBuilder
       def initialize(*)
       end
@@ -590,6 +600,15 @@ module JobIteration
       continue_iterating
 
       assert_equal false, JobIteration.interruption_adapter.call
+    end
+
+    def test_reenqueue_self
+      iterate_exact_times(2.times)
+
+      ReenqueueJob.new.perform_now
+
+      jobs = ActiveJob::Base.queue_adapter.enqueued_jobs
+      assert_equal 1, jobs.size
     end
 
     private

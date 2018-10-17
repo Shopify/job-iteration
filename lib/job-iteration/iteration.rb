@@ -144,9 +144,14 @@ module JobIteration
 
       self.already_in_queue = true if respond_to?(:already_in_queue=)
       run_callbacks :shutdown
-      enqueue
+      retry_job unless @enqueued
 
       true
+    end
+
+    def retry_job(*)
+      @enqueued = true
+      super
     end
 
     def adjust_total_time

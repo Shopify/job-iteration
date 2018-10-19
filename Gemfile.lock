@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    job-iteration (0.9.3)
+    job-iteration (0.9.4)
       activejob (~> 5.2)
 
 GEM

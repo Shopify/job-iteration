@@ -102,14 +102,16 @@ module JobIteration
         ActiveSupport::Notifications.instrument("resumed.iteration", iteration_instrumentation_tags)
       end
 
-      catch(:abort) do
-        return unless iterate_with_enumerator(enumerator, arguments)
+      completed = catch(:abort) do
+        iterate_with_enumerator(enumerator, arguments)
       end
 
       run_callbacks :shutdown
-      run_callbacks :complete
 
-      output_interrupt_summary
+      if completed
+        run_callbacks :complete
+        output_interrupt_summary
+      end
     end
 
     def iterate_with_enumerator(enumerator, arguments)

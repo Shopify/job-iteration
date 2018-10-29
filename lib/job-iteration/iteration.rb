@@ -102,14 +102,16 @@ module JobIteration
         ActiveSupport::Notifications.instrument("resumed.iteration", iteration_instrumentation_tags)
       end
 
-      catch(:abort) do
-        return unless iterate_with_enumerator(enumerator, arguments)
+      completed = catch(:abort) do
+        iterate_with_enumerator(enumerator, arguments)
       end
 
       run_callbacks :shutdown
-      run_callbacks :complete
 
-      output_interrupt_summary
+      if completed
+        run_callbacks :complete
+        output_interrupt_summary
+      end
     end
 
     def iterate_with_enumerator(enumerator, arguments)
@@ -122,7 +124,7 @@ module JobIteration
 
         next unless job_should_exit?
         self.executions -= 1 if executions > 1
-        shutdown_and_reenqueue
+        reenqueue_iteration_job
         return false
       end
 
@@ -135,7 +137,7 @@ module JobIteration
       end
     end
 
-    def shutdown_and_reenqueue
+    def reenqueue_iteration_job
       ActiveSupport::Notifications.instrument("interrupted.iteration", iteration_instrumentation_tags)
       logger.info "[JobIteration::Iteration] Interrupting and re-enqueueing the job cursor_position=#{cursor_position}"
 
@@ -143,14 +145,11 @@ module JobIteration
       self.times_interrupted += 1
 
       self.already_in_queue = true if respond_to?(:already_in_queue=)
-      run_callbacks :shutdown
-      retry_job unless @enqueued
-
-      true
+      retry_job unless @retried
     end
 
     def retry_job(*)
-      @enqueued = true
+      @retried = true
       super
     end
 

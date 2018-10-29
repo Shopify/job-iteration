@@ -537,11 +537,12 @@ module JobIteration
       end
     end
 
-    def test_aborting_in_each_iteration_job
+    def test_aborting_in_each_iteration_job_will_not_execute_on_complete_callback
       push(AbortingActiveRecordIterationJob)
       work_one_job
       assert_equal 2, AbortingActiveRecordIterationJob.records_performed.size
-      assert_equal 1, AbortingActiveRecordIterationJob.on_complete_called
+      assert_equal 0, AbortingActiveRecordIterationJob.on_complete_called
+      assert_equal 1, AbortingActiveRecordIterationJob.on_shutdown_called
     end
 
     def test_aborting_in_batched_job
@@ -549,7 +550,7 @@ module JobIteration
       work_one_job
       assert_equal 2, AbortingBatchActiveRecordIterationJob.records_performed.size
       assert_equal [3, 3], AbortingBatchActiveRecordIterationJob.records_performed.map(&:size)
-      assert_equal 1, AbortingBatchActiveRecordIterationJob.on_complete_called
+      assert_equal 0, AbortingBatchActiveRecordIterationJob.on_complete_called
     end
 
     def test_checks_for_exit_after_iteration

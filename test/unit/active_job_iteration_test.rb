@@ -351,7 +351,7 @@ module JobIteration
       assert cursor
 
       assert_equal 0, ActiveRecordIterationJob.on_complete_called
-      assert_equal 4, ActiveRecordIterationJob.on_shutdown_called
+      assert_equal 2, ActiveRecordIterationJob.on_shutdown_called
     end
 
     def test_activerecord_batches_complete

@@ -146,13 +146,13 @@ module JobIteration
 
       self.already_in_queue = true if respond_to?(:already_in_queue=)
       run_callbacks :shutdown
-      retry_job unless @enqueued
+      retry_job unless @retried
 
       true
     end
 
     def retry_job(*)
-      @enqueued = true
+      @retried = true
       super
     end
 

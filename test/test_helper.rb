@@ -1,5 +1,5 @@
-# frozen_string_literal: true
 
+# frozen_string_literal: true
 $LOAD_PATH.unshift File.expand_path("../../lib", __FILE__)
 require "minitest/autorun"
 
@@ -10,6 +10,7 @@ require "job-iteration/test_helper"
 
 require "globalid"
 require "sidekiq"
+require "resque"
 require "active_job"
 require "active_record"
 require "pry"
@@ -44,7 +45,25 @@ ActiveJob::Base.queue_adapter = :iteration_test
 class Product < ActiveRecord::Base
 end
 
-ActiveRecord::Base.establish_connection adapter: "mysql2", database: "job_iteration_test", username: 'root'
+host = ENV['USING_DEV'] == "1" ? 'job-iteration.railgun' : 'localhost'
+
+connection_config = {
+  adapter: "mysql2",
+  database: "job_iteration_test",
+  username: 'root',
+  host: host,
+}
+
+ActiveRecord::Base.establish_connection(connection_config)
+
+Redis.current = Redis.new(host: host, timeout: 1.0).tap(&:ping)
+
+Resque.redis = Redis.current
+
+Sidekiq.configure_client do |config|
+  config.redis = { host: host }
+end
+
 ActiveRecord::Base.connection.create_table Product.table_name, force: true do |t|
   t.string :name
   t.timestamps
@@ -71,12 +90,10 @@ end
 
 ActiveJob::Base.logger = Logger.new(IO::NULL)
 
-Redis.new.ping
-
 module ActiveSupport
   class TestCase
     setup do
-      Redis.new.flushdb
+      Redis.current.flushdb
     end
   end
 end

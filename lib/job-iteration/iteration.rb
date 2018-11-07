@@ -72,6 +72,11 @@ module JobIteration
       interruptible_perform(*params)
     end
 
+    def retry_job(*)
+      @retried = true
+      super
+    end
+
     private
 
     def enumerator_builder
@@ -108,7 +113,7 @@ module JobIteration
 
       run_callbacks :shutdown
 
-      if completed
+      if run_complete_callbacks?(completed)
         run_callbacks :complete
         output_interrupt_summary
       end
@@ -146,11 +151,6 @@ module JobIteration
 
       self.already_in_queue = true if respond_to?(:already_in_queue=)
       retry_job unless @retried
-    end
-
-    def retry_job(*)
-      @retried = true
-      super
     end
 
     def adjust_total_time
@@ -203,6 +203,20 @@ module JobIteration
       end
 
       JobIteration.interruption_adapter.call || (defined?(super) && super)
+    end
+
+    def run_complete_callbacks?(completed)
+      # nil means that someone aborted the job but want to call the on_complete callback
+      if completed.nil?
+        completed = :finished
+      end
+
+      case completed
+      when :finished, true then true
+      # skip_complete_callbacks is returning from ThrottleEnumeratorand we do not want the on_complete callback to
+      # be executed
+      when false, :skip_complete_callbacks then false
+      end
     end
   end
 end

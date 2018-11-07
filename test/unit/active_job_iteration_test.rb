@@ -77,8 +77,18 @@ module JobIteration
 
     class AbortingActiveRecordIterationJob < ActiveRecordIterationJob
       def each_iteration(*)
-        throw(:abort) if self.class.records_performed.size == 2
+        abort_strategy if self.class.records_performed.size == 2
         super
+      end
+
+      def abort_strategy
+        throw(:abort)
+      end
+    end
+
+    class AbortingAndSkippingCompleteCallbackActiveRecordIterationJob < AbortingActiveRecordIterationJob
+      def abort_strategy
+        throw(:abort, :skip_complete_callbacks)
       end
     end
 
@@ -93,7 +103,17 @@ module JobIteration
 
       def each_iteration(record)
         self.class.records_performed << record
-        throw(:abort) if self.class.records_performed.size == 2
+        abort_strategy if self.class.records_performed.size == 2
+      end
+
+      def abort_strategy
+        throw(:abort)
+      end
+    end
+
+    class AbortingAndSkippingCompleteCallbackBatchActiveRecordIterationJob < AbortingBatchActiveRecordIterationJob
+      def abort_strategy
+        throw(:abort, :skip_complete_callbacks)
       end
     end
 
@@ -537,11 +557,11 @@ module JobIteration
       end
     end
 
-    def test_aborting_in_each_iteration_job_will_not_execute_on_complete_callback
+    def test_aborting_in_each_iteration_job_will_execute_on_complete_callback
       push(AbortingActiveRecordIterationJob)
       work_one_job
       assert_equal 2, AbortingActiveRecordIterationJob.records_performed.size
-      assert_equal 0, AbortingActiveRecordIterationJob.on_complete_called
+      assert_equal 1, AbortingActiveRecordIterationJob.on_complete_called
       assert_equal 1, AbortingActiveRecordIterationJob.on_shutdown_called
     end
 
@@ -550,7 +570,24 @@ module JobIteration
       work_one_job
       assert_equal 2, AbortingBatchActiveRecordIterationJob.records_performed.size
       assert_equal [3, 3], AbortingBatchActiveRecordIterationJob.records_performed.map(&:size)
-      assert_equal 0, AbortingBatchActiveRecordIterationJob.on_complete_called
+      assert_equal 1, AbortingBatchActiveRecordIterationJob.on_complete_called
+    end
+
+    def test_throwing_skip_complete_callbacks_in_each_iteration_job_will_not_execute_on_complete_callback
+      push(AbortingAndSkippingCompleteCallbackActiveRecordIterationJob)
+      work_one_job
+      assert_equal 2, AbortingAndSkippingCompleteCallbackActiveRecordIterationJob.records_performed.size
+      assert_equal 0, AbortingAndSkippingCompleteCallbackActiveRecordIterationJob.on_complete_called
+      assert_equal 1, AbortingAndSkippingCompleteCallbackActiveRecordIterationJob.on_shutdown_called
+    end
+
+    def test_aborting_skip_complete_callbacks_in_batched_job
+      job_class = AbortingAndSkippingCompleteCallbackBatchActiveRecordIterationJob
+      push(AbortingAndSkippingCompleteCallbackBatchActiveRecordIterationJob)
+      work_one_job
+      assert_equal 2, job_class.records_performed.size
+      assert_equal [3, 3], job_class.records_performed.map(&:size)
+      assert_equal 0, job_class.on_complete_called
     end
 
     def test_checks_for_exit_after_iteration

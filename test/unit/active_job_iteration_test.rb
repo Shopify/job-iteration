@@ -14,6 +14,10 @@ module JobIteration
       self.on_complete_called = 0
       cattr_accessor :on_shutdown_called, instance_accessor: false
       self.on_shutdown_called = 0
+      cattr_accessor :before_each_iteration_called, instance_accessor: false
+      self.before_each_iteration_called = 0
+      cattr_accessor :after_each_iteration_called, instance_accessor: false
+      self.after_each_iteration_called = 0
 
       on_start do
         self.class.on_start_called += 1
@@ -25,6 +29,14 @@ module JobIteration
 
       on_shutdown do
         self.class.on_shutdown_called += 1
+      end
+
+      before_each_iteration do
+        self.class.before_each_iteration_called += 1
+      end
+
+      after_each_iteration do
+        self.class.after_each_iteration_called += 1
       end
     end
 
@@ -276,6 +288,9 @@ module JobIteration
         klass.on_start_called = 0
         klass.on_complete_called = 0
         klass.on_shutdown_called = 0
+        klass.on_shutdown_called = 0
+        klass.before_each_iteration_called = 0
+        klass.after_each_iteration_called = 0
       end
       JobShouldExitJob.records_performed = []
       super
@@ -343,6 +358,16 @@ module JobIteration
         work_one_job
       end
       assert_jobs_in_queue 0
+    end
+
+    def test_failing_job_runs_each_iteration_callbacks
+      push(FailingIterationJob)
+
+      work_one_job
+      assert_jobs_in_queue 1
+
+      assert_equal 4, FailingIterationJob.before_each_iteration_called
+      assert_equal 3, FailingIterationJob.after_each_iteration_called
     end
 
     def test_active_record_job
@@ -440,6 +465,15 @@ module JobIteration
       assert_equal first_products, MultipleColumnsActiveRecordIterationJob.records_performed
     end
 
+    def test_multiple_columns_callback_for_each_iteration
+      iterate_exact_times(3.times)
+      push(MultipleColumnsActiveRecordIterationJob)
+      work_one_job
+
+      assert_equal 3, MultipleColumnsActiveRecordIterationJob.before_each_iteration_called
+      assert_equal 3, MultipleColumnsActiveRecordIterationJob.after_each_iteration_called
+    end
+
     def test_single_iteration
       push(SingleIterationJob)
 
@@ -450,6 +484,15 @@ module JobIteration
       assert_jobs_in_queue 0
       assert_equal 1, SingleIterationJob.on_start_called
       assert_equal 1, SingleIterationJob.on_complete_called
+    end
+
+    def test_single_iteration_callback_for_each_iteration
+      push(SingleIterationJob)
+      work_one_job
+      assert_jobs_in_queue 0
+
+      assert_equal 1, SingleIterationJob.before_each_iteration_called
+      assert_equal 1, SingleIterationJob.after_each_iteration_called
     end
 
     def test_relation_with_limit
@@ -555,6 +598,14 @@ module JobIteration
       assert_logged(%([JobIteration::Iteration] Completed iterating)) do
         work_one_job
       end
+    end
+
+    def test_aborting_in_each_iteration_job_will_execute_each_iteration_callback
+      push(AbortingActiveRecordIterationJob)
+      work_one_job
+      assert_equal 2, AbortingActiveRecordIterationJob.records_performed.size
+      assert_equal 3, AbortingActiveRecordIterationJob.before_each_iteration_called
+      assert_equal 2, AbortingActiveRecordIterationJob.after_each_iteration_called
     end
 
     def test_aborting_in_each_iteration_job_will_execute_on_complete_callback

@@ -17,6 +17,7 @@ module JobIteration
       define_callbacks :start
       define_callbacks :shutdown
       define_callbacks :complete
+      define_callbacks :each_iteration
     end
 
     module ClassMethods
@@ -34,6 +35,14 @@ module JobIteration
 
       def on_complete(*filters, &blk)
         set_callback(:complete, :after, *filters, &blk)
+      end
+
+      def before_each_iteration(*filters, &blk)
+        set_callback(:each_iteration, :before, *filters, &blk)
+      end
+
+      def after_each_iteration(*filters, &blk)
+        set_callback(:each_iteration, :after, *filters, &blk)
       end
 
       def supports_interruption?
@@ -123,7 +132,9 @@ module JobIteration
       arguments = arguments.dup.freeze
       enumerator.each do |iteration, index|
         record_unit_of_work do
-          each_iteration(iteration, *arguments)
+          run_callbacks(:each_iteration) do
+            each_iteration(iteration, *arguments)
+          end
           self.cursor_position = index
         end
 

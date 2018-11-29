@@ -12,3 +12,7 @@ script:
   - bundle exec rake test
   - bundle exec rubocop
   - bundle exec yardoc --no-output --no-save --no-stats --fail-on-warning
+
+gemfile:
+  - 'gemfiles/activejob_5_2.gemfile'
+  - 'gemfiles/activejob_edge.gemfile'

@@ -1,0 +1,6 @@
+# frozen_string_literal: true
+
+eval_gemfile '../Gemfile'
+
+gem 'activejob', github: 'rails/rails'
+gem 'activerecord', github: 'rails/rails'

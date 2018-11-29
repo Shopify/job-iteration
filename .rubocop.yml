@@ -14,3 +14,7 @@ Style/GlobalVars:
 Naming/FileName:
   Exclude:
     - lib/job-iteration.rb
+Style/MethodCallWithArgsParentheses:
+  Exclude:
+    - 'gemfiles/*'
+    - Gemfile

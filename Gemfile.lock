@@ -1,8 +1,8 @@
 PATH
   remote: .
   specs:
-    job-iteration (0.9.6)
-      activejob (~> 5.2)
+    job-iteration (0.9.7)
+      activejob (>= 5.2)
 
 GEM
   remote: https://rubygems.org/
@@ -112,4 +112,4 @@ DEPENDENCIES
   yard
 
 BUNDLED WITH
-   1.16.6
+   1.17.1

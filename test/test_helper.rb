@@ -1,6 +1,6 @@
 
 # frozen_string_literal: true
-$LOAD_PATH.unshift File.expand_path("../../lib", __FILE__)
+$LOAD_PATH.unshift(File.expand_path("../../lib", __FILE__))
 require "minitest/autorun"
 
 ENV['ITERATION_DISABLE_AUTOCONFIGURE'] = 'true'
@@ -64,8 +64,8 @@ Sidekiq.configure_client do |config|
   config.redis = { host: host }
 end
 
-ActiveRecord::Base.connection.create_table Product.table_name, force: true do |t|
-  t.string :name
+ActiveRecord::Base.connection.create_table(Product.table_name, force: true) do |t|
+  t.string(:name)
   t.timestamps
 end
 
@@ -81,7 +81,7 @@ module LoggingHelpers
       yield
 
       log.rewind
-      assert_match message, log.read
+      assert_match(message, log.read)
     ensure
       ActiveJob::Base.logger = old_logger
     end

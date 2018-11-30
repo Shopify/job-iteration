@@ -55,7 +55,7 @@ module JobIteration
         return
       end
 
-      count = `wc -l < #{filepath}`.strip.to_i
+      count = %x(wc -l < #{filepath}).strip.to_i
       count -= 1 if @csv.headers
       count
     end

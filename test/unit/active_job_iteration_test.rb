@@ -305,44 +305,44 @@ module JobIteration
     def test_works_with_private_methods
       push(PrivateIterationJob)
       work_one_job
-      assert_jobs_in_queue 0
+      assert_jobs_in_queue(0)
 
-      assert_equal 1, PrivateIterationJob.on_start_called
-      assert_equal 1, PrivateIterationJob.on_complete_called
-      assert_equal 1, PrivateIterationJob.on_shutdown_called
+      assert_equal(1, PrivateIterationJob.on_start_called)
+      assert_equal(1, PrivateIterationJob.on_complete_called)
+      assert_equal(1, PrivateIterationJob.on_shutdown_called)
     end
 
     def test_failing_job
       push(FailingIterationJob)
 
       work_one_job
-      assert_jobs_in_queue 1
+      assert_jobs_in_queue(1)
 
       processed_records = Product.order(:id).pluck(:id)
 
       job = peek_into_queue
-      assert_equal processed_records[2], job.cursor_position
-      assert_equal 1, job.executions
-      assert_equal 0, job.times_interrupted
-      assert_equal 3, FailingIterationJob.records_performed.size
-      assert_equal 1, FailingIterationJob.on_start_called
+      assert_equal(processed_records[2], job.cursor_position)
+      assert_equal(1, job.executions)
+      assert_equal(0, job.times_interrupted)
+      assert_equal(3, FailingIterationJob.records_performed.size)
+      assert_equal(1, FailingIterationJob.on_start_called)
 
       work_one_job
 
       job = peek_into_queue
-      assert_equal processed_records[5], job.cursor_position
-      assert_equal 2, job.executions
-      assert_equal 0, job.times_interrupted
+      assert_equal(processed_records[5], job.cursor_position)
+      assert_equal(2, job.executions)
+      assert_equal(0, job.times_interrupted)
 
-      assert_equal 6, FailingIterationJob.records_performed.size
-      assert_equal 1, FailingIterationJob.on_start_called
-      assert_equal 0, FailingIterationJob.on_complete_called
+      assert_equal(6, FailingIterationJob.records_performed.size)
+      assert_equal(1, FailingIterationJob.on_start_called)
+      assert_equal(0, FailingIterationJob.on_complete_called)
 
       # last attempt
       assert_raises(RuntimeError) do
         work_one_job
       end
-      assert_jobs_in_queue 0
+      assert_jobs_in_queue(0)
     end
 
     def test_active_record_job
@@ -350,28 +350,28 @@ module JobIteration
 
       push(ActiveRecordIterationJob)
 
-      assert_equal 0, ActiveRecordIterationJob.on_complete_called
+      assert_equal(0, ActiveRecordIterationJob.on_complete_called)
       work_one_job
 
-      assert_equal 2, ActiveRecordIterationJob.records_performed.size
+      assert_equal(2, ActiveRecordIterationJob.records_performed.size)
 
       job = peek_into_queue
-      assert_equal 1, job.times_interrupted
-      assert_equal 1, job.executions
-      assert_equal Product.first(2).last.id, job.cursor_position
+      assert_equal(1, job.times_interrupted)
+      assert_equal(1, job.executions)
+      assert_equal(Product.first(2).last.id, job.cursor_position)
 
       work_one_job
-      assert_equal 4, ActiveRecordIterationJob.records_performed.size
+      assert_equal(4, ActiveRecordIterationJob.records_performed.size)
 
       job = peek_into_queue
-      assert_equal 2, job.times_interrupted
-      assert_equal 1, job.executions
+      assert_equal(2, job.times_interrupted)
+      assert_equal(1, job.executions)
       times_interrupted, cursor = last_interrupted_job(ActiveRecordIterationJob)
-      assert_equal 2, times_interrupted
-      assert cursor
+      assert_equal(2, times_interrupted)
+      assert(cursor)
 
-      assert_equal 0, ActiveRecordIterationJob.on_complete_called
-      assert_equal 2, ActiveRecordIterationJob.on_shutdown_called
+      assert_equal(0, ActiveRecordIterationJob.on_complete_called)
+      assert_equal(2, ActiveRecordIterationJob.on_shutdown_called)
     end
 
     def test_activerecord_batches_complete
@@ -379,10 +379,10 @@ module JobIteration
       processed_records = Product.order(:id).pluck(:id)
 
       work_one_job
-      assert_jobs_in_queue 0
+      assert_jobs_in_queue(0)
 
-      assert_equal [3, 3, 3, 1], BatchActiveRecordIterationJob.records_performed.map(&:size)
-      assert_equal processed_records, BatchActiveRecordIterationJob.records_performed.flatten.map(&:id)
+      assert_equal([3, 3, 3, 1], BatchActiveRecordIterationJob.records_performed.map(&:size))
+      assert_equal(processed_records, BatchActiveRecordIterationJob.records_performed.flatten.map(&:id))
     end
 
     def test_activerecord_batches
@@ -392,33 +392,33 @@ module JobIteration
       processed_records = Product.order(:id).pluck(:id)
 
       work_one_job
-      assert_equal 1, BatchActiveRecordIterationJob.records_performed.size
-      assert_equal 3, BatchActiveRecordIterationJob.records_performed.flatten.size
-      assert_equal 1, BatchActiveRecordIterationJob.on_start_called
+      assert_equal(1, BatchActiveRecordIterationJob.records_performed.size)
+      assert_equal(3, BatchActiveRecordIterationJob.records_performed.flatten.size)
+      assert_equal(1, BatchActiveRecordIterationJob.on_start_called)
 
       job = peek_into_queue
-      assert_equal processed_records[2], job.cursor_position
-      assert_equal 1, job.times_interrupted
-      assert_equal 1, job.executions
+      assert_equal(processed_records[2], job.cursor_position)
+      assert_equal(1, job.times_interrupted)
+      assert_equal(1, job.executions)
 
       work_one_job
-      assert_equal 2, BatchActiveRecordIterationJob.records_performed.size
-      assert_equal 6, BatchActiveRecordIterationJob.records_performed.flatten.size
-      assert_equal 1, BatchActiveRecordIterationJob.on_start_called
+      assert_equal(2, BatchActiveRecordIterationJob.records_performed.size)
+      assert_equal(6, BatchActiveRecordIterationJob.records_performed.flatten.size)
+      assert_equal(1, BatchActiveRecordIterationJob.on_start_called)
 
       job = peek_into_queue
-      assert_equal 2, job.times_interrupted
-      assert_equal 1, job.executions
-      assert_equal processed_records[5], job.cursor_position
+      assert_equal(2, job.times_interrupted)
+      assert_equal(1, job.executions)
+      assert_equal(processed_records[5], job.cursor_position)
       continue_iterating
 
       work_one_job
-      assert_jobs_in_queue 0
-      assert_equal 4, BatchActiveRecordIterationJob.records_performed.size
-      assert_equal 10, BatchActiveRecordIterationJob.records_performed.flatten.size
+      assert_jobs_in_queue(0)
+      assert_equal(4, BatchActiveRecordIterationJob.records_performed.size)
+      assert_equal(10, BatchActiveRecordIterationJob.records_performed.flatten.size)
 
-      assert_equal 1, BatchActiveRecordIterationJob.on_start_called
-      assert_equal 1, BatchActiveRecordIterationJob.on_complete_called
+      assert_equal(1, BatchActiveRecordIterationJob.on_start_called)
+      assert_equal(1, BatchActiveRecordIterationJob.on_complete_called)
     end
 
     def test_multiple_columns
@@ -437,19 +437,19 @@ module JobIteration
       end
 
       first_products = Product.all.order('updated_at, id').limit(9).to_a
-      assert_equal first_products, MultipleColumnsActiveRecordIterationJob.records_performed
+      assert_equal(first_products, MultipleColumnsActiveRecordIterationJob.records_performed)
     end
 
     def test_single_iteration
       push(SingleIterationJob)
 
-      assert_equal 0, SingleIterationJob.on_start_called
-      assert_equal 0, SingleIterationJob.on_complete_called
+      assert_equal(0, SingleIterationJob.on_start_called)
+      assert_equal(0, SingleIterationJob.on_complete_called)
 
       work_one_job
-      assert_jobs_in_queue 0
-      assert_equal 1, SingleIterationJob.on_start_called
-      assert_equal 1, SingleIterationJob.on_complete_called
+      assert_jobs_in_queue(0)
+      assert_equal(1, SingleIterationJob.on_start_called)
+      assert_equal(1, SingleIterationJob.on_complete_called)
     end
 
     def test_relation_with_limit
@@ -489,7 +489,7 @@ module JobIteration
         [0, Product.first, nil],
         [1, Product.first, nil],
       ]
-      assert_equal expected, MultiArgumentIterationJob.records_performed
+      assert_equal(expected, MultiArgumentIterationJob.records_performed)
     end
 
     def test_supports_multiple_job_arguments
@@ -501,14 +501,14 @@ module JobIteration
         [0, 2, %w(a b c)],
         [1, 2, %w(a b c)],
       ]
-      assert_equal expected, MultiArgumentIterationJob.records_performed
+      assert_equal(expected, MultiArgumentIterationJob.records_performed)
     end
 
     def test_passes_params_to_each_iteration
       params = { 'walrus' => 'best' }
       push(ParamsIterationJob, params)
       work_one_job
-      assert_equal [params, params], ParamsIterationJob.records_performed
+      assert_equal([params, params], ParamsIterationJob.records_performed)
     end
 
     def test_passes_params_to_each_iteration_without_extra_information_on_interruption
@@ -517,14 +517,14 @@ module JobIteration
       push(ParamsIterationJob, params)
 
       work_one_job
-      assert_equal [params], ParamsIterationJob.records_performed
+      assert_equal([params], ParamsIterationJob.records_performed)
 
       work_one_job
-      assert_equal [params, params], ParamsIterationJob.records_performed
+      assert_equal([params, params], ParamsIterationJob.records_performed)
     end
 
     def test_emits_metric_when_interrupted
-      skip "statsd is coming"
+      skip("statsd is coming")
       iterate_exact_times(2.times)
 
       push(ActiveRecordIterationJob)
@@ -535,7 +535,7 @@ module JobIteration
     end
 
     def test_emits_metric_when_resumed
-      skip "statsd is coming"
+      skip("statsd is coming")
       iterate_exact_times(2.times)
 
       push(ActiveRecordIterationJob)
@@ -560,34 +560,34 @@ module JobIteration
     def test_aborting_in_each_iteration_job_will_execute_on_complete_callback
       push(AbortingActiveRecordIterationJob)
       work_one_job
-      assert_equal 2, AbortingActiveRecordIterationJob.records_performed.size
-      assert_equal 1, AbortingActiveRecordIterationJob.on_complete_called
-      assert_equal 1, AbortingActiveRecordIterationJob.on_shutdown_called
+      assert_equal(2, AbortingActiveRecordIterationJob.records_performed.size)
+      assert_equal(1, AbortingActiveRecordIterationJob.on_complete_called)
+      assert_equal(1, AbortingActiveRecordIterationJob.on_shutdown_called)
     end
 
     def test_aborting_in_batched_job
       push(AbortingBatchActiveRecordIterationJob)
       work_one_job
-      assert_equal 2, AbortingBatchActiveRecordIterationJob.records_performed.size
-      assert_equal [3, 3], AbortingBatchActiveRecordIterationJob.records_performed.map(&:size)
-      assert_equal 1, AbortingBatchActiveRecordIterationJob.on_complete_called
+      assert_equal(2, AbortingBatchActiveRecordIterationJob.records_performed.size)
+      assert_equal([3, 3], AbortingBatchActiveRecordIterationJob.records_performed.map(&:size))
+      assert_equal(1, AbortingBatchActiveRecordIterationJob.on_complete_called)
     end
 
     def test_throwing_skip_complete_callbacks_in_each_iteration_job_will_not_execute_on_complete_callback
       push(AbortingAndSkippingCompleteCallbackActiveRecordIterationJob)
       work_one_job
-      assert_equal 2, AbortingAndSkippingCompleteCallbackActiveRecordIterationJob.records_performed.size
-      assert_equal 0, AbortingAndSkippingCompleteCallbackActiveRecordIterationJob.on_complete_called
-      assert_equal 1, AbortingAndSkippingCompleteCallbackActiveRecordIterationJob.on_shutdown_called
+      assert_equal(2, AbortingAndSkippingCompleteCallbackActiveRecordIterationJob.records_performed.size)
+      assert_equal(0, AbortingAndSkippingCompleteCallbackActiveRecordIterationJob.on_complete_called)
+      assert_equal(1, AbortingAndSkippingCompleteCallbackActiveRecordIterationJob.on_shutdown_called)
     end
 
     def test_aborting_skip_complete_callbacks_in_batched_job
       job_class = AbortingAndSkippingCompleteCallbackBatchActiveRecordIterationJob
       push(AbortingAndSkippingCompleteCallbackBatchActiveRecordIterationJob)
       work_one_job
-      assert_equal 2, job_class.records_performed.size
-      assert_equal [3, 3], job_class.records_performed.map(&:size)
-      assert_equal 0, job_class.on_complete_called
+      assert_equal(2, job_class.records_performed.size)
+      assert_equal([3, 3], job_class.records_performed.map(&:size))
+      assert_equal(0, job_class.on_complete_called)
     end
 
     def test_checks_for_exit_after_iteration
@@ -620,24 +620,24 @@ module JobIteration
       JobIteration.enumerator_builder = CustomEnumBuilder
 
       builder_instance = SimpleIterationJob.new.send(:enumerator_builder)
-      assert_instance_of CustomEnumBuilder, builder_instance
+      assert_instance_of(CustomEnumBuilder, builder_instance)
     ensure
       JobIteration.enumerator_builder = original_builder
     end
 
     def test_respects_job_should_exit_from_parent_class
       JobShouldExitJob.new.perform_now
-      assert_equal [0], JobShouldExitJob.records_performed
+      assert_equal([0], JobShouldExitJob.records_performed)
     end
 
     def test_mark_job_worker_as_interrupted
       mark_job_worker_as_interrupted
 
-      assert_equal true, JobIteration.interruption_adapter.call
+      assert_equal(true, JobIteration.interruption_adapter.call)
 
       continue_iterating
 
-      assert_equal false, JobIteration.interruption_adapter.call
+      assert_equal(false, JobIteration.interruption_adapter.call)
     end
 
     def test_reenqueue_self
@@ -646,24 +646,24 @@ module JobIteration
       ReenqueueJob.new.perform_now
 
       jobs = ActiveJob::Base.queue_adapter.enqueued_jobs
-      assert_equal 1, jobs.size
+      assert_equal(1, jobs.size)
     end
 
     private
 
     def last_interrupted_job(job_class, _queue = nil)
       jobs = ActiveJob::Base.queue_adapter.enqueued_jobs
-      assert_equal 1, jobs.size
+      assert_equal(1, jobs.size)
 
       job = jobs.last
-      assert_equal job_class.name, job["job_class"]
+      assert_equal(job_class.name, job["job_class"])
 
       [job["times_interrupted"], job["cursor_position"]]
     end
 
     def peek_into_queue
       jobs = ActiveJob::Base.queue_adapter.enqueued_jobs
-      assert_operator jobs.size, :>, 0
+      assert_operator(jobs.size, :>, 0)
       ActiveJob::Base.deserialize(jobs.last)
     end
 
@@ -677,7 +677,7 @@ module JobIteration
     end
 
     def assert_jobs_in_queue(size, _queue = nil)
-      assert_equal size, ActiveJob::Base.queue_adapter.enqueued_jobs.size
+      assert_equal(size, ActiveJob::Base.queue_adapter.enqueued_jobs.size)
     end
   end
 end

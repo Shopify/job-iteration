@@ -11,3 +11,6 @@ Lint/HandleExceptions:
 Style/GlobalVars:
   Exclude:
     - lib/job-iteration/integrations/resque.rb
+Naming/FileName:
+  Exclude:
+    - lib/job-iteration.rb

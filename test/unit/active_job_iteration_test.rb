@@ -214,6 +214,23 @@ module JobIteration
       end
     end
 
+    class ReenqueuingIterationJob < SimpleIterationJob
+      def build_enumerator(cursor:)
+        enumerator_builder.build_once_enumerator(cursor: cursor)
+      end
+
+      def each_iteration(*)
+      end
+
+      def job_should_exit?
+        true
+      end
+
+      on_shutdown do
+        retry_job
+      end
+    end
+
     class JobWithBuildEnumeratorReturningArray < SimpleIterationJob
       def build_enumerator(*)
         []
@@ -343,6 +360,12 @@ module JobIteration
         work_one_job
       end
       assert_jobs_in_queue(0)
+    end
+
+    def test_retry_job_from_shutdown_hook_doesnt_retry_job
+      push(ReenqueuingIterationJob)
+      work_one_job
+      assert_jobs_in_queue(1)
     end
 
     def test_active_record_job

@@ -73,8 +73,8 @@ module JobIteration
     end
 
     def retry_job(*)
+      super unless @retried
       @retried = true
-      super
     end
 
     private
@@ -150,7 +150,7 @@ module JobIteration
       self.times_interrupted += 1
 
       self.already_in_queue = true if respond_to?(:already_in_queue=)
-      retry_job unless @retried
+      retry_job
     end
 
     def adjust_total_time

@@ -222,10 +222,6 @@ module JobIteration
       def each_iteration(*)
       end
 
-      def job_should_exit?
-        true
-      end
-
       on_shutdown do
         retry_job
       end
@@ -363,6 +359,8 @@ module JobIteration
     end
 
     def test_retry_job_from_shutdown_hook_doesnt_retry_job
+      mark_job_worker_as_interrupted
+
       push(ReenqueuingIterationJob)
       work_one_job
       assert_jobs_in_queue(1)

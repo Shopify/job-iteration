@@ -15,6 +15,7 @@ module JobIteration
       )
 
       define_callbacks :start
+      define_callbacks :iteration
       define_callbacks :shutdown
       define_callbacks :complete
     end
@@ -26,6 +27,10 @@ module JobIteration
 
       def on_start(*filters, &blk)
         set_callback(:start, :after, *filters, &blk)
+      end
+
+      def before_iteration(*filters, &blk)
+        set_callback(:iteration, :before, *filters, &blk)
       end
 
       def on_shutdown(*filters, &blk)
@@ -123,6 +128,7 @@ module JobIteration
       arguments = arguments.dup.freeze
       enumerator.each do |iteration, index|
         record_unit_of_work do
+          run_callbacks(:iteration)
           each_iteration(iteration, *arguments)
           self.cursor_position = index
         end

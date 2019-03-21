@@ -121,9 +121,9 @@ module JobIteration
 
     def iterate_with_enumerator(enumerator, arguments)
       arguments = arguments.dup.freeze
-      enumerator.each do |iteration, index|
+      enumerator.each do |object_from_enumerator, index|
         record_unit_of_work do
-          each_iteration(iteration, *arguments)
+          each_iteration(object_from_enumerator, *arguments)
           self.cursor_position = index
         end
 

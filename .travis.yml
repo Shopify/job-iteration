@@ -3,8 +3,8 @@ services:
   - redis-server
 language: ruby
 rvm:
-  - 2.4.5
-  - 2.5.3
+  - 2.5.5
+  - 2.6.2
 before_install:
   - gem install bundler -v 1.16.6
   - mysql -e 'CREATE DATABASE job_iteration_test;'

@@ -24,7 +24,7 @@ module JobIteration
     def batches
       cursor = finder_cursor
       Enumerator.new(method(:size)) do |yielder|
-        while records = cursor.next_batch(@batch_size)
+        while (records = cursor.next_batch(@batch_size))
           yielder.yield(records, cursor_value(records.last)) if records.any?
         end
       end

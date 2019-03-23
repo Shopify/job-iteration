@@ -22,3 +22,4 @@ gem 'mocha'
 
 gem 'rubocop'
 gem 'yard'
+gem 'rake'

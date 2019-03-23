@@ -6,7 +6,7 @@ rvm:
   - 2.5.5
   - 2.6.2
 before_install:
-  - gem uninstall bundler
+  - gem uninstall -x bundler
   - gem install bundler -v 1.16.6
   - mysql -e 'CREATE DATABASE job_iteration_test;'
 script:

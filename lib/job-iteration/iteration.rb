@@ -73,7 +73,7 @@ module JobIteration
     end
 
     def retry_job(*)
-      super unless @retried
+      super unless defined?(@retried) && @retried
       @retried = true
     end
 

@@ -4,6 +4,8 @@ module JobIteration
   # Builds Enumerator based on ActiveRecord Relation. Supports enumerating on rows and batches.
   # @see EnumeratorBuilder
   class ActiveRecordEnumerator
+    SQL_DATETIME_WITH_NSEC = "%Y-%m-%d %H:%M:%S.%N"
+
     def initialize(relation, columns: nil, batch_size: 100, cursor: nil)
       @relation = relation
       @batch_size = batch_size
@@ -38,9 +40,8 @@ module JobIteration
 
     def cursor_value(record)
       positions = @columns.map do |column|
-        method = column.to_s.split('.').last
-        attribute = record.read_attribute(method.to_sym)
-        attribute.is_a?(Time) ? attribute.to_s(:db) : attribute
+        attribute_name = column.to_s.split('.').last
+        column_value(record, attribute_name)
       end
       return positions.first if positions.size == 1
       positions
@@ -48,6 +49,16 @@ module JobIteration
 
     def finder_cursor
       JobIteration::ActiveRecordCursor.new(@relation, @columns, @cursor)
+    end
+
+    def column_value(record, attribute)
+      value = record.read_attribute(attribute.to_sym)
+      case record.class.columns_hash.fetch(attribute).type
+      when :datetime
+        value.strftime(SQL_DATETIME_WITH_NSEC)
+      else
+        value
+      end
     end
   end
 end

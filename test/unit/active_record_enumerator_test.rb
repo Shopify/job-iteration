@@ -4,6 +4,7 @@ require "test_helper"
 
 module JobIteration
   class ActiveRecordEnumeratorTest < IterationUnitTest
+    SQL_TIME_FORMAT = "%Y-%m-%d %H:%M:%S.%N"
     test "#records yields every record with their cursor position" do
       enum = build_enumerator.records
       shop_id_tuples = Product.all.order(:id).take(3).map { |shop| [shop, shop.id] }
@@ -60,14 +61,14 @@ module JobIteration
       enum = build_enumerator(columns: [:updated_at]).batches
       shops = Product.order(:updated_at).take(2)
 
-      assert_equal([shops, shops.last.updated_at.to_s(:db)], enum.first)
+      assert_equal([shops, shops.last.updated_at.strftime(SQL_TIME_FORMAT)], enum.first)
     end
 
     test "columns can be an array" do
       enum = build_enumerator(columns: [:updated_at, :id]).batches
       shops = Product.order(:updated_at, :id).take(2)
 
-      assert_equal([shops, [shops.last.updated_at.to_s(:db), shops.last.id]], enum.first)
+      assert_equal([shops, [shops.last.updated_at.strftime(SQL_TIME_FORMAT), shops.last.id]], enum.first)
     end
 
     test "cursor can be used to resume" do
@@ -82,13 +83,13 @@ module JobIteration
       enum = build_enumerator(columns: [:created_at, :id]).batches
       shops = Product.order(:created_at, :id).take(2)
 
-      cursor = [shops.last.created_at.to_s(:db), shops.last.id]
+      cursor = [shops.last.created_at.strftime(SQL_TIME_FORMAT), shops.last.id]
       assert_equal([shops, cursor], enum.first)
 
       enum = build_enumerator(columns: [:created_at, :id], cursor: cursor).batches
       shops = Product.order(:created_at, :id).offset(2).take(2)
 
-      cursor = [shops.last.created_at.to_s(:db), shops.last.id]
+      cursor = [shops.last.created_at.strftime(SQL_TIME_FORMAT), shops.last.id]
       assert_equal([shops, cursor], enum.first)
     end
 

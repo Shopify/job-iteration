@@ -452,7 +452,8 @@ module JobIteration
 
         job = peek_into_queue
         last_processed_record = MultipleColumnsActiveRecordIterationJob.records_performed.last
-        assert_equal [last_processed_record.updated_at.to_s(:db), last_processed_record.id], job.cursor_position
+        expected = [last_processed_record.updated_at.strftime("%Y-%m-%d %H:%M:%S.%N"), last_processed_record.id]
+        assert_equal expected, job.cursor_position
 
         assert_equal iter * 3, MultipleColumnsActiveRecordIterationJob.records_performed.size
       end

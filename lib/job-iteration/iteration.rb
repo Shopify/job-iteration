@@ -72,11 +72,6 @@ module JobIteration
       interruptible_perform(*params)
     end
 
-    def retry_job(*)
-      super unless defined?(@retried) && @retried
-      @retried = true
-    end
-
     private
 
     def enumerator_builder
@@ -150,7 +145,9 @@ module JobIteration
       self.times_interrupted += 1
 
       self.already_in_queue = true if respond_to?(:already_in_queue=)
-      retry_job
+
+      enqueue unless @enqueued
+      @enqueued = true
     end
 
     def adjust_total_time

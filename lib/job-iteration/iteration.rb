@@ -36,10 +36,6 @@ module JobIteration
         set_callback(:complete, :after, *filters, &blk)
       end
 
-      def supports_interruption?
-        true
-      end
-
       private
 
       def ban_perform_definition

@@ -24,5 +24,6 @@ Gem::Specification.new do |spec|
 
   spec.metadata["changelog_uri"] = "https://github.com/Shopify/job-iteration/blob/master/CHANGELOG.md"
 
+  spec.add_development_dependency("activerecord")
   spec.add_dependency("activejob", ">= 5.2")
 end

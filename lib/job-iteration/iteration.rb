@@ -176,7 +176,13 @@ module JobIteration
         )
       end
 
-      unless respond_to?(:build_enumerator, true)
+      if respond_to?(:build_enumerator, true)
+        parameters = method(:build_enumerator).parameters
+        unless valid_cursor_parameter?(parameters)
+          raise ArgumentError, "Iteration job (#{self.class}) #build_enumerator " \
+          "expects the keyword argument `cursor`"
+        end
+      else
         raise ArgumentError, "Iteration job (#{self.class}) must implement #build_enumerator " \
           "to provide a collection to iterate"
       end
@@ -213,6 +219,18 @@ module JobIteration
       # be executed
       when false, :skip_complete_callbacks then false
       end
+    end
+
+    def valid_cursor_parameter?(parameters)
+      # this condition is when people use the splat operator.
+      # def build_enumerator(*)
+      return true if parameters == [[:rest]]
+
+      parameters.each do |parameter_type, parameter_name|
+        next unless parameter_name == :cursor
+        return true if parameter_type == :keyreq
+      end
+      false
     end
   end
 end

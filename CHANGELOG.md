@@ -4,6 +4,12 @@
 
 #### Bug fix
 
+### v1.1.0 (July 17, 2019)
+
+#### New feature
+
+- [35](https://github.com/Shopify/job-iteration/pull/35) - Raise exception if malformed arguments are use in #build_enumerator
+
 ### v1.0.0 (April 29, 2019)
 
 It’s been in production at Shopify since 2017. It has support for Rails 5 and 6 :tada:

@@ -228,7 +228,7 @@ module JobIteration
 
       parameters.each do |parameter_type, parameter_name|
         next unless parameter_name == :cursor
-        return true if parameter_type == :keyreq
+        return true if [:keyreq, :key].include?(parameter_type)
       end
       false
     end

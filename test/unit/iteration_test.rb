@@ -39,6 +39,15 @@ class JobIterationTest < IterationUnitTest
     end
   end
 
+  class JobWithRightMethodsUsingDefaultKeywordArgument < ActiveJob::Base
+    include JobIteration::Iteration
+    def build_enumerator(params, cursor: nil)
+    end
+
+    def each_iteration(*)
+    end
+  end
+
   def test_jobs_that_define_build_enumerator_and_each_iteration_will_not_raise
     push(JobWithRightMethods, 'walrus' => 'best')
     work_one_job
@@ -46,6 +55,11 @@ class JobIterationTest < IterationUnitTest
 
   def test_jobs_that_pass_splat_argument_to_build_enumerator_will_not_raise
     push(JobWithRightMethodsUsingSplatInTheArguments, {})
+    work_one_job
+  end
+
+  def test_jobs_that_pass_default_keyword_argument_to_build_enumerator_will_not_raise
+    push(JobWithRightMethodsUsingDefaultKeywordArgument, {})
     work_one_job
   end
 

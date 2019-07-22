@@ -4,6 +4,12 @@
 
 #### Bug fix
 
+### v1.1.1 (July 22, 2019)
+
+#### Bug fix
+
+- [36](https://github.com/shopify/job-iteration/pull/36) -  Add case for using default keyword arguments for cursor in #build_enumerator
+
 ### v1.1.0 (July 17, 2019)
 
 #### New feature

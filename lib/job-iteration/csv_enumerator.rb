@@ -55,6 +55,9 @@ module JobIteration
         return
       end
 
+      # Behaviour of CSV#path changed in Ruby 2.6.3 (returns nil instead of raising NoMethodError)
+      return if filepath.nil?
+
       count = %x(wc -l < #{filepath}).strip.to_i
       count -= 1 if @csv.headers
       count

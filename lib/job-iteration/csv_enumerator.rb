@@ -49,6 +49,7 @@ module JobIteration
     private
 
     def count_rows_in_file
+      # TODO: Remove rescue for NoMethodError when Ruby 2.6 is no longer supported.
       begin
         filepath = @csv.path
       rescue NoMethodError
@@ -56,7 +57,7 @@ module JobIteration
       end
 
       # Behaviour of CSV#path changed in Ruby 2.6.3 (returns nil instead of raising NoMethodError)
-      return if filepath.nil?
+      return unless filepath
 
       count = %x(wc -l < #{filepath}).strip.to_i
       count -= 1 if @csv.headers

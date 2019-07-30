@@ -64,16 +64,14 @@ class JobIterationTest < IterationUnitTest
   end
 
   def test_jobs_that_do_not_define_build_enumerator_or_each_iteration_raises
-    push(JobWithNoMethods)
     assert_raises(ArgumentError) do
-      work_one_job
+      push(JobWithNoMethods)
     end
   end
 
   def test_jobs_that_defines_methods_but_do_not_declare_cursor_as_keyword_argument_raises
-    push(JobWithRightMethodsButMissingCursorKeywordArgument, id: 1)
     assert_raises(ArgumentError) do
-      work_one_job
+      push(JobWithRightMethodsButMissingCursorKeywordArgument, id: 1)
     end
   end
 

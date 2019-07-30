@@ -171,6 +171,14 @@ module JobIteration
       end
     end
 
+    class CustomEnumerationJob < SimpleIterationJob
+      def build_enumerator(_params, cursor:)
+      end
+
+      def each_iteration(*)
+      end
+    end
+
     class MultipleColumnsActiveRecordIterationJob < SimpleIterationJob
       def build_enumerator(cursor:)
         enumerator_builder.active_record_on_records(
@@ -295,17 +303,15 @@ module JobIteration
     end
 
     def test_each_iteration_method_missing
-      push(MissingEachIterationJob)
       error = assert_raises(ArgumentError) do
-        work_one_job
+        push(MissingEachIterationJob)
       end
       assert_match(/Iteration job \(\S+\) must implement #each_iteration/, error.to_s)
     end
 
     def test_build_enumerator_method_missing
-      push(MissingBuildEnumeratorJob)
       error = assert_raises(ArgumentError) do
-        work_one_job
+        push(MissingBuildEnumeratorJob)
       end
       assert_match(/Iteration job \(\S+\) must implement #build_enumerator/, error.to_s)
     end
@@ -641,7 +647,7 @@ module JobIteration
       original_builder = JobIteration.enumerator_builder
       JobIteration.enumerator_builder = CustomEnumBuilder
 
-      builder_instance = SimpleIterationJob.new.send(:enumerator_builder)
+      builder_instance = CustomEnumerationJob.new.send(:enumerator_builder)
       assert_instance_of(CustomEnumBuilder, builder_instance)
     ensure
       JobIteration.enumerator_builder = original_builder

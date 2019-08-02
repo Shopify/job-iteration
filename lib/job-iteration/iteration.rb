@@ -47,6 +47,7 @@ module JobIteration
       super
       self.times_interrupted = 0
       self.total_time = 0.0
+      assert_implements_methods!
     end
 
     def serialize # @private
@@ -80,8 +81,6 @@ module JobIteration
     end
 
     def interruptible_perform(*arguments)
-      assert_implements_methods!
-
       self.start_time = Time.now.utc
 
       enumerator = nil

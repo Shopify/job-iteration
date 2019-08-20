@@ -4,6 +4,16 @@
 
 #### Bug fix
 
+### v1.1.3 (August 20, 2019)
+
+- [36](https://github.com/shopify/job-iteration/pull/39) -  Check method validation at job initialization step
+
+### v1.1.2 (July 24, 2019)
+
+#### Bug fix
+
+- [36](https://github.com/shopify/job-iteration/pull/38) -  Fix CsvEnumerator for Ruby 2.6.3
+
 ### v1.1.1 (July 22, 2019)
 
 #### Bug fix

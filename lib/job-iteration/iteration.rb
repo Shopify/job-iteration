@@ -89,7 +89,7 @@ module JobIteration
       end
 
       unless enumerator
-        logger.info("[JobIteration::Iteration] `build_enumerator` returned nil. " \
+        JobIteration.logger.info("[JobIteration::Iteration] `build_enumerator` returned nil. " \
           "Skipping the job.")
         return
       end
@@ -139,7 +139,8 @@ module JobIteration
 
     def reenqueue_iteration_job
       ActiveSupport::Notifications.instrument("interrupted.iteration", iteration_instrumentation_tags)
-      logger.info("[JobIteration::Iteration] Interrupting and re-enqueueing the job cursor_position=#{cursor_position}")
+      JobIteration.logger.info("[JobIteration::Iteration] Interrupting and re-enqueueing the job "\
+        "cursor_position=#{cursor_position}")
 
       adjust_total_time
       self.times_interrupted += 1
@@ -195,7 +196,7 @@ module JobIteration
       adjust_total_time
 
       message = "[JobIteration::Iteration] Completed iterating. times_interrupted=%d total_time=%.3f"
-      logger.info(Kernel.format(message, times_interrupted, total_time))
+      JobIteration.logger.info(Kernel.format(message, times_interrupted, total_time))
     end
 
     def job_should_exit?

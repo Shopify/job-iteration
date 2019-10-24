@@ -11,7 +11,7 @@ gemspec
 gem 'sidekiq'
 gem 'resque'
 
-gem 'mysql2', '~> 0.4.4'
+gem 'mysql2', '~> 0.5'
 gem 'globalid'
 gem 'i18n'
 gem 'redis'

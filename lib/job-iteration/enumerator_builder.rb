@@ -61,16 +61,6 @@ module JobIteration
       wrap(self, enumerable.each_with_index.drop(drop).to_enum { enumerable.size })
     end
 
-    # Builds Enumerator from a lock queue instance that belongs to a job.
-    # The helper is only to be used from jobs that use LockQueue module.
-    def build_lock_queue_enumerator(lock_queue, at_most_once:)
-      unless lock_queue.is_a?(BackgroundQueue::LockQueue::RedisQueue) ||
-          lock_queue.is_a?(BackgroundQueue::LockQueue::RolloutRedisQueue)
-        raise ArgumentError, "an argument to #build_lock_queue_enumerator must be a LockQueue"
-      end
-      wrap(self, BackgroundQueue::LockQueueEnumerator.new(lock_queue, at_most_once: at_most_once).to_enum)
-    end
-
     # Builds Enumerator from Active Record Relation. Each Enumerator tick moves the cursor one row forward.
     #
     # +columns:+ argument is used to build the actual query for iteration. +columns+: defaults to primary key:

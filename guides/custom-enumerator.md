@@ -8,7 +8,7 @@ class ListJob < ActiveJob::Base
 
   def build_enumerator(*)
     @redis = Redis.new
-    Enumerator.new |yielder|
+    Enumerator.new do |yielder|
       yielder.yield @redis.lpop(key), nil
     end
   end

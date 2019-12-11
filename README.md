@@ -112,6 +112,7 @@ Iteration hooks into Sidekiq and Resque out of the box to support graceful inter
 * [Iteration: how it works](guides/iteration-how-it-works.md)
 * [Best practices](guides/best-practices.md)
 * [Writing custom enumerator](guides/custom-enumerator.md)
+* [Throttling](guides/throttling.md)
 
 For more detailed documentation, see [rubydoc](https://www.rubydoc.info/github/Shopify/job-iteration).
 

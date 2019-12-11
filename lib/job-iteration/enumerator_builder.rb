@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 require_relative "./active_record_enumerator"
 require_relative "./csv_enumerator"
+require_relative "./throttle_enumerator"
 require "forwardable"
 
 module JobIteration
@@ -109,11 +110,21 @@ module JobIteration
       wrap(self, enum)
     end
 
+    def build_throttle_enumerator(enum, throttle_on:, backoff:)
+      JobIteration::ThrottleEnumerator.new(
+        enum,
+        @job,
+        throttle_on: throttle_on,
+        backoff: backoff
+      ).to_enum
+    end
+
     alias_method :once, :build_once_enumerator
     alias_method :times, :build_times_enumerator
     alias_method :array, :build_array_enumerator
     alias_method :active_record_on_records, :build_active_record_enumerator_on_records
     alias_method :active_record_on_batches, :build_active_record_enumerator_on_batches
+    alias_method :throttle, :build_throttle_enumerator
 
     private
 

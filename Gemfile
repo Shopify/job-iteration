@@ -20,6 +20,6 @@ gem 'database_cleaner'
 gem 'pry'
 gem 'mocha'
 
-gem 'rubocop'
+gem 'rubocop', '~> 0.77.0'
 gem 'yard'
 gem 'rake'

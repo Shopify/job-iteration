@@ -14,7 +14,6 @@ module JobIteration
   #       backoff: 30.seconds
   #     )
   #   end
-  # 
   # The enumerator from above will mimic +active_record_on_batches+,
   # except when +DatabaseStatus.unhealthy?+ starts to return true.
   # In that case, it will re-enqueue the job with a specified backoff.

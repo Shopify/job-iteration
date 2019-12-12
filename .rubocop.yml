@@ -5,7 +5,7 @@ AllCops:
   TargetRubyVersion: 2.4.4
   Exclude:
     - 'vendor/bundle/**/*'
-Lint/HandleExceptions:
+Lint/SuppressedException:
   Exclude:
     - lib/job-iteration.rb
 Style/GlobalVars:

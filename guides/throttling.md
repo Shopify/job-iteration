@@ -43,4 +43,4 @@ Note that it's up to you to implement `DatabaseStatus.unhealthy?` that works for
 * Replication lag across all regions
 * DB threads
 * DB is available for writes (otherwise indicates a failover happening)
-* [Semian](https://github.com/shopify/semian) curciuts
+* [Semian](https://github.com/shopify/semian) open circuits

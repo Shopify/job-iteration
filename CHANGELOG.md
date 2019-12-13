@@ -4,6 +4,11 @@
 
 #### Bug fix
 
+## v1.1.4 (December 13, 2019)
+
+- [45](https://github.com/Shopify/job-iteration/pull/45) -  Add Throttle enumerator
+
+
 ### v1.1.3 (August 20, 2019)
 
 - [36](https://github.com/shopify/job-iteration/pull/39) -  Check method validation at job initialization step

@@ -30,7 +30,9 @@ module JobIteration
         @enum.each do |*val|
           if should_throttle?
             ActiveSupport::Notifications.instrument("throttled.iteration", job_class: @job.class.name)
-            @job.retry_job(wait: @backoff)
+            @job.run_callbacks(:reenqueue) do
+              @job.reenqueue_iteration_job(wait: @backoff)
+            end
             throw(:abort, :skip_complete_callbacks)
           end
 

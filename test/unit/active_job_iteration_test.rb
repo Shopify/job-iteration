@@ -14,6 +14,8 @@ module JobIteration
       self.on_complete_called = 0
       cattr_accessor :on_shutdown_called, instance_accessor: false
       self.on_shutdown_called = 0
+      cattr_accessor :on_reenqueue_called, instance_accessor: false
+      self.on_reenqueue_called = 0
 
       on_start do
         self.class.on_start_called += 1
@@ -25,6 +27,10 @@ module JobIteration
 
       on_shutdown do
         self.class.on_shutdown_called += 1
+      end
+
+      on_reenqueue do
+        self.class.on_reenqueue_called += 1
       end
     end
 
@@ -58,6 +64,12 @@ module JobIteration
 
       def each_iteration(record)
         self.class.records_performed << record
+      end
+    end
+
+    class ActiveRecordIterationJobHaltReenqueue < ActiveRecordIterationJob
+      on_reenqueue do |job|
+        throw(:abort) if job.times_interrupted > 0
       end
     end
 
@@ -297,6 +309,7 @@ module JobIteration
         klass.on_start_called = 0
         klass.on_complete_called = 0
         klass.on_shutdown_called = 0
+        klass.on_reenqueue_called = 0
       end
       JobShouldExitJob.records_performed = []
       super
@@ -329,6 +342,7 @@ module JobIteration
       assert_equal(1, PrivateIterationJob.on_start_called)
       assert_equal(1, PrivateIterationJob.on_complete_called)
       assert_equal(1, PrivateIterationJob.on_shutdown_called)
+      assert_equal(0, PrivateIterationJob.on_reenqueue_called)
     end
 
     def test_failing_job
@@ -379,6 +393,7 @@ module JobIteration
 
       assert_equal(0, ActiveRecordIterationJob.on_complete_called)
       work_one_job
+      assert_equal(1, ActiveRecordIterationJob.on_reenqueue_called)
 
       assert_equal(2, ActiveRecordIterationJob.records_performed.size)
 
@@ -389,6 +404,7 @@ module JobIteration
 
       work_one_job
       assert_equal(4, ActiveRecordIterationJob.records_performed.size)
+      assert_equal(2, ActiveRecordIterationJob.on_reenqueue_called)
 
       job = peek_into_queue
       assert_equal(2, job.times_interrupted)
@@ -399,6 +415,24 @@ module JobIteration
 
       assert_equal(0, ActiveRecordIterationJob.on_complete_called)
       assert_equal(2, ActiveRecordIterationJob.on_shutdown_called)
+    end
+
+    def test_active_record_job_halt_reenqueue
+      iterate_exact_times(3.times)
+
+      push(ActiveRecordIterationJobHaltReenqueue)
+      assert_jobs_in_queue(1)
+
+      work_one_job
+      assert_equal(1, ActiveRecordIterationJob.on_reenqueue_called)
+      assert_equal(3, ActiveRecordIterationJob.records_performed.size)
+      assert_jobs_in_queue(1)
+
+      work_one_job
+      assert_equal(2, ActiveRecordIterationJob.on_reenqueue_called)
+      assert_equal(6, ActiveRecordIterationJob.records_performed.size)
+      # By throwing abort on the reenqueue callback we halt the iteration and no jobs are reenqueue
+      assert_jobs_in_queue(0)
     end
 
     def test_activerecord_batches_complete

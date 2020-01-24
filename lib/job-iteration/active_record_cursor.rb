@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 module JobIteration
+  # Curious about how this works from the SQL perspective?
+  # Check "Pagination Done the Right way": https://bit.ly/2Rq7iPF
   class ActiveRecordCursor # @private
     include Comparable
 

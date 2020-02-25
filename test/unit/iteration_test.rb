@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "test_helper"
+require "sorbet-runtime"
 
 class JobIterationTest < IterationUnitTest
   class JobWithNoMethods < ActiveJob::Base
@@ -14,6 +15,20 @@ class JobIterationTest < IterationUnitTest
     end
 
     def each_iteration(*)
+    end
+  end
+
+  class JobWithRightMethodsButWithSorbetSignatures < ActiveJob::Base
+    extend T::Sig
+    include JobIteration::Iteration
+
+    sig { params(_params: T.untyped, cursor: T.untyped).returns(T::Enumerator[T.untyped]) }
+    def build_enumerator(_params, cursor:)
+      enumerator_builder.build_times_enumerator(2, cursor: cursor)
+    end
+
+    sig { params(product: T.untyped, params: T.untyped).void }
+    def each_iteration(product, params)
     end
   end
 
@@ -50,6 +65,11 @@ class JobIterationTest < IterationUnitTest
 
   def test_jobs_that_define_build_enumerator_and_each_iteration_will_not_raise
     push(JobWithRightMethods, 'walrus' => 'best')
+    work_one_job
+  end
+
+  def test_jobs_that_define_build_enumerator_and_each_iteration_with_sigs_will_not_raise
+    push(JobWithRightMethodsButWithSorbetSignatures, 'walrus' => 'best')
     work_one_job
   end
 

@@ -23,3 +23,6 @@ gem 'mocha'
 gem 'rubocop', '~> 0.77.0'
 gem 'yard'
 gem 'rake'
+
+# for unit testing optional sorbet support
+gem 'sorbet-runtime'

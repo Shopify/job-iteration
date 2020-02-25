@@ -176,7 +176,7 @@ module JobIteration
       end
 
       if respond_to?(:build_enumerator, true)
-        parameters = method(:build_enumerator).parameters
+        parameters = method_parameters(:build_enumerator)
         unless valid_cursor_parameter?(parameters)
           raise ArgumentError, "Iteration job (#{self.class}) #build_enumerator " \
           "expects the keyword argument `cursor`"
@@ -185,6 +185,17 @@ module JobIteration
         raise ArgumentError, "Iteration job (#{self.class}) must implement #build_enumerator " \
           "to provide a collection to iterate"
       end
+    end
+
+    def method_parameters(method_name)
+      method = method(method_name)
+
+      if defined?(T::Private::Methods)
+        signature = T::Private::Methods.signature_for_method(method)
+        method = signature.method if signature
+      end
+
+      method.parameters
     end
 
     def iteration_instrumentation_tags

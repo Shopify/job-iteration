@@ -4,6 +4,10 @@
 
 #### Bug fix
 
+## v1.1.5 (February 27, 2020)
+
+- [47](https://github.com/Shopify/job-iteration/pull/47) -  Optional `sorbet-runtime` support for `JobIteration::Iteration` interface validation
+
 ## v1.1.4 (December 13, 2019)
 
 - [45](https://github.com/Shopify/job-iteration/pull/45) -  Add Throttle enumerator

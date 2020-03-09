@@ -59,9 +59,18 @@ module JobIteration
       # Behaviour of CSV#path changed in Ruby 2.6.3 (returns nil instead of raising NoMethodError)
       return unless filepath
 
-      count = %x(wc -l < #{filepath}).strip.to_i
-      count -= 1 if @csv.headers
-      count
+      count = system_line_count(filepath)
+      if count != 0
+        count -= 1 if @csv.headers
+        @count ||= count
+      else
+        # fallback if wc doesn't work (e.g. a remote file being streamed)
+        @count ||= CSV.foreach(filepath, headers: @csv.headers).count.to_i
+      end
+    end
+
+    def system_line_count(filepath)
+      %x(wc -l < #{filepath}).strip.to_i
     end
   end
 end

@@ -116,6 +116,18 @@ module JobIteration
       assert_equal 6, enum.size
     end
 
+    test "#rows work even if system_line_count returns 0" do
+      JobIteration::CsvEnumerator.any_instance.stubs(:system_line_count).returns(0)
+      enum = build_enumerator(open_csv).rows(cursor: 0)
+      assert_equal 11, enum.size
+    end
+
+    test "#batches work even if system_line_count returns 0" do
+      JobIteration::CsvEnumerator.any_instance.stubs(:system_line_count).returns(0)
+      enum = build_enumerator(open_csv).batches(batch_size: 2, cursor: 5)
+      assert_equal 6, enum.size
+    end
+
     private
 
     def build_enumerator(csv)

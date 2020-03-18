@@ -116,8 +116,10 @@ module JobIteration
 
     def iterate_with_enumerator(enumerator, arguments)
       arguments = arguments.dup.freeze
+      found_record = false
       enumerator.each do |object_from_enumerator, index|
         record_unit_of_work do
+          found_record = true
           each_iteration(object_from_enumerator, *arguments)
           self.cursor_position = index
         end
@@ -127,6 +129,11 @@ module JobIteration
         reenqueue_iteration_job
         return false
       end
+
+      logger.info(
+        "[JobIteration::Iteration] Enumerator found nothing to iterate! " \
+        "(times_interrupted: #{times_interrupted}, cursor_position: #{cursor_position})"
+      ) unless found_record
 
       true
     end

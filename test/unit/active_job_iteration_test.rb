@@ -585,6 +585,15 @@ module JobIteration
       end
     end
 
+    def test_log_no_iterations
+      Product.delete_all
+      push(ActiveRecordIterationJob)
+
+      assert_logged(%([JobIteration::Iteration] Enumerator found nothing to iterate!)) do
+        work_one_job
+      end
+    end
+
     def test_aborting_in_each_iteration_job_will_execute_on_complete_callback
       push(AbortingActiveRecordIterationJob)
       work_one_job

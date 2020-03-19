@@ -132,7 +132,7 @@ module JobIteration
 
       logger.info(
         "[JobIteration::Iteration] Enumerator found nothing to iterate! " \
-        "(times_interrupted: #{times_interrupted}, cursor_position: #{cursor_position})"
+        "times_interrupted=#{times_interrupted} cursor_position=#{cursor_position}"
       ) unless found_record
 
       true

@@ -66,6 +66,9 @@ end
 
 ActiveRecord::Base.connection.create_table(Product.table_name, force: true) do |t|
   t.string(:name)
+  t.boolean(:test)
+  t.string(:state)
+  t.integer(:shop_id)
   t.timestamps
 end
 

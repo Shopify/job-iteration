@@ -58,7 +58,21 @@ module JobIteration
       result = parse(Product.where("shop_id IS NULL"))
       assert_kind_of QueryParser::ResultWithColumns, result
       assert_equal ["shop_id"], result.columns
+
+      result = parse(Product.where("publish_at IS NULL"))
+      assert_kind_of QueryParser::ResultWithColumns, result
+      assert_equal ["publish_at"], result.columns
+
+      result = parse(Product.where("publish_at IN (1)"))
+      assert_kind_of QueryParser::ResultWithColumns, result
+      assert_equal ["publish_at"], result.columns
+
+      result = parse(Product.where("publish_at = 1"))
+      assert_kind_of QueryParser::ResultWithColumns, result
+      assert_equal ["publish_at"], result.columns
     end
+
+    private
 
     def parse(relation)
       QueryParser::Parser.parse(relation)

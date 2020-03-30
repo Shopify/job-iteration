@@ -11,6 +11,11 @@ module JobIteration
       @batch_size = batch_size
       @columns = Array(columns || "#{relation.table_name}.#{relation.primary_key}")
       @cursor = cursor
+
+      result = QueryParser::Parser.parse(relation)
+      if result.is_a?(QueryParser::ResultWithViolations)
+        raise "Found issues:\n query:#{relation.to_sql}, issues: #{result.violations}"
+      end
     end
 
     def records

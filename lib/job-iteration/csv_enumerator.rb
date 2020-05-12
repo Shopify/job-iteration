@@ -30,9 +30,11 @@ module JobIteration
     # Constructs a enumerator on CSV rows
     # @return [Enumerator] Enumerator instance
     def rows(cursor:)
+      drop = cursor.nil? ? 0 : cursor + 1
+
       @csv.lazy
         .each_with_index
-        .drop(cursor.to_i)
+        .drop(drop)
         .to_enum { count_rows_in_file }
     end
 

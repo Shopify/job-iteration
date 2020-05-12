@@ -15,7 +15,7 @@ module JobIteration
     end
 
     test "#rows yields every record with their cursor position" do
-      enum = build_enumerator(open_csv).rows(cursor: 0)
+      enum = build_enumerator(open_csv).rows(cursor: nil)
       assert_instance_of(Enumerator::Lazy, enum)
 
       enum.each_with_index do |element_and_cursor, index|
@@ -28,16 +28,7 @@ module JobIteration
       assert_instance_of(Enumerator::Lazy, enum)
 
       enum.each_with_index do |element_and_cursor, index|
-        assert_equal [csv_rows[index + 3], index + 3], [element_and_cursor[0].fields, element_and_cursor[1]]
-      end
-    end
-
-    test "#rows considers cursor: nil as the start" do
-      enum = build_enumerator(open_csv).rows(cursor: nil)
-      assert_instance_of(Enumerator::Lazy, enum)
-
-      enum.each_with_index do |element_and_cursor, index|
-        assert_equal [csv_rows[index], index], [element_and_cursor[0].fields, element_and_cursor[1]]
+        assert_equal [csv_rows[index + 4], index + 4], [element_and_cursor[0].fields, element_and_cursor[1]]
       end
     end
 

@@ -53,18 +53,8 @@ module JobIteration
       assert_equal 12, enum.size
     end
 
-    test "#batches considers cursor: nil as the start" do
-      enum = build_enumerator(open_csv).batches(batch_size: 3, cursor: nil)
-      assert_instance_of(Enumerator::Lazy, enum)
-
-      expected_values = csv_rows.each_slice(3).to_a
-      enum.each_with_index do |element_and_cursor, index|
-        assert_equal [expected_values[index], index], [element_and_cursor[0].map(&:fields), element_and_cursor[1]]
-      end
-    end
-
     test "#batches yields every batch with their cursor position" do
-      enum = build_enumerator(open_csv).batches(batch_size: 3, cursor: 0)
+      enum = build_enumerator(open_csv).batches(batch_size: 3, cursor: nil)
       assert_instance_of(Enumerator::Lazy, enum)
 
       expected_values = csv_rows.each_slice(3).to_a
@@ -77,14 +67,14 @@ module JobIteration
       enum = build_enumerator(open_csv).batches(batch_size: 3, cursor: 2)
       assert_instance_of(Enumerator::Lazy, enum)
 
-      expected_values = csv_rows.each_slice(3).drop(2).to_a
+      expected_values = csv_rows.each_slice(3).drop(3).to_a
       enum.each_with_index do |element_and_cursor, index|
-        assert_equal [expected_values[index], index + 2], [element_and_cursor[0].map(&:fields), element_and_cursor[1]]
+        assert_equal [expected_values[index], index + 3], [element_and_cursor[0].map(&:fields), element_and_cursor[1]]
       end
     end
 
     test "#batches enumerator can be resumed from the last uneven batch" do
-      enum = build_enumerator(open_csv).batches(batch_size: 2, cursor: 5)
+      enum = build_enumerator(open_csv).batches(batch_size: 2, cursor: 4)
       assert_instance_of(Enumerator::Lazy, enum)
 
       element_and_cursor = enum.next

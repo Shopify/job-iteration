@@ -32,8 +32,8 @@ module JobIteration
     def rows(cursor:)
       @csv.lazy
         .each_with_index
-        .drop(cursor.to_i)
-        .to_enum { count_rows_in_file }
+        .drop(count_of_processed_rows(cursor))
+        .to_enum { count_of_rows_in_file }
     end
 
     # Constructs a enumerator on batches of CSV rows
@@ -42,13 +42,13 @@ module JobIteration
       @csv.lazy
         .each_slice(batch_size)
         .each_with_index
-        .drop(cursor.to_i)
-        .to_enum { (count_rows_in_file.to_f / batch_size).ceil }
+        .drop(count_of_processed_rows(cursor))
+        .to_enum { (count_of_rows_in_file.to_f / batch_size).ceil }
     end
 
     private
 
-    def count_rows_in_file
+    def count_of_rows_in_file
       # TODO: Remove rescue for NoMethodError when Ruby 2.6 is no longer supported.
       begin
         filepath = @csv.path
@@ -62,6 +62,10 @@ module JobIteration
       count = %x(wc -l < #{filepath}).strip.to_i
       count -= 1 if @csv.headers
       count
+    end
+
+    def count_of_processed_rows(cursor)
+      cursor.nil? ? 0 : cursor + 1
     end
   end
 end

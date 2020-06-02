@@ -3,8 +3,9 @@ services:
   - redis-server
 language: ruby
 rvm:
-  - 2.5.5
-  - 2.6.2
+  - 2.5
+  - 2.6
+  - 2.7
 before_install:
   - mysql -e 'CREATE DATABASE job_iteration_test;'
 script:
@@ -14,4 +15,5 @@ script:
 
 gemfile:
   - 'gemfiles/rails_5_2.gemfile'
+  - 'gemfiles/rails_6_0.gemfile'
   - 'gemfiles/rails_edge.gemfile'

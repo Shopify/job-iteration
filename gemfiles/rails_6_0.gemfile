@@ -1,0 +1,6 @@
+# frozen_string_literal: true
+
+eval_gemfile '../Gemfile'
+
+gem 'activejob', '~> 6.0.0'
+gem 'activerecord', '~> 6.0.0'

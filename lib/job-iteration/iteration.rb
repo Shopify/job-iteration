@@ -69,7 +69,7 @@ module JobIteration
       interruptible_perform(*params)
     end
 
-    def retry_job(*)
+    def retry_job(*, **)
       super unless defined?(@retried) && @retried
       @retried = true
     end

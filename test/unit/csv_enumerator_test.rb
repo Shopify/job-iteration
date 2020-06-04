@@ -112,7 +112,7 @@ module JobIteration
     end
 
     def open_csv(options = {})
-      CSV.open(sample_csv_with_headers, { converters: :integer, headers: true }.merge(options))
+      CSV.open(sample_csv_with_headers, converters: :integer, headers: true, **options)
     end
   end
 end

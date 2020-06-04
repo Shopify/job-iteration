@@ -4,6 +4,10 @@
 
 #### Bug fix
 
+## v1.1.7 (June 4, 2020)
+
+- [54](https://github.com/Shopify/job-iteration/pull/54) - Fix warnings on Ruby 2.7
+
 ## v1.1.6 (May 22, 2020)
 
 - [49](https://github.com/Shopify/job-iteration/pull/49) -  Log when enumerator has nothing to iterate

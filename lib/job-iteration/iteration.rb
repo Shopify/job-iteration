@@ -49,7 +49,7 @@ module JobIteration
       self.total_time = 0.0
       assert_implements_methods!
     end
-    ruby2_keywords :initialize if respond_to?(:ruby2_keywords, true)
+    ruby2_keywords(:initialize) if respond_to?(:ruby2_keywords, true)
 
     def serialize # @private
       super.merge(

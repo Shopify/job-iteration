@@ -1,19 +1,9 @@
-# This file is for Shopify employees development environment.
-# If you are an external contributor you don't have to bother with it.
-name: job-iteration
-
 up:
-  - homebrew:
-    - mysql-client:
-        or:        [mysql@5.7]
-  - ruby:
-      version: 2.6.5
-  - railgun
-  - bundler
-  - custom:
-      name: Create Job Iteration database
-      meet: mysql -uroot -h job-iteration.railgun -e "CREATE DATABASE job_iteration_test"
-      met?: mysql -uroot -h job-iteration.railgun job_iteration_test -e "SELECT 1"
+  - docker-compose up -d
+  - ./bin/setup
 
-commands:
-  test: bundle exec rake
+test:
+  - bundle exec rake test
+
+down:
+  - docker-compose down -v

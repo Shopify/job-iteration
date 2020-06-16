@@ -18,6 +18,7 @@ gem 'redis'
 gem 'database_cleaner'
 
 gem 'pry'
+gem 'byebug'
 gem 'mocha'
 
 gem 'rubocop', '~> 0.77.0'

@@ -16,6 +16,7 @@ require "active_record"
 require "pry"
 require 'mocha/minitest'
 require 'database_cleaner'
+require "byebug"
 
 GlobalID.app = "iteration"
 ActiveRecord::Base.include(GlobalID::Identification) # https://github.com/rails/globalid/blob/master/lib/global_id/railtie.rb
@@ -45,13 +46,15 @@ ActiveJob::Base.queue_adapter = :iteration_test
 class Product < ActiveRecord::Base
 end
 
-host = ENV['USING_DEV'] == "1" ? 'job-iteration.railgun' : 'localhost'
+host = ENV['USING_DEV'] == "1" ? 'job-iteration.railgun' : '127.0.0.1'
 
 connection_config = {
   adapter: "mysql2",
   database: "job_iteration_test",
-  username: 'root',
+  username: "root",
+  password: "password",
   host: host,
+  port: 3306
 }
 
 ActiveRecord::Base.establish_connection(connection_config)

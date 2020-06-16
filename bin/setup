@@ -1,23 +1,9 @@
 #!/bin/bash
 
-if ! [ -x "$(command -v mysql)" ];
-then
-  echo "Error: mysql is not installed." >&2
-  echo "You need to install mysql"
-  exit 1
-else
-  echo "Installing dependencies"
-  bundle install --quiet
+echo "Installing dependencies"
+bundle install
 
-  mysql.server start > /dev/null 2>&1
-  mysql -uroot job_iteration_test -e exit > /dev/null 2>&1
+echo "Creating job_iteration_test database"
+docker-compose exec mysql mysql "-e CREATE DATABASE IF NOT EXISTS job_iteration_test;"
 
-  if [ $? -eq 0 ];
-  then
-    echo "Setup completed!"
-  else
-    echo "Creating job_iteration_test database"
-    mysql -uroot -e "CREATE DATABASE job_iteration_test" > /dev/null 2>&1
-    echo "Setup completed!"
-  fi
-fi
+echo "Setup completed!"

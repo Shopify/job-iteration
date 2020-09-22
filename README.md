@@ -64,7 +64,9 @@ end
 Check out more examples of Iterations:
 
 ```ruby
-class BatchesJob < ActiveJob::Iteration
+class BatchesJob < ActiveJob::Base
+  include JobIteration::Iteration
+
   def build_enumerator(product_id, cursor:)
     enumerator_builder.active_record_on_batches(
       Product.find(product_id).comments,
@@ -81,7 +83,9 @@ end
 ```
 
 ```ruby
-class ArrayJob < ActiveJob::Iteration
+class ArrayJob < ActiveJob::Base
+  include JobIteration::Iteration
+
   def build_enumerator(cursor:)
     enumerator_builder.array(['build', 'enumerator', 'from', 'any', 'array'], cursor: cursor)
   end
@@ -93,7 +97,9 @@ end
 ```
 
 ```ruby
-class CsvJob < ActiveJob::Iteration
+class CsvJob < ActiveJob::Base
+  include JobIteration::Iteration
+
   def build_enumerator(import_id, cursor:)
     import = Import.find(import_id)
     JobIteration::CsvEnumerator.new(import.csv).rows(cursor: cursor)

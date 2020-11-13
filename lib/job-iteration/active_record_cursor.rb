@@ -18,7 +18,7 @@ module JobIteration
       end
     end
 
-    def initialize(relation, columns = nil, position = nil)
+    def initialize(relation, columns = nil, position = nil, around_query = nil)
       columns ||= "#{relation.table_name}.#{relation.primary_key}"
       @columns = Array.wrap(columns)
       self.position = Array.wrap(position)
@@ -33,6 +33,7 @@ module JobIteration
 
       @base_relation = relation.reorder(@columns.join(','))
       @reached_end = false
+      @around_query = around_query
     end
 
     def <=>(other)
@@ -64,7 +65,11 @@ module JobIteration
         relation = relation.where(*conditions)
       end
 
-      records = relation.to_a
+      records = if @around_query
+                  @around_query.call { relation.to_a }
+                else
+                  relation.to_a
+                end
 
       update_from_record(records.last) unless records.empty?
       @reached_end = records.size < batch_size

@@ -22,6 +22,7 @@ module JobIteration
     module ClassMethods
       def method_added(method_name)
         ban_perform_definition if method_name.to_sym == :perform
+        super
       end
 
       def on_start(*filters, &blk)

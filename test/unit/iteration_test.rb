@@ -99,6 +99,31 @@ class JobIterationTest < IterationUnitTest
     refute_nil(::JobIteration::VERSION)
   end
 
+  def test_that_the_registered_method_added_hook_calls_super
+    methods_added = []
+
+    hook_module = Module.new do
+      define_method(:method_added) do |name|
+        methods_added << name
+      end
+    end
+
+    Class.new(ActiveJob::Base) do
+      # The order below is important.
+      # We want the Hook Module to add the `method_added` first
+      # and then `Iteration` to override it. That means that if
+      # the `method_added` in `Iteration` does not call `super`
+      # `foo` will **not** be in the `methods_added` list.
+      extend hook_module
+      include JobIteration::Iteration
+
+      def foo
+      end
+    end
+
+    assert_includes(methods_added, :foo)
+  end
+
   private
 
   def push(job, *args)

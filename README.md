@@ -9,7 +9,7 @@ Meet Iteration, an extension for [ActiveJob](https://github.com/rails/rails/tree
 Imagine the following job:
 
 ```ruby
-class SimpleJob < ActiveJob::Base
+class SimpleJob < ApplicationJob
   def perform
     User.find_each do |user|
       user.notify_about_something
@@ -43,7 +43,7 @@ And then execute:
 In the job, include `JobIteration::Iteration` module and start describing the job with two methods (`build_enumerator` and `each_iteration`) instead of `perform`:
 
 ```ruby
-class NotifyUsersJob < ActiveJob::Base
+class NotifyUsersJob < ApplicationJob
   include JobIteration::Iteration
 
   def build_enumerator(cursor:)
@@ -64,7 +64,7 @@ end
 Check out more examples of Iterations:
 
 ```ruby
-class BatchesJob < ActiveJob::Base
+class BatchesJob < ApplicationJob
   include JobIteration::Iteration
 
   def build_enumerator(product_id, cursor:)
@@ -83,7 +83,7 @@ end
 ```
 
 ```ruby
-class ArrayJob < ActiveJob::Base
+class ArrayJob < ApplicationJob
   include JobIteration::Iteration
 
   def build_enumerator(cursor:)
@@ -97,7 +97,7 @@ end
 ```
 
 ```ruby
-class CsvJob < ActiveJob::Base
+class CsvJob < ApplicationJob
   include JobIteration::Iteration
 
   def build_enumerator(import_id, cursor:)
@@ -159,7 +159,7 @@ There a few configuration assumptions that are required for Iteration to work wi
 **My job has a complex flow. How do I write my own Enumerator?** Iteration API takes care of persisting the cursor (that you may use to calculate an offset) and controlling the job state. The power of Enumerator object is that you can use the cursor in any way you want. One example is a cursorless job that pops records from a datastore until the job is interrupted:
 
 ```ruby
-class MyJob < ActiveJob::Base
+class MyJob < ApplicationJob
   include JobIteration::Iteration
 
   def build_enumerator(cursor:)

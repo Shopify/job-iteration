@@ -4,6 +4,10 @@
 
 #### Bug fix
 
+## v1.1.9 (January 6, 2021)
+
+- [61](https://github.com/Shopify/job-iteration/pull/61) Call `super` in `method_added`
+
 ## v1.1.8 (June 8, 2020)
 
 - Preserve ruby2_keywords tags in arguments on Ruby 2.7

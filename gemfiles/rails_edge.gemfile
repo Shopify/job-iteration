@@ -2,5 +2,5 @@
 
 eval_gemfile '../Gemfile'
 
-gem 'activejob', github: 'rails/rails'
-gem 'activerecord', github: 'rails/rails'
+gem 'activejob', github: 'rails/rails', branch: 'main'
+gem 'activerecord', github: 'rails/rails', branch: 'main'

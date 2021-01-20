@@ -59,7 +59,7 @@ module JobIteration
           cursor + 1
         end
 
-      wrap(self, enumerable.each_with_index.drop(drop).to_enum { enumerable.size })
+      wrap(self, enumerable.each_with_index.drop(drop).to_enum { enumerable.size - drop })
     end
 
     # Builds Enumerator from Active Record Relation. Each Enumerator tick moves the cursor one row forward.

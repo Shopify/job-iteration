@@ -2,30 +2,12 @@
 require_relative "./active_record_enumerator"
 require_relative "./csv_enumerator"
 require_relative "./throttle_enumerator"
-require "forwardable"
 
 module JobIteration
   class EnumeratorBuilder
-    extend Forwardable
-
-    # TODO: Document deprecation
-    class Wrapper < Enumerator
-      def self.wrap(_builder, enum)
-        # TODO: Log deprecation
-        new(-> { enum.size }) do |yielder|
-          enum.each do |*val|
-            yielder.yield(*val)
-          end
-        end
-      end
-    end
-
-    def initialize(job, wrapper: Wrapper)
+    def initialize(job)
       @job = job
-      @wrapper = wrapper
     end
-
-    def_delegator :@wrapper, :wrap
 
     # Builds Enumerator objects that iterates once.
     def build_once_enumerator(cursor:)

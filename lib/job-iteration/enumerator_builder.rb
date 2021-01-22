@@ -29,37 +29,33 @@ module JobIteration
     def initialize(job, wrapper: Wrapper)
       @job = job
       @wrapper = wrapper
+      @deferred_enumerator_builder = DeferredEnumeratorBuilder.new(job)
     end
 
     def_delegator :@wrapper, :wrap
 
     # Builds Enumerator objects that iterates once.
     def build_once_enumerator(cursor:)
-      wrap(self, build_times_enumerator(1, cursor: cursor))
+      enum = deferred_enumerator_builder.build_deferred_once_enumerator
+        .call(cursor: cursor)
+
+      wrap(self, enum)
     end
 
     # Builds Enumerator objects that iterates N times and yields number starting from zero.
     def build_times_enumerator(number, cursor:)
-      raise ArgumentError, "First argument must be an Integer" unless number.is_a?(Integer)
-      wrap(self, build_array_enumerator(number.times.to_a, cursor: cursor))
+      enum = deferred_enumerator_builder.build_deferred_times_enumerator(number)
+        .call(cursor: cursor)
+
+      wrap(self, enum)
     end
 
     # Builds Enumerator object from a given array, using +cursor+ as an offset.
     def build_array_enumerator(enumerable, cursor:)
-      unless enumerable.is_a?(Array)
-        raise ArgumentError, "enumerable must be an Array"
-      end
-      if enumerable.any? { |i| defined?(ActiveRecord) && i.is_a?(ActiveRecord::Base) }
-        raise ArgumentError, "array cannot contain ActiveRecord objects"
-      end
-      drop =
-        if cursor.nil?
-          0
-        else
-          cursor + 1
-        end
+      enum = deferred_enumerator_builder.build_array_enumerator(enumerable)
+        .call(cursor: cursor)
 
-      wrap(self, enumerable.each_with_index.drop(drop).to_enum { enumerable.size })
+      wrap(self, enum)
     end
 
     # Builds Enumerator from Active Record Relation. Each Enumerator tick moves the cursor one row forward.
@@ -87,11 +83,10 @@ module JobIteration
     #          OR (created_at = '$LAST_CREATED_AT_CURSOR' AND (id > '$LAST_ID_CURSOR')))
     #        ORDER BY created_at, id LIMIT 100
     def build_active_record_enumerator_on_records(scope, cursor:, **args)
-      enum = build_active_record_enumerator(
+      enum = deferred_enumerator_builder.build_deferred_active_record_enumerator_on_records(
         scope,
-        cursor: cursor,
         **args
-      ).records
+      ).call(cursor: cursor)
       wrap(self, enum)
     end
 
@@ -102,14 +97,14 @@ module JobIteration
     #
     # For the rest of arguments, see documentation for #build_active_record_enumerator_on_records
     def build_active_record_enumerator_on_batches(scope, cursor:, **args)
-      enum = build_active_record_enumerator(
+      enum = deferred_enumerator_builder.build_deferred_active_record_enumerator_on_batches(
         scope,
-        cursor: cursor,
         **args
-      ).batches
+      ).call(cursor: cursor)
       wrap(self, enum)
     end
 
+    # TODO: Revisit this one
     def build_throttle_enumerator(enum, throttle_on:, backoff:)
       JobIteration::ThrottleEnumerator.new(
         enum,
@@ -128,16 +123,6 @@ module JobIteration
 
     private
 
-    def build_active_record_enumerator(scope, cursor:, **args)
-      unless scope.is_a?(ActiveRecord::Relation)
-        raise ArgumentError, "scope must be an ActiveRecord::Relation"
-      end
-
-      JobIteration::ActiveRecordEnumerator.new(
-        scope,
-        cursor: cursor,
-        **args
-      )
-    end
+    attr_reader :deferred_enumerator_builder
   end
 end

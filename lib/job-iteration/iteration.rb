@@ -78,6 +78,14 @@ module JobIteration
 
     private
 
+    def build_enumerator(*arguments, cursor:)
+      build_deferred_enumerator(*arguments).call(cursor: cursor)
+    end
+
+    def deferred_enumerator_builder
+      JobIteration.deferred_enumerator_builder.new(self)
+    end
+
     def enumerator_builder
       JobIteration.enumerator_builder.new(self)
     end

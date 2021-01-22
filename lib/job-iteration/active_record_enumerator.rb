@@ -4,61 +4,32 @@ module JobIteration
   # Builds Enumerator based on ActiveRecord Relation. Supports enumerating on rows and batches.
   # @see EnumeratorBuilder
   class ActiveRecordEnumerator
-    SQL_DATETIME_WITH_NSEC = "%Y-%m-%d %H:%M:%S.%N"
-
     def initialize(relation, columns: nil, batch_size: 100, cursor: nil)
+      @deferred_enumerator = DeferredActiveRecordEnumerator.new(
+        relation,
+        columns: columns,
+        batch_size: batch_size,
+      )
       @relation = relation
-      @batch_size = batch_size
-      @columns = Array(columns || "#{relation.table_name}.#{relation.primary_key}")
       @cursor = cursor
     end
 
     def records
-      Enumerator.new(method(:size)) do |yielder|
-        batches.each do |batch, _|
-          batch.each do |record|
-            yielder.yield(record, cursor_value(record))
-          end
-        end
-      end
+      deferred_enumerator.records.call(cursor: cursor)
     end
 
     def batches
-      cursor = finder_cursor
-      Enumerator.new(method(:size)) do |yielder|
-        while (records = cursor.next_batch(@batch_size))
-          yielder.yield(records, cursor_value(records.last)) if records.any?
-        end
-      end
+      deferred_enumerator.batches.call(cursor: cursor)
     end
 
     def size
-      @relation.count
+      relation.count
     end
 
     private
 
-    def cursor_value(record)
-      positions = @columns.map do |column|
-        attribute_name = column.to_s.split('.').last
-        column_value(record, attribute_name)
-      end
-      return positions.first if positions.size == 1
-      positions
-    end
-
-    def finder_cursor
-      JobIteration::ActiveRecordCursor.new(@relation, @columns, @cursor)
-    end
-
-    def column_value(record, attribute)
-      value = record.read_attribute(attribute.to_sym)
-      case record.class.columns_hash.fetch(attribute).type
-      when :datetime
-        value.strftime(SQL_DATETIME_WITH_NSEC)
-      else
-        value
-      end
-    end
+    attr_reader :cursor
+    attr_reader :deferred_enumerator
+    attr_reader :relation
   end
 end

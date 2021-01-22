@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative 'deferred_csv_enumerator'
+
 module JobIteration
   # CsvEnumerator makes it possible to write an Iteration job
   # that uses CSV file as a collection to Iterate.
@@ -20,52 +22,23 @@ module JobIteration
     #   csv = CSV.open('tmp/files', { converters: :integer, headers: true })
     #   JobIteration::CsvEnumerator.new(csv).rows(cursor: cursor)
     def initialize(csv)
-      unless csv.instance_of?(CSV)
-        raise ArgumentError, "CsvEnumerator.new takes CSV object"
-      end
-
-      @csv = csv
+      @deferred_enumerator = DeferredCsvEnumerator.new(csv)
     end
 
     # Constructs a enumerator on CSV rows
     # @return [Enumerator] Enumerator instance
     def rows(cursor:)
-      @csv.lazy
-        .each_with_index
-        .drop(count_of_processed_rows(cursor))
-        .to_enum { count_of_rows_in_file }
+      deferred_enumerator.rows.call(cursor: cursor)
     end
 
     # Constructs a enumerator on batches of CSV rows
     # @return [Enumerator] Enumerator instance
     def batches(batch_size:, cursor:)
-      @csv.lazy
-        .each_slice(batch_size)
-        .each_with_index
-        .drop(count_of_processed_rows(cursor))
-        .to_enum { (count_of_rows_in_file.to_f / batch_size).ceil }
+      deferred_enumerator.batches(batch_size: batch_size).call(cursor: cursor)
     end
 
     private
 
-    def count_of_rows_in_file
-      # TODO: Remove rescue for NoMethodError when Ruby 2.6 is no longer supported.
-      begin
-        filepath = @csv.path
-      rescue NoMethodError
-        return
-      end
-
-      # Behaviour of CSV#path changed in Ruby 2.6.3 (returns nil instead of raising NoMethodError)
-      return unless filepath
-
-      count = %x(wc -l < #{filepath}).strip.to_i
-      count -= 1 if @csv.headers
-      count
-    end
-
-    def count_of_processed_rows(cursor)
-      cursor.nil? ? 0 : cursor + 1
-    end
+    attr_reader :deferred_enumerator
   end
 end

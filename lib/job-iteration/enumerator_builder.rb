@@ -8,16 +8,10 @@ module JobIteration
   class EnumeratorBuilder
     extend Forwardable
 
-    # These wrappers ensure we have a custom type that we can assert on in
-    # Iteration. It's useful that the `wrapper` passed to EnumeratorBuilder in
-    # `enumerator_builder` is _always_ the type that is returned from
-    # `build_enumerator`. This prevents people from implementing custom
-    # Enumerators without wrapping them in
-    # `enumerator_builder.wrap(custom_enum)`. We don't do this yet for backwards
-    # compatibility with raw calls to EnumeratorBuilder. Think of these wrappers
-    # the way you should a middleware.
+    # TODO: Document deprecation
     class Wrapper < Enumerator
       def self.wrap(_builder, enum)
+        # TODO: Log deprecation
         new(-> { enum.size }) do |yielder|
           enum.each do |*val|
             yielder.yield(*val)
@@ -35,13 +29,13 @@ module JobIteration
 
     # Builds Enumerator objects that iterates once.
     def build_once_enumerator(cursor:)
-      wrap(self, build_times_enumerator(1, cursor: cursor))
+      build_times_enumerator(1, cursor: cursor)
     end
 
     # Builds Enumerator objects that iterates N times and yields number starting from zero.
     def build_times_enumerator(number, cursor:)
       raise ArgumentError, "First argument must be an Integer" unless number.is_a?(Integer)
-      wrap(self, build_array_enumerator(number.times.to_a, cursor: cursor))
+      build_array_enumerator(number.times.to_a, cursor: cursor)
     end
 
     # Builds Enumerator object from a given array, using +cursor+ as an offset.
@@ -59,7 +53,7 @@ module JobIteration
           cursor + 1
         end
 
-      wrap(self, enumerable.each_with_index.drop(drop).to_enum { enumerable.size })
+      enumerable.each_with_index.drop(drop).to_enum { enumerable.size }
     end
 
     # Builds Enumerator from Active Record Relation. Each Enumerator tick moves the cursor one row forward.
@@ -87,12 +81,11 @@ module JobIteration
     #          OR (created_at = '$LAST_CREATED_AT_CURSOR' AND (id > '$LAST_ID_CURSOR')))
     #        ORDER BY created_at, id LIMIT 100
     def build_active_record_enumerator_on_records(scope, cursor:, **args)
-      enum = build_active_record_enumerator(
+      build_active_record_enumerator(
         scope,
         cursor: cursor,
         **args
       ).records
-      wrap(self, enum)
     end
 
     # Builds Enumerator from Active Record Relation and enumerates on batches.
@@ -102,12 +95,11 @@ module JobIteration
     #
     # For the rest of arguments, see documentation for #build_active_record_enumerator_on_records
     def build_active_record_enumerator_on_batches(scope, cursor:, **args)
-      enum = build_active_record_enumerator(
+      build_active_record_enumerator(
         scope,
         cursor: cursor,
         **args
       ).batches
-      wrap(self, enum)
     end
 
     def build_throttle_enumerator(enum, throttle_on:, backoff:)

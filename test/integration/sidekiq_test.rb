@@ -39,6 +39,21 @@ class SidekiqIntegrationTest < ActiveSupport::TestCase
     assert_equal 0, queue_size
   end
 
+  test "allows callbacks to finish before reenqueuing job after interrupt" do
+    out, _ = capture_subprocess_io do
+      CallbacksJob.perform_later
+      start_sidekiq_and_wait
+    end
+
+    expected_callbacks_order = [["before_enqueue"], ["on_shutdown"], ["before_enqueue"]]
+    assert_equal expected_callbacks_order, out.scan(/callback: ([^\s]+)/)
+
+    TerminateJob.perform_later
+    start_sidekiq_and_wait
+
+    assert_equal 0, queue_size
+  end
+
   private
 
   def start_sidekiq_and_wait

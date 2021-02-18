@@ -17,6 +17,8 @@ module JobIteration
       define_callbacks :start
       define_callbacks :shutdown
       define_callbacks :complete
+
+      after_perform(prepend: true, if: :reenqueue_iteration_job?) { reenqueue_iteration_job }
     end
 
     module ClassMethods
@@ -127,8 +129,8 @@ module JobIteration
         end
 
         next unless job_should_exit?
+        @reenqueue_iteration_job = true
         self.executions -= 1 if executions > 1
-        reenqueue_iteration_job
         return false
       end
 
@@ -144,6 +146,10 @@ module JobIteration
       ActiveSupport::Notifications.instrument("each_iteration.iteration", iteration_instrumentation_tags) do
         yield
       end
+    end
+
+    def reenqueue_iteration_job?
+      defined?(@reenqueue_iteration_job) && @reenqueue_iteration_job
     end
 
     def reenqueue_iteration_job

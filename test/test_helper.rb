@@ -51,6 +51,7 @@ connection_config = {
   adapter: "mysql2",
   database: "job_iteration_test",
   username: 'root',
+  password: 'root',
   host: host,
 }
 

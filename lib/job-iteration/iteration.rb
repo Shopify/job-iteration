@@ -18,6 +18,11 @@ module JobIteration
       define_callbacks :shutdown
       define_callbacks :complete
 
+      rescue_from(Exception) do
+        reenqueue_iteration_job if reenqueue_iteration_job?
+        raise
+      end
+
       after_perform(prepend: true, if: :reenqueue_iteration_job?) { reenqueue_iteration_job }
     end
 

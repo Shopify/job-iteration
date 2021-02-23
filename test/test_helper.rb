@@ -46,14 +46,15 @@ class Product < ActiveRecord::Base
 end
 
 host = ENV['USING_DEV'] == "1" ? 'job-iteration.railgun' : 'localhost'
-
+puts "!" * 100
+puts host
 connection_config = {
   adapter: "mysql2",
   database: "job_iteration_test",
   username: 'root',
-  password: 'root',
   host: host,
 }
+connection_config[:password] = 'root' unless ENV['USING_DEV']
 
 ActiveRecord::Base.establish_connection(connection_config)
 

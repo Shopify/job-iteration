@@ -51,9 +51,9 @@ connection_config = {
   adapter: "mysql2",
   database: "job_iteration_test",
   username: 'root',
-  password: 'root',
   host: host,
 }
+connection_config[:password] = 'root' if ENV['CI']
 
 ActiveRecord::Base.establish_connection(connection_config)
 

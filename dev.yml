@@ -12,8 +12,8 @@ up:
   - bundler
   - custom:
       name: Create Job Iteration database
-      meet: mysql -uroot -h job-iteration.railgun -proot -e "CREATE DATABASE job_iteration_test"
-      met?: mysql -uroot -h job-iteration.railgun -proot job_iteration_test -e "SELECT 1"
+      meet: mysql -uroot -h job-iteration.railgun -e "CREATE DATABASE job_iteration_test"
+      met?: mysql -uroot -h job-iteration.railgun job_iteration_test -e "SELECT 1"
 
 commands:
   test: bundle exec rake

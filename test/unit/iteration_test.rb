@@ -64,12 +64,12 @@ class JobIterationTest < IterationUnitTest
   end
 
   def test_jobs_that_define_build_enumerator_and_each_iteration_will_not_raise
-    push(JobWithRightMethods, 'walrus' => 'best')
+    push(JobWithRightMethods, "walrus" => "best")
     work_one_job
   end
 
   def test_jobs_that_define_build_enumerator_and_each_iteration_with_sigs_will_not_raise
-    push(JobWithRightMethodsButWithSorbetSignatures, 'walrus' => 'best')
+    push(JobWithRightMethodsButWithSorbetSignatures, "walrus" => "best")
     work_one_job
   end
 

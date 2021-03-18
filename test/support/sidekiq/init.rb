@@ -1,14 +1,14 @@
 # frozen_string_literal: true
 
-require 'job-iteration'
-require 'job-iteration/integrations/sidekiq'
+require "job-iteration"
+require "job-iteration/integrations/sidekiq"
 
-require 'active_job'
-require 'i18n'
+require "active_job"
+require "i18n"
 
-require_relative '../jobs'
+require_relative "../jobs"
 
-redis_host = if ENV['USING_DEV'] == "1"
+redis_host = if ENV["USING_DEV"] == "1"
   "job-iteration.railgun"
 else
   "localhost"

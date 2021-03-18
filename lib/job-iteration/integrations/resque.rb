@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'resque'
+require "resque"
 
 module JobIteration
   module Integrations

@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require 'test_helper'
+require "test_helper"
 
-require_relative '../support/jobs'
+require_relative "../support/jobs"
 
 class ResqueIntegrationTest < ActiveSupport::TestCase
   setup do

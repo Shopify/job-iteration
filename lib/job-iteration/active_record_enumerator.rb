@@ -40,7 +40,7 @@ module JobIteration
 
     def cursor_value(record)
       positions = @columns.map do |column|
-        attribute_name = column.to_s.split('.').last
+        attribute_name = column.to_s.split(".").last
         column_value(record, attribute_name)
       end
       return positions.first if positions.size == 1

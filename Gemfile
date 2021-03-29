@@ -20,7 +20,7 @@ gem "database_cleaner"
 gem "pry"
 gem "mocha"
 
-gem "rubocop", "~> 0.77.0"
+gem "rubocop-shopify", require: false
 gem "yard"
 gem "rake"
 

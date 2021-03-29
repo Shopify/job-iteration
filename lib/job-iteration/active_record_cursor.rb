@@ -23,7 +23,7 @@ module JobIteration
       @columns = Array.wrap(columns)
       self.position = Array.wrap(position)
       raise ArgumentError, "Must specify at least one column" if columns.empty?
-      if relation.joins_values.present? && !@columns.all? { |column| column.to_s.include?('.') }
+      if relation.joins_values.present? && !@columns.all? { |column| column.to_s.include?(".") }
         raise ArgumentError, "You need to specify fully-qualified columns if you join a table"
       end
 
@@ -31,7 +31,7 @@ module JobIteration
         raise ConditionNotSupportedError
       end
 
-      @base_relation = relation.reorder(@columns.join(','))
+      @base_relation = relation.reorder(@columns.join(","))
       @reached_end = false
     end
 
@@ -50,7 +50,7 @@ module JobIteration
 
     def update_from_record(record)
       self.position = @columns.map do |column|
-        method = column.to_s.split('.').last
+        method = column.to_s.split(".").last
         record.send(method.to_sym)
       end
     end

@@ -10,7 +10,7 @@ Gem::Specification.new do |spec|
   spec.authors       = %w(Shopify)
   spec.email         = ["ops-accounts+shipit@shopify.com"]
 
-  spec.summary       = 'Makes your background jobs interruptible and resumable.'
+  spec.summary       = "Makes your background jobs interruptible and resumable."
   spec.description   = spec.summary
   spec.homepage      = "https://github.com/shopify/job-iteration"
   spec.license       = "MIT"

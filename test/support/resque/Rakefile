@@ -2,16 +2,16 @@
 
 # $LOAD_PATH.unshift File.dirname(__FILE__) + '/../../lib'
 # $LOAD_PATH.unshift File.dirname(__FILE__) unless $LOAD_PATH.include?(File.dirname(__FILE__))
-require 'resque/tasks'
+require "resque/tasks"
 
-require 'job-iteration'
-require 'job-iteration/integrations/resque'
-require 'active_job'
-require 'i18n'
+require "job-iteration"
+require "job-iteration/integrations/resque"
+require "active_job"
+require "i18n"
 
-require_relative '../jobs'
+require_relative "../jobs"
 
-redis_url = if ENV['USING_DEV'] == "1"
+redis_url = if ENV["USING_DEV"] == "1"
   "job-iteration.railgun:6379"
 else
   "localhost:6379"

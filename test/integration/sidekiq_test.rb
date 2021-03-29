@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-require 'test_helper'
+require "test_helper"
 
-require 'sidekiq/api'
-require_relative '../support/jobs'
+require "sidekiq/api"
+require_relative "../support/jobs"
 
 class SidekiqIntegrationTest < ActiveSupport::TestCase
   setup do

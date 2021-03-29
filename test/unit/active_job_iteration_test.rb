@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-require 'test_helper'
+require "test_helper"
 
 module JobIteration
   class IterationTest < IterationUnitTest
@@ -120,7 +120,7 @@ module JobIteration
     class OrderedActiveRecordIterationJob < SimpleIterationJob
       def build_enumerator(cursor:)
         enumerator_builder.active_record_on_records(
-          Product.order('country DESC'),
+          Product.order("country DESC"),
           cursor: cursor
         )
       end
@@ -464,7 +464,7 @@ module JobIteration
         assert_equal iter * 3, MultipleColumnsActiveRecordIterationJob.records_performed.size
       end
 
-      first_products = Product.all.order('updated_at, id').limit(9).to_a
+      first_products = Product.all.order("updated_at, id").limit(9).to_a
       assert_equal(first_products, MultipleColumnsActiveRecordIterationJob.records_performed)
     end
 
@@ -533,7 +533,7 @@ module JobIteration
     end
 
     def test_passes_params_to_each_iteration
-      params = { 'walrus' => 'best' }
+      params = { "walrus" => "best" }
       push(ParamsIterationJob, params)
       work_one_job
       assert_equal([params, params], ParamsIterationJob.records_performed)
@@ -541,7 +541,7 @@ module JobIteration
 
     def test_passes_params_to_each_iteration_without_extra_information_on_interruption
       iterate_exact_times(1.times)
-      params = { 'walrus' => 'yes', 'morewalrus' => 'si' }
+      params = { "walrus" => "yes", "morewalrus" => "si" }
       push(ParamsIterationJob, params)
 
       work_one_job
@@ -557,7 +557,7 @@ module JobIteration
 
       push(ActiveRecordIterationJob)
 
-      assert_statsd_increment('background_queue.iteration.interrupted') do
+      assert_statsd_increment("background_queue.iteration.interrupted") do
         work_one_job
       end
     end
@@ -568,11 +568,11 @@ module JobIteration
 
       push(ActiveRecordIterationJob)
 
-      assert_no_statsd_calls('background_queue.iteration.resumed') do
+      assert_no_statsd_calls("background_queue.iteration.resumed") do
         work_one_job
       end
 
-      assert_statsd_increment('background_queue.iteration.resumed') do
+      assert_statsd_increment("background_queue.iteration.resumed") do
         work_one_job
       end
     end

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require 'test_helper'
-require 'open3'
+require "test_helper"
+require "open3"
 
 class IntegrationsTest < ActiveSupport::TestCase
   test "will prevent loading two integrations" do

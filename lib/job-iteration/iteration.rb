@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'active_support/all'
+require "active_support/all"
 
 module JobIteration
   module Iteration
@@ -54,17 +54,17 @@ module JobIteration
 
     def serialize # @private
       super.merge(
-        'cursor_position' => cursor_position,
-        'times_interrupted' => times_interrupted,
-        'total_time' => total_time,
+        "cursor_position" => cursor_position,
+        "times_interrupted" => times_interrupted,
+        "total_time" => total_time,
       )
     end
 
     def deserialize(job_data) # @private
       super
-      self.cursor_position = job_data['cursor_position']
-      self.times_interrupted = job_data['times_interrupted'] || 0
-      self.total_time = job_data['total_time'] || 0
+      self.cursor_position = job_data["cursor_position"]
+      self.times_interrupted = job_data["times_interrupted"] || 0
+      self.total_time = job_data["total_time"] || 0
     end
 
     def perform(*params) # @private

@@ -54,11 +54,11 @@ module JobIteration
   def load_integration(integration)
     unless INTEGRATIONS.include?(integration)
       raise IntegrationLoadError,
-        "#{integration} integration is not supported. Available integrations: #{INTEGRATIONS.join(', ')}"
+        "#{integration} integration is not supported. Available integrations: #{INTEGRATIONS.join(", ")}"
     end
 
     require_relative "./job-iteration/integrations/#{integration}"
   end
 end
 
-JobIteration.load_integrations unless ENV['ITERATION_DISABLE_AUTOCONFIGURE']
+JobIteration.load_integrations unless ENV["ITERATION_DISABLE_AUTOCONFIGURE"]

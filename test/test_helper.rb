@@ -3,7 +3,7 @@
 $LOAD_PATH.unshift(File.expand_path("../../lib", __FILE__))
 require "minitest/autorun"
 
-ENV['ITERATION_DISABLE_AUTOCONFIGURE'] = 'true'
+ENV["ITERATION_DISABLE_AUTOCONFIGURE"] = "true"
 
 require "job-iteration"
 require "job-iteration/test_helper"
@@ -14,8 +14,8 @@ require "resque"
 require "active_job"
 require "active_record"
 require "pry"
-require 'mocha/minitest'
-require 'database_cleaner'
+require "mocha/minitest"
+require "database_cleaner"
 
 GlobalID.app = "iteration"
 ActiveRecord::Base.include(GlobalID::Identification) # https://github.com/rails/globalid/blob/master/lib/global_id/railtie.rb
@@ -45,15 +45,15 @@ ActiveJob::Base.queue_adapter = :iteration_test
 class Product < ActiveRecord::Base
 end
 
-host = ENV['USING_DEV'] == "1" ? 'job-iteration.railgun' : 'localhost'
+host = ENV["USING_DEV"] == "1" ? "job-iteration.railgun" : "localhost"
 
 connection_config = {
   adapter: "mysql2",
   database: "job_iteration_test",
-  username: 'root',
+  username: "root",
   host: host,
 }
-connection_config[:password] = 'root' if ENV['CI']
+connection_config[:password] = "root" if ENV["CI"]
 
 ActiveRecord::Base.establish_connection(connection_config)
 

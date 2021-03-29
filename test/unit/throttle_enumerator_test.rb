@@ -116,7 +116,7 @@ module JobIteration
       called = false
       callback = ->(_event, _started, _finished, _job_id, args) {
         called = true
-        assert_equal IterationThrottleJob.name, args[:job_class]
+        assert_equal(IterationThrottleJob.name, args[:job_class])
       }
       ActiveSupport::Notifications.subscribed(callback, "throttled.iteration") do
         IterationThrottleJob.perform_now({})

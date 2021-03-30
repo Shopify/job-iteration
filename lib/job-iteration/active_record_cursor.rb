@@ -64,7 +64,9 @@ module JobIteration
         relation = relation.where(*conditions)
       end
 
-      records = relation.to_a
+      records = relation.uncached do
+        relation.to_a
+      end
 
       update_from_record(records.last) unless records.empty?
       @reached_end = records.size < batch_size

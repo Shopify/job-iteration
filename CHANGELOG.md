@@ -4,6 +4,10 @@
 
 #### Bug fix
 
+## v1.1.10 (March 30, 2021)
+
+- [69](https://github.com/Shopify/job-iteration/pull/69) Fix memory leak in ActiveRecordCursor
+
 ## v1.1.9 (January 6, 2021)
 
 - [61](https://github.com/Shopify/job-iteration/pull/61) Call `super` in `method_added`

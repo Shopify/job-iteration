@@ -6,6 +6,28 @@ module JobIteration
   module Iteration
     extend ActiveSupport::Concern
 
+    class CursorError < ArgumentError
+      attr_reader :cursor
+
+      def initialize(message, cursor:)
+        super(message)
+        @cursor = cursor
+      end
+
+      def message
+        "#{super} (#{inspected_cursor})"
+      end
+
+      private
+
+      def inspected_cursor
+        cursor.inspect
+      rescue NoMethodError
+        # For those brave enough to try to use BasicObject as cursor. Nice try.
+        Object.instance_method(:inspect).bind(cursor).call
+      end
+    end
+
     included do |_base|
       attr_accessor(
         :cursor_position,
@@ -120,6 +142,8 @@ module JobIteration
       arguments = arguments.dup.freeze
       found_record = false
       enumerator.each do |object_from_enumerator, index|
+        assert_valid_cursor!(index)
+
         record_unit_of_work do
           found_record = true
           each_iteration(object_from_enumerator, *arguments)
@@ -174,6 +198,18 @@ module JobIteration
             )
           end
       EOS
+    end
+
+    # The adapter must be able to serialize and deserialize the cursor back into an equivalent object.
+    # https://github.com/mperham/sidekiq/wiki/Best-Practices#1-make-your-job-parameters-small-and-simple
+    def assert_valid_cursor!(cursor)
+      return if serializable?(cursor)
+
+      raise CursorError.new(
+        "Cursor must be composed of objects capable of built-in (de)serialization: " \
+        "Strings, Integers, Floats, Arrays, Hashes, true, false, or nil.",
+        cursor: cursor,
+      )
     end
 
     def assert_implements_methods!
@@ -249,6 +285,22 @@ module JobIteration
         next unless parameter_name == :cursor
         return true if [:keyreq, :key].include?(parameter_type)
       end
+      false
+    end
+
+    SIMPLE_SERIALIZABLE_CLASSES = [String, Integer, Float, NilClass, TrueClass, FalseClass].freeze
+    private_constant :SIMPLE_SERIALIZABLE_CLASSES
+    def serializable?(object)
+      # Subclasses must be excluded, hence not using is_a? or ===.
+      if object.instance_of?(Array)
+        object.all? { |element| serializable?(element) }
+      elsif object.instance_of?(Hash)
+        object.all? { |key, value| serializable?(key) && serializable?(value) }
+      else
+        SIMPLE_SERIALIZABLE_CLASSES.any? { |klass| object.instance_of?(klass) }
+      end
+    rescue NoMethodError
+      # BasicObject doesn't respond to instance_of, but we can't serialize it anyway
       false
     end
   end

@@ -4,13 +4,20 @@
 
 #### Bug fix
 
+
+## v1.1.11 (April 19, 2021)
+
+#### Bug fix
+
+- [73](https://github.com/Shopify/job-iteration/pull/73) - Enforce cursor be serializable
+
 ## v1.1.10 (March 30, 2021)
 
-- [69](https://github.com/Shopify/job-iteration/pull/69) Fix memory leak in ActiveRecordCursor
+- [69](https://github.com/Shopify/job-iteration/pull/69) - Fix memory leak in ActiveRecordCursor
 
 ## v1.1.9 (January 6, 2021)
 
-- [61](https://github.com/Shopify/job-iteration/pull/61) Call `super` in `method_added`
+- [61](https://github.com/Shopify/job-iteration/pull/61) - Call `super` in `method_added`
 
 ## v1.1.8 (June 8, 2020)
 

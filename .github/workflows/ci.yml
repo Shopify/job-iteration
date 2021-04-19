@@ -1,11 +1,11 @@
-name: Ruby
+name: CI
 
 on: [push]
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    name: Ruby ${{ matrix.ruby }}
+    name: Ruby ${{ matrix.ruby }} | Gemfile ${{ matrix.gemfile }}
     services:
       redis:
         image: redis

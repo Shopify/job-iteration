@@ -39,6 +39,22 @@ class SidekiqIntegrationTest < ActiveSupport::TestCase
     assert_equal 0, queue_size
   end
 
+  test "unserializable cursor corruption is prevented" do
+    # Sidekiq serializes cursors as JSON, but not all objects are serializable.
+    #     time   = Time.at(0).utc   # => 1970-01-01 00:00:00 UTC
+    #     json   = JSON.dump(time)  # => "\"1970-01-01 00:00:00 UTC\""
+    #     string = JSON.parse(json) # => "1970-01-01 00:00:00 UTC"
+    # We serialized a Time, but it was deserialized as a String.
+    TimeCursorJob.perform_later
+    TerminateJob.perform_later
+    start_sidekiq_and_wait
+
+    assert_equal(
+      JobIteration::Iteration::CursorError.name,
+      failed_job_error_class_name,
+    )
+  end
+
   private
 
   def start_sidekiq_and_wait
@@ -49,5 +65,9 @@ class SidekiqIntegrationTest < ActiveSupport::TestCase
 
   def queue_size
     Sidekiq::Queue.new.size
+  end
+
+  def failed_job_error_class_name
+    Sidekiq::RetrySet.new.first&.item&.fetch("error_class")
   end
 end

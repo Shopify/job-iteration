@@ -15,6 +15,19 @@ class IterationJob < ActiveJob::Base
   end
 end
 
+class TimeCursorJob < ActiveJob::Base
+  include JobIteration::Iteration
+
+  def build_enumerator(cursor:)
+    return [["item", Time.now]].to_enum if cursor.nil?
+
+    raise "This should never run; cursor is unserializable!"
+  end
+
+  def each_iteration(*)
+  end
+end
+
 class TerminateJob < ActiveJob::Base
   def perform
     Process.kill("TERM", Process.pid)

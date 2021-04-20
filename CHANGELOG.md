@@ -4,12 +4,18 @@
 
 #### Bug fix
 
+## v1.1.12 (April 19, 2021)
+
+#### Bug fix
+
+- [77](https://github.com/Shopify/job-iteration/pull/77) - Defer enforce cursor be serializable until 2.0.0
 
 ## v1.1.11 (April 19, 2021)
 
 #### Bug fix
 
 - [73](https://github.com/Shopify/job-iteration/pull/73) - Enforce cursor be serializable
+  _This is reverted in 1.1.12 as it breaks behaviour in some apps._
 
 ## v1.1.10 (March 30, 2021)
 

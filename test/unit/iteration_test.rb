@@ -183,32 +183,38 @@ class JobIterationTest < IterationUnitTest
   end
 
   def test_jobs_using_time_cursor_will_raise
+    skip("Deferred until 2.0.0")
     push(JobWithTimeCursor)
     assert_raises_cursor_error { work_one_job }
   end
 
   def test_jobs_using_active_record_cursor_will_raise
+    skip("Deferred until 2.0.0")
     refute_nil(Product.first)
     push(JobWithActiveRecordCursor)
     assert_raises_cursor_error { work_one_job }
   end
 
   def test_jobs_using_symbol_cursor_will_raise
+    skip("Deferred until 2.0.0")
     push(JobWithSymbolCursor)
     assert_raises_cursor_error { work_one_job }
   end
 
   def test_jobs_using_string_subclass_cursor_will_raise
+    skip("Deferred until 2.0.0")
     push(JobWithStringSubclassCursor)
     assert_raises_cursor_error { work_one_job }
   end
 
   def test_jobs_using_basic_object_cursor_will_raise
+    skip("Deferred until 2.0.0")
     push(JobWithBasicObjectCursor)
     assert_raises_cursor_error { work_one_job }
   end
 
   def test_jobs_using_complex_but_serializable_cursor_will_not_raise
+    skip("Deferred until 2.0.0")
     push(JobWithComplexCursor)
     work_one_job
   end

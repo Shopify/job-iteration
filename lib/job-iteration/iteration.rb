@@ -142,7 +142,8 @@ module JobIteration
       arguments = arguments.dup.freeze
       found_record = false
       enumerator.each do |object_from_enumerator, index|
-        assert_valid_cursor!(index)
+        # Deferred until 2.0.0
+        # assert_valid_cursor!(index)
 
         record_unit_of_work do
           found_record = true

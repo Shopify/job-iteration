@@ -38,16 +38,14 @@ module JobIteration
   def load_integrations
     loaded = nil
     INTEGRATIONS.each do |integration|
-      begin
-        load_integration(integration)
-        if loaded
-          raise IntegrationLoadError,
-            "#{loaded} integration has already been loaded, but #{integration} is also available. " \
-            "Iteration will only work with one integration."
-        end
-        loaded = integration
-      rescue LoadError
+      load_integration(integration)
+      if loaded
+        raise IntegrationLoadError,
+          "#{loaded} integration has already been loaded, but #{integration} is also available. " \
+          "Iteration will only work with one integration."
       end
+      loaded = integration
+    rescue LoadError
     end
   end
 

@@ -9,6 +9,8 @@ module JobIteration
 
   INTEGRATIONS = [:resque, :sidekiq]
 
+  Deprecation = ActiveSupport::Deprecation.new("2.0", "JobIteration")
+
   extend self
 
   # Use this to _always_ interrupt the job after it's been running for more than N seconds.

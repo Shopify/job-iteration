@@ -27,6 +27,4 @@ Gem::Specification.new do |spec|
 
   spec.add_development_dependency("activerecord")
   spec.add_dependency("activejob", ">= 5.2")
-
-  spec.required_ruby_version = ">= 2.5"
 end

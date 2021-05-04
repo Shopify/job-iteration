@@ -36,6 +36,20 @@ module JobIteration
       end
     end
 
+    class FlunkOnIterationThrottleJob < ActiveJob::Base
+      include JobIteration::Iteration
+
+      def build_enumerator(_params, cursor:)
+        enumerator_builder.build_throttle_enumerator(
+          Enumerator.new { raise StandardError, "should not evaluate when throttled" },
+          throttle_on: -> { true },
+          backoff: 30.seconds
+        )
+      end
+
+      def each_iteration(_record, _params); end
+    end
+
     setup do
       IterationThrottleJob.iterations_performed = []
     end
@@ -108,6 +122,10 @@ module JobIteration
 
       IterationThrottleJob.perform_now({})
       assert_equal 0, IterationThrottleJob.on_complete_called
+    end
+
+    test "does not evaluate enumerator when throttled" do
+      FlunkOnIterationThrottleJob.perform_now({})
     end
 
     test "throttle event is instrumented" do

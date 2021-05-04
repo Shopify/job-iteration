@@ -468,6 +468,54 @@ module JobIteration
       assert_equal(first_products, MultipleColumnsActiveRecordIterationJob.records_performed)
     end
 
+    def test_multiple_columns_iterates_over_records_more_than_once
+      minimum_timestamp = Product.minimum(:updated_at)
+      maximum_timestamp = Product.maximum(:updated_at)
+
+      record = Product.first
+      record.update!(updated_at: minimum_timestamp)
+
+      iterate_exact_times(6.times)
+      push(MultipleColumnsActiveRecordIterationJob)
+
+      work_one_job
+
+      record.update!(updated_at: maximum_timestamp + 1.second)
+
+      work_one_job
+
+      filtered_records = MultipleColumnsActiveRecordIterationJob.records_performed.select do |performed_record|
+        performed_record == record
+      end
+
+      assert_equal(2, filtered_records.size)
+    end
+
+    def test_multiple_columns_skips_iterating_over_records
+      minimum_timestamp = Product.minimum(:updated_at)
+      maximum_timestamp = Product.maximum(:updated_at)
+
+      record = Product.last
+      record.update!(updated_at: maximum_timestamp)
+
+      iterate_exact_times(6.times)
+
+      push(MultipleColumnsActiveRecordIterationJob)
+
+      work_one_job
+
+      record.update!(updated_at: minimum_timestamp - 1.second)
+
+      work_one_job
+
+      filtered_records = MultipleColumnsActiveRecordIterationJob.records_performed.select do |performed_record|
+        performed_record == record
+      end
+
+      assert_equal(0, filtered_records.size)
+      assert_jobs_in_queue(0)
+    end
+
     def test_single_iteration
       push(SingleIterationJob)
 

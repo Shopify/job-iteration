@@ -162,6 +162,8 @@ module JobIteration
         "times_interrupted=#{times_interrupted} cursor_position=#{cursor_position}"
       ) unless found_record
 
+      adjust_total_time
+
       true
     end
 
@@ -249,8 +251,6 @@ module JobIteration
     end
 
     def output_interrupt_summary
-      adjust_total_time
-
       message = "[JobIteration::Iteration] Completed iterating. times_interrupted=%d total_time=%.3f"
       logger.info(Kernel.format(message, times_interrupted, total_time))
     end

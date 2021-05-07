@@ -86,6 +86,11 @@ module JobIteration
     #        WHERE (created_at > '$LAST_CREATED_AT_CURSOR'
     #          OR (created_at = '$LAST_CREATED_AT_CURSOR' AND (id > '$LAST_ID_CURSOR')))
     #        ORDER BY created_at, id LIMIT 100
+    #
+    # As a result of this query pattern, if the values in these columns change for the records in scope during
+    # iteration, they may be skipped or yielded multiple times depending on the nature of the update and the
+    # cursor's value. If the value gets updated to a greater value than the cursor's value, it will get yielded
+    # again. Similarly, if the value gets updated to a lesser value than the curor's value, it will get skipped.
     def build_active_record_enumerator_on_records(scope, cursor:, **args)
       enum = build_active_record_enumerator(
         scope,

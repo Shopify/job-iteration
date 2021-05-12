@@ -6,9 +6,10 @@ module JobIteration
   class ActiveRecordEnumerator
     SQL_DATETIME_WITH_NSEC = "%Y-%m-%d %H:%M:%S.%N"
 
-    def initialize(relation, columns: nil, batch_size: 100, cursor: nil)
+    def initialize(relation, columns: nil, batch_size: 100, as_relation: false, cursor: nil)
       @relation = relation
       @batch_size = batch_size
+      @as_relation = as_relation
       @columns = Array(columns || "#{relation.table_name}.#{relation.primary_key}")
       @cursor = cursor
     end
@@ -26,7 +27,7 @@ module JobIteration
     def batches
       cursor = finder_cursor
       Enumerator.new(method(:size)) do |yielder|
-        while (records = cursor.next_batch(@batch_size))
+        while (records = cursor.next_batch(@batch_size, @as_relation))
           yielder.yield(records, cursor_value(records.last)) if records.any?
         end
       end

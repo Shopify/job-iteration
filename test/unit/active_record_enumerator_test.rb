@@ -50,6 +50,38 @@ module JobIteration
       end
     end
 
+    test "#batches yielding records performs one query per batch, plus one, when relation_size % batch_size is 0" do
+      enum = build_enumerator.batches
+      num_batches = 0
+      query_count = count_uncached_queries do
+        enum.each { num_batches += 1 }
+      end
+
+      expected_num_queries = num_batches + 1
+      assert_equal expected_num_queries, query_count
+    end
+
+    test "#batches yielding records performs one query for each batch when relation_size % batch_size isn't 0" do
+      enum = build_enumerator(batch_size: 3).batches
+      num_batches = 0
+      query_count = count_uncached_queries do
+        enum.each { num_batches += 1 }
+      end
+
+      assert_equal num_batches, query_count
+    end
+
+    test "#batches yielding relations performs one query per batch, plus one" do
+      enum = build_enumerator(as_relation: true).batches
+      num_batches = 0
+      query_count = count_uncached_queries do
+        enum.each { num_batches += 1 }
+      end
+
+      expected_num_queries = num_batches + 1
+      assert_equal expected_num_queries, query_count
+    end
+
     test "batch size is configurable" do
       enum = build_enumerator(batch_size: 4).batches
       shops = Product.order(:id).take(4)
@@ -95,13 +127,22 @@ module JobIteration
 
     private
 
-    def build_enumerator(relation: Product.all, batch_size: 2, columns: nil, cursor: nil)
+    def build_enumerator(relation: Product.all, batch_size: 2, columns: nil, cursor: nil, as_relation: false)
       JobIteration::ActiveRecordEnumerator.new(
         relation,
         batch_size: batch_size,
         columns: columns,
         cursor: cursor,
+        as_relation: as_relation,
       )
+    end
+
+    def count_uncached_queries(&block)
+      count = 0
+
+      query_cb = ->(*, payload) { count += 1 unless payload[:cached] }
+      ActiveSupport::Notifications.subscribed(query_cb, "sql.active_record", &block)
+      count
     end
   end
 end

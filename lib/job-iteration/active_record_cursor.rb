@@ -48,14 +48,7 @@ module JobIteration
       @position = position
     end
 
-    def update_from_record(record)
-      self.position = @columns.map do |column|
-        method = column.to_s.split(".").last
-        record.send(method.to_sym)
-      end
-    end
-
-    def next_batch(batch_size)
+    def next_batch(batch_size, as_relation = false)
       return nil if @reached_end
 
       relation = @base_relation.limit(batch_size)
@@ -64,14 +57,11 @@ module JobIteration
         relation = relation.where(*conditions)
       end
 
-      records = relation.uncached do
-        relation.to_a
+      if as_relation
+        prepare_next_batch_as_relation(relation)
+      else
+        prepare_next_batch_as_records(batch_size, relation)
       end
-
-      update_from_record(records.last) unless records.empty?
-      @reached_end = records.size < batch_size
-
-      records.empty? ? nil : records
     end
 
     protected
@@ -92,6 +82,37 @@ module JobIteration
       ret = @position.reduce([conditions]) { |params, value| params << value << value }
       ret.pop
       ret
+    end
+
+    private
+
+    def prepare_next_batch_as_records(batch_size, relation)
+      records = relation.uncached do
+        relation.to_a
+      end
+
+      update_from_record(records.last) unless records.empty?
+      @reached_end = records.size < batch_size
+
+      records.empty? ? nil : records
+    end
+
+    def prepare_next_batch_as_relation(relation)
+      last_record = relation.last
+      if last_record
+        update_from_record(last_record)
+        relation
+      else
+        @reached_end = true
+        nil
+      end
+    end
+
+    def update_from_record(record)
+      self.position = @columns.map do |column|
+        method = column.to_s.split(".").last
+        record.send(method.to_sym)
+      end
     end
   end
 end

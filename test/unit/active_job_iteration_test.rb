@@ -75,6 +75,20 @@ module JobIteration
       end
     end
 
+    class BatchActiveRecordRelationIterationJob < SimpleIterationJob
+      def build_enumerator(cursor:)
+        enumerator_builder.active_record_on_batches_as_relation(
+          Product.all,
+          cursor: cursor,
+          batch_size: 3,
+        )
+      end
+
+      def each_iteration(relation)
+        self.class.records_performed << relation
+      end
+    end
+
     class AbortingActiveRecordIterationJob < ActiveRecordIterationJob
       def each_iteration(*)
         abort_strategy if self.class.records_performed.size == 2
@@ -410,6 +424,17 @@ module JobIteration
 
       assert_equal([3, 3, 3, 1], BatchActiveRecordIterationJob.records_performed.map(&:size))
       assert_equal(processed_records, BatchActiveRecordIterationJob.records_performed.flatten.map(&:id))
+    end
+
+    def test_activerecord_batches_as_relation
+      push(BatchActiveRecordRelationIterationJob)
+
+      work_one_job
+      assert_jobs_in_queue(0)
+
+      records_performed = BatchActiveRecordIterationJob.records_performed
+      assert_equal([3, 3, 3, 1], records_performed.map(&:size))
+      assert(records_performed.all? { |record| record.is_a?(ActiveRecord::Relation) })
     end
 
     def test_activerecord_batches

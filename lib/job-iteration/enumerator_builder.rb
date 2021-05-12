@@ -110,6 +110,18 @@ module JobIteration
       wrap(self, enum)
     end
 
+    # Builds Enumerator from Active Record Relation and enumerates on batches, yielding Active Record Relations.
+    # See documentation for #build_active_record_enumerator_on_batches.
+    def build_active_record_enumerator_on_batches_as_relation(scope, cursor:, **args)
+      enum = build_active_record_enumerator(
+        scope,
+        cursor: cursor,
+        as_relation: true,
+        **args
+      ).batches
+      wrap(self, enum)
+    end
+
     def build_throttle_enumerator(enum, throttle_on:, backoff:)
       JobIteration::ThrottleEnumerator.new(
         enum,
@@ -124,6 +136,7 @@ module JobIteration
     alias_method :array, :build_array_enumerator
     alias_method :active_record_on_records, :build_active_record_enumerator_on_records
     alias_method :active_record_on_batches, :build_active_record_enumerator_on_batches
+    alias_method :active_record_on_batches_as_relation, :build_active_record_enumerator_on_batches_as_relation
     alias_method :throttle, :build_throttle_enumerator
 
     private

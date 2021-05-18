@@ -696,11 +696,11 @@ module JobIteration
     def test_mark_job_worker_as_interrupted
       mark_job_worker_as_interrupted
 
-      assert_equal(true, JobIteration.interruption_adapter.call)
+      assert_equal(true, JobIteration.load_interruption_integration().stopping?)
 
       continue_iterating
 
-      assert_equal(false, JobIteration.interruption_adapter.call)
+      assert_equal(false, JobIteration.load_interruption_integration().stopping?)
     end
 
     def test_reenqueue_self

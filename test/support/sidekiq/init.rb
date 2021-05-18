@@ -1,11 +1,12 @@
 # frozen_string_literal: true
 
-require "job-iteration"
-require "job-iteration/integrations/sidekiq"
+require "job_iteration"
+require "job_iteration/integrations/sidekiq_integration"
 
 require "active_job"
 require "i18n"
 
+require_relative "../async_integration"
 require_relative "../jobs"
 
 redis_host = if ENV["USING_DEV"] == "1"

@@ -255,12 +255,16 @@ module JobIteration
       logger.info(Kernel.format(message, times_interrupted, total_time))
     end
 
+    def interruption_integration
+      JobIteration.load_interruption_integration(self.class.queue_adapter_name)
+    end
+
     def job_should_exit?
       if ::JobIteration.max_job_runtime && start_time && (Time.now.utc - start_time) > ::JobIteration.max_job_runtime
         return true
       end
 
-      JobIteration.interruption_adapter.call || (defined?(super) && super)
+      interruption_integration.stopping? || (defined?(super) && super)
     end
 
     def run_complete_callbacks?(completed)

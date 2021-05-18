@@ -3,10 +3,8 @@
 $LOAD_PATH.unshift(File.expand_path("../../lib", __FILE__))
 require "minitest/autorun"
 
-ENV["ITERATION_DISABLE_AUTOCONFIGURE"] = "true"
-
-require "job-iteration"
-require "job-iteration/test_helper"
+require "job_iteration"
+require "job_iteration/test_helper"
 
 require "globalid"
 require "sidekiq"
@@ -39,6 +37,24 @@ module ActiveJob
     end
   end
 end
+
+module JobIteration
+  module Integrations
+    class IterationTestIntegration
+      def stopping?
+        false
+      end
+    end
+
+    # https://api.rubyonrails.org/classes/ActiveJob/QueueAdapters/AsyncAdapter.html
+    class AsyncIntegration
+      def stopping?
+        false
+      end
+    end
+  end
+end
+
 
 ActiveJob::Base.queue_adapter = :iteration_test
 

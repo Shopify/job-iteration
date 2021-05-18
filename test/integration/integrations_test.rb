@@ -4,26 +4,13 @@ require "test_helper"
 require "open3"
 
 class IntegrationsTest < ActiveSupport::TestCase
-  test "will prevent loading two integrations" do
-    with_env("ITERATION_DISABLE_AUTOCONFIGURE", nil) do
-      rubby = <<~RUBBY
-        require 'bundler/setup'
-        require 'job-iteration'
-      RUBBY
-      _stdout, stderr, status = run_ruby(rubby)
-
-      assert_equal false, status.success?
-      assert_match(/resque integration has already been loaded, but sidekiq is also available/, stderr)
-    end
-  end
-
   test "successfully loads one (resque) integration" do
     with_env("ITERATION_DISABLE_AUTOCONFIGURE", nil) do
       rubby = <<~RUBBY
         require 'bundler/setup'
         # Remove sidekiq, only resque will be left
         $LOAD_PATH.delete_if { |p| p =~ /sidekiq/ }
-        require 'job-iteration'
+        require 'job_iteration'
       RUBBY
       _stdout, _stderr, status = run_ruby(rubby)
 

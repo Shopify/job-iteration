@@ -60,8 +60,7 @@ module JobIteration
       @cursor = Array.wrap(cursor)
 
       # Yields relations by selecting the primary keys of records in the batch.
-      # Post.where(published: nil)
-      # results in an enumerator of relations like Post.where(ids: batch_of_ids)
+      # Post.where(published: nil) results in an enumerator of relations like: Post.where(ids: batch_of_ids)
       @base_relation.where(@primary_key => ids)
     end
 
@@ -72,9 +71,10 @@ module JobIteration
       end
 
       column_values = relation.pluck(*@pluck_columns)
-      primary_key_values = column_values.map { |values| values[@primary_key_index || -1] }
+      primary_key_index = @primary_key_index || -1
+      primary_key_values = column_values.map { |values| values[primary_key_index] }
 
-      column_values.map! { |values| values.map! { |value| column_value(value) } }
+      serialize_column_values!(column_values)
       [column_values, primary_key_values]
     end
 
@@ -99,6 +99,10 @@ module JobIteration
       ret = @cursor.reduce([where_clause]) { |params, value| params << value << value }
       ret.pop
       ret
+    end
+
+    def serialize_column_values!(column_values)
+      column_values.map! { |values| values.map! { |value| column_value(value) } }
     end
 
     def column_value(value)

@@ -77,7 +77,28 @@ class BatchesJob < ApplicationJob
 
   def each_iteration(batch_of_comments, product_id)
     # batch_of_comments will contain batches of 100 records
-    Comment.where(id: batch_of_comments.map(&:id)).update_all(deleted: true)
+    batch_of_comments.each do |comment|
+      DeleteCommentJob.perform_later(comment)
+    end
+  end
+end
+```
+
+```ruby
+class BatchesAsRelationJob < ApplicationJob
+  include JobIteration::Iteration
+
+  def build_enumerator(product_id, cursor:)
+    enumerator_builder.active_record_on_batch_relations(
+      Product.find(product_id).comments,
+      cursor: cursor,
+      batch_size: 100,
+    )
+  end
+
+  def each_iteration(batch_of_comments, product_id)
+    # batch_of_comments will be a Comment::ActiveRecord_Relation
+    batch_of_comments.update_all(deleted: true)
   end
 end
 ```

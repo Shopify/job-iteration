@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+require_relative "./active_record_batch_enumerator"
 require_relative "./active_record_enumerator"
 require_relative "./csv_enumerator"
 require_relative "./throttle_enumerator"
@@ -100,7 +101,7 @@ module JobIteration
       wrap(self, enum)
     end
 
-    # Builds Enumerator from Active Record Relation and enumerates on batches.
+    # Builds Enumerator from Active Record Relation and enumerates on batches of records.
     # Each Enumerator tick moves the cursor +batch_size+ rows forward.
     #
     # +batch_size:+ sets how many records will be fetched in one batch. Defaults to 100.
@@ -113,6 +114,16 @@ module JobIteration
         **args
       ).batches
       wrap(self, enum)
+    end
+
+    # Builds Enumerator from Active Record Relation and enumerates on batches, yielding Active Record Relations.
+    # See documentation for #build_active_record_enumerator_on_batches.
+    def build_active_record_enumerator_on_batch_relations(scope, cursor:, **args)
+      JobIteration::ActiveRecordBatchEnumerator.new(
+        scope,
+        cursor: cursor,
+        **args
+      ).each
     end
 
     def build_throttle_enumerator(enum, throttle_on:, backoff:)
@@ -129,6 +140,7 @@ module JobIteration
     alias_method :array, :build_array_enumerator
     alias_method :active_record_on_records, :build_active_record_enumerator_on_records
     alias_method :active_record_on_batches, :build_active_record_enumerator_on_batches
+    alias_method :active_record_on_batch_relations, :build_active_record_enumerator_on_batch_relations
     alias_method :throttle, :build_throttle_enumerator
 
     private

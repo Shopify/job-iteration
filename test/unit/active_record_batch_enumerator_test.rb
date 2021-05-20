@@ -24,8 +24,9 @@ module JobIteration
     end
 
     test "#each yields enumerator when called without a block" do
-      enum = build_enumerator
-      assert enum.each.is_a?(Enumerator)
+      enum = build_enumerator.each
+      assert enum.is_a?(Enumerator)
+      assert_not_nil enum.size
     end
 
     test "#each doesn't yield anything if the relation is empty" do

@@ -34,6 +34,11 @@ module JobIteration
       assert_equal([], enum.to_a)
     end
 
+    test "#size returns size of the base Active Record Relation" do
+      enum = build_enumerator
+      assert_equal Product.count, enum.size
+    end
+
     test "batch size is configurable" do
       enum = build_enumerator(batch_size: 4)
       products = Product.order(:id).take(4)
@@ -58,11 +63,11 @@ module JobIteration
     end
 
     test "columns configured with primary key only queries primary key column once" do
-      queries = track_uncached_queries do
+      queries = track_queries do
         enum = build_enumerator(columns: [:updated_at, :id])
         enum.first
       end
-      assert_equal 1, queries.first.scan(/`products`.`id`/).count
+      assert_match(/\A\s?`products`.`updated_at`, `products`.`id`\z/, queries.first[/SELECT (.*) FROM/, 1])
     end
 
     test "cursor can be used to resume" do
@@ -87,6 +92,17 @@ module JobIteration
       assert_equal([products, cursor], enum.first)
     end
 
+    test "one query performed per batch, plus an additional one for the empty cursor" do
+      enum = build_enumerator
+      num_batches = 0
+      queries = track_queries do
+        enum.each { num_batches += 1 }
+      end
+
+      expected_num_queries = num_batches + 1
+      assert_equal expected_num_queries, queries.size
+    end
+
     private
 
     def build_enumerator(relation: Product.all, batch_size: 2, columns: nil, cursor: nil)
@@ -98,9 +114,9 @@ module JobIteration
       )
     end
 
-    def track_uncached_queries(&block)
+    def track_queries(&block)
       queries = []
-      query_cb = ->(*, payload) { queries << payload[:sql] unless payload[:cached] }
+      query_cb = ->(*, payload) { queries << payload[:sql] }
       ActiveSupport::Notifications.subscribed(query_cb, "sql.active_record", &block)
       queries
     end

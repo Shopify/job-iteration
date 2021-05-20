@@ -469,7 +469,7 @@ module JobIteration
       assert_jobs_in_queue(0)
 
       records_performed = BatchActiveRecordIterationJob.records_performed
-      assert_equal([3, 3, 3, 1], records_performed.map(&:size))
+      assert_equal([3, 3, 3, 1], records_performed.map(&:count))
       assert(records_performed.all? { |relation| relation.is_a?(ActiveRecord::Relation) })
       assert(records_performed.none?(&:loaded?))
     end

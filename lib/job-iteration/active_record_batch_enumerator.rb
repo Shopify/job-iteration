@@ -34,7 +34,7 @@ module JobIteration
     def each
       if block_given?
         while (relation = next_batch)
-          break if @cursor.empty?
+          break if @cursor.nil?
           yield relation, cursor_value
         end
       else
@@ -59,8 +59,9 @@ module JobIteration
       end
 
       cursor = cursor_values.last
-      # The primary key was plucked, but original cursor did not include it
-      cursor.pop unless @primary_key_index || cursor.nil?
+      return unless cursor.present?
+      # The primary key was plucked, but original cursor did not include it, so we should remove it
+      cursor.pop unless @primary_key_index
       @cursor = Array.wrap(cursor)
 
       # Yields relations by selecting the primary keys of records in the batch.

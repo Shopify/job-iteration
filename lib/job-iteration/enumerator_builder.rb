@@ -119,12 +119,11 @@ module JobIteration
     # Builds Enumerator from Active Record Relation and enumerates on batches, yielding Active Record Relations.
     # See documentation for #build_active_record_enumerator_on_batches.
     def build_active_record_enumerator_on_batch_relations(scope, cursor:, **args)
-      enum = JobIteration::ActiveRecordBatchEnumerator.new(
+      JobIteration::ActiveRecordBatchEnumerator.new(
         scope,
         cursor: cursor,
         **args
-      )
-      wrap(self, enum)
+      ).each
     end
 
     def build_throttle_enumerator(enum, throttle_on:, backoff:)

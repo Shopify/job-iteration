@@ -23,6 +23,11 @@ module JobIteration
       refute_predicate relation, :loaded?
     end
 
+    test "#each yields enumerator when called without a block" do
+      enum = build_enumerator
+      assert enum.each.is_a?(Enumerator)
+    end
+
     test "#each doesn't yield anything if the relation is empty" do
       enum = build_enumerator(relation: Product.none)
 

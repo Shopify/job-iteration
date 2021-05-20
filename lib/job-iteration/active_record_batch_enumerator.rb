@@ -32,9 +32,13 @@ module JobIteration
     end
 
     def each
-      while (relation = next_batch)
-        break if @cursor.empty?
-        yield relation, cursor_value
+      if block_given?
+        while (relation = next_batch)
+          break if @cursor.empty?
+          yield relation, cursor_value
+        end
+      else
+        to_enum(:each)
       end
     end
 

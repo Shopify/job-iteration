@@ -1,8 +1,9 @@
 ### Master (unreleased)
 
-#### New feature
+## v1.1.13 (May 20, 2021)
 
-#### Bug fix
+#### New feature
+- [91](https://github.com/Shopify/job-iteration/pull/91) - Add enumerator yielding batches as Active Record Relations
 
 ## v1.1.12 (April 19, 2021)
 

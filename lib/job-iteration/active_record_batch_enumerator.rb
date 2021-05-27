@@ -34,7 +34,6 @@ module JobIteration
     def each
       return to_enum { size } unless block_given?
       while (relation = next_batch)
-        break if @cursor.nil?
         yield relation, cursor_value
       end
     end

@@ -1,5 +1,13 @@
 ### Master (unreleased)
 
+## v1.1.14 (May 28, 2021)
+
+#### Bug fix
+- [84](https://github.com/Shopify/job-iteration/pull/84) - Call adjust_total_time before running on_complete callbacks
+- [94](https://github.com/Shopify/job-iteration/pull/94) - Remove unnecessary break
+- [95](https://github.com/Shopify/job-iteration/pull/95) - ActiveRecordBatchEnumerator#each should rewind at the end
+- [97](https://github.com/Shopify/job-iteration/pull/97) - Batch enumerator size returns the number of batches, not records
+
 ## v1.1.13 (May 20, 2021)
 
 #### New feature

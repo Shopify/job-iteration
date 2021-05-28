@@ -35,9 +35,11 @@ module JobIteration
       assert_equal([], enum.to_a)
     end
 
-    test "#size returns size of the base Active Record Relation" do
+    test "#size returns size of the Enumerator" do
       enum = build_enumerator
-      assert_equal Product.count, enum.size
+      assert_equal 5, enum.size # 5 batches of 2
+      enum = build_enumerator(batch_size: 3)
+      assert_equal 4, enum.size # 3 batches of 3, 1 batch of 1
     end
 
     test "batch size is configurable" do

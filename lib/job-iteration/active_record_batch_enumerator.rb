@@ -40,7 +40,7 @@ module JobIteration
     end
 
     def size
-      @base_relation.count
+      (@base_relation.count + @batch_size - 1) / @batch_size # ceiling division
     end
 
     private

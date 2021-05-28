@@ -19,6 +19,7 @@ module JobIteration
         @columns.dup << @primary_key
       end
       @cursor = Array.wrap(cursor)
+      @initial_cursor = @cursor
       raise ArgumentError, "Must specify at least one column" if @columns.empty?
       if relation.joins_values.present? && !@columns.all? { |column| column.to_s.include?(".") }
         raise ArgumentError, "You need to specify fully-qualified columns if you join a table"
@@ -55,7 +56,10 @@ module JobIteration
       end
 
       cursor = cursor_values.last
-      return unless cursor.present?
+      unless cursor.present?
+        @cursor = @initial_cursor
+        return
+      end
       # The primary key was plucked, but original cursor did not include it, so we should remove it
       cursor.pop unless @primary_key_index
       @cursor = Array.wrap(cursor)

@@ -16,6 +16,12 @@ module JobIteration
       end
     end
 
+    test "#each yields relations repeatedly" do
+      enum = build_enumerator(cursor: 2)
+      assert_equal 4, enum.to_a.size
+      assert_equal 4, enum.to_a.size
+    end
+
     test "#each yields unloaded relations" do
       enum = build_enumerator
       relation, _ = enum.first

@@ -34,6 +34,7 @@ module JobIteration
         :start_time,
         :times_interrupted,
         :total_time,
+        :instance_iterations
       )
 
       define_callbacks :start
@@ -42,9 +43,15 @@ module JobIteration
     end
 
     module ClassMethods
+      cattr_accessor :max_iters
+
       def method_added(method_name)
         ban_perform_definition if method_name.to_sym == :perform
         super
+      end
+
+      def max_iters_per_run(value)
+        self.max_iters = value
       end
 
       def on_start(*filters, &blk)
@@ -70,6 +77,7 @@ module JobIteration
       super
       self.times_interrupted = 0
       self.total_time = 0.0
+      self.instance_iterations = 0
       assert_implements_methods!
     end
     ruby2_keywords(:initialize) if respond_to?(:ruby2_keywords, true)
@@ -136,6 +144,8 @@ module JobIteration
         run_callbacks(:complete)
         output_interrupt_summary
       end
+
+      reenqueue_iteration_job unless completed
     end
 
     def iterate_with_enumerator(enumerator, arguments)
@@ -149,11 +159,11 @@ module JobIteration
           found_record = true
           each_iteration(object_from_enumerator, *arguments)
           self.cursor_position = index
+          self.instance_iterations += 1
         end
 
         next unless job_should_exit?
         self.executions -= 1 if executions > 1
-        reenqueue_iteration_job
         return false
       end
 
@@ -256,6 +266,8 @@ module JobIteration
     end
 
     def job_should_exit?
+      return true if self.class.max_iters.present? && self.class.max_iters == instance_iterations
+
       if ::JobIteration.max_job_runtime && start_time && (Time.now.utc - start_time) > ::JobIteration.max_job_runtime
         return true
       end

@@ -122,12 +122,5 @@ module JobIteration
         cursor: cursor,
       )
     end
-
-    def track_queries(&block)
-      queries = []
-      query_cb = ->(*, payload) { queries << payload[:sql] }
-      ActiveSupport::Notifications.subscribed(query_cb, "sql.active_record", &block)
-      queries
-    end
   end
 end

@@ -89,6 +89,20 @@ module JobIteration
       end
     end
 
+    class NestedRecordsActiveRecordIterationJob < SimpleIterationJob
+      def build_enumerator(cursor:)
+        enumerator_builder.active_record_on_nested_records(
+          [Product.all, ->(product) { product.comments }],
+          cursor: cursor,
+          batch_size: 3
+        )
+      end
+
+      def each_iteration(comment)
+        self.class.records_performed << comment
+      end
+    end
+
     class AbortingActiveRecordIterationJob < ActiveRecordIterationJob
       def each_iteration(*)
         abort_strategy if self.class.records_performed.size == 2
@@ -472,6 +486,43 @@ module JobIteration
       assert_equal([3, 3, 3, 1], records_performed.map(&:count))
       assert(records_performed.all? { |relation| relation.is_a?(ActiveRecord::Relation) })
       assert(records_performed.none?(&:loaded?))
+    end
+
+    def test_activerecord_nested_records
+      iterate_exact_times(3.times)
+
+      push(NestedRecordsActiveRecordIterationJob)
+
+      work_one_job
+      assert_equal(3, NestedRecordsActiveRecordIterationJob.records_performed.size)
+      assert_equal(1, NestedRecordsActiveRecordIterationJob.on_start_called)
+
+      job = peek_into_queue
+      assert_equal(1, job.times_interrupted)
+      assert_equal(1, job.executions)
+
+      product = Product.first
+      assert_equal([product.id, product.comments.first(3).last.id], job.cursor_position)
+
+      work_one_job
+      assert_equal(6, NestedRecordsActiveRecordIterationJob.records_performed.size)
+      assert_equal(1, NestedRecordsActiveRecordIterationJob.on_start_called)
+
+      job = peek_into_queue
+      assert_equal(2, job.times_interrupted)
+      assert_equal(1, job.executions)
+
+      product = Product.second
+      assert_equal([product.id, product.comments.first.id], job.cursor_position)
+
+      continue_iterating
+      work_one_job
+      assert_jobs_in_queue(0)
+
+      assert_equal(50, NestedRecordsActiveRecordIterationJob.records_performed.size)
+
+      assert_equal(1, NestedRecordsActiveRecordIterationJob.on_start_called)
+      assert_equal(1, NestedRecordsActiveRecordIterationJob.on_complete_called)
     end
 
     def test_multiple_columns

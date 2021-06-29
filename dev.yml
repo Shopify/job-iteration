@@ -13,7 +13,7 @@ up:
   - custom:
       name: Create Job Iteration database
       meet: mysql -uroot -h job-iteration.railgun -e "CREATE DATABASE job_iteration_test"
-      met?: mysql -uroot -h job-iteration.railgun job_iteration_test -e "SELECT 1"
+      met?: mysql -uroot -h job-iteration.railgun job_iteration_test -e "SELECT 1" &> /dev/null
 
 commands:
   test: bundle exec rake

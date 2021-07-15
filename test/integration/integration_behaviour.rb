@@ -35,7 +35,7 @@ module IntegrationBehaviour
     end
 
     test "unserializable corruption is prevented" do
-      skip "Deferred until 2.0.0"
+      skip "Breaking change deferred until 2.0" if Gem::Version.new(JobIteration::VERSION) < Gem::Version.new("2.0")
       # Cursors are serialized as JSON, but not all objects are serializable.
       #     time   = Time.at(0).utc   # => 1970-01-01 00:00:00 UTC
       #     json   = JSON.dump(time)  # => "\"1970-01-01 00:00:00 UTC\""

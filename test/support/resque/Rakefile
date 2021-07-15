@@ -4,11 +4,12 @@
 # $LOAD_PATH.unshift File.dirname(__FILE__) unless $LOAD_PATH.include?(File.dirname(__FILE__))
 require "resque/tasks"
 
-require "job-iteration"
-require "job-iteration/integrations/resque"
+require "job_iteration"
+require "job_iteration/integrations/resque_integration"
 require "active_job"
 require "i18n"
 
+require_relative "../async_integration"
 require_relative "../jobs"
 
 redis_url = if ENV["USING_DEV"] == "1"

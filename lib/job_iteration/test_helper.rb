@@ -9,7 +9,7 @@ module JobIteration
         @calls = 0
       end
 
-      def call
+      def stopping?
         @calls += 1
         (@calls % @stop_after_count) == 0
       end
@@ -23,7 +23,7 @@ module JobIteration
     #     MyJob.perform_now
     #   end
     def iterate_exact_times(n_times)
-      JobIteration.stubs(:interruption_adapter).returns(StoppingSupervisor.new(n_times.size))
+      JobIteration.stubs(:load_interruption_integration).returns(StoppingSupervisor.new(n_times.size))
     end
 
     # Stubs interruption adapter to interrupt the job after every sing iteration.
@@ -46,8 +46,8 @@ module JobIteration
 
     def stub_shutdown_adapter_to_return(value)
       adapter = mock
-      adapter.stubs(:call).returns(value)
-      JobIteration.stubs(:interruption_adapter).returns(adapter)
+      adapter.stubs(:stopping?).returns(value)
+      JobIteration.stubs(:load_interruption_integration).returns(adapter)
     end
   end
 end

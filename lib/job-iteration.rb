@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-
+require "active_job"
 require_relative "./job-iteration/version"
 require_relative "./job-iteration/enumerator_builder"
 require_relative "./job-iteration/iteration"
@@ -19,6 +19,9 @@ module JobIteration
   # This setting will make it to always interrupt a job after it's been iterating for 5 minutes.
   # Defaults to nil which means that jobs will not be interrupted except on termination signal.
   attr_accessor :max_job_runtime
+
+  attr_accessor :logger
+  self.logger = ActiveJob::Base.logger
 
   # Used internally for hooking into job processing frameworks like Sidekiq and Resque.
   attr_accessor :interruption_adapter

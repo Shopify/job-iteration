@@ -43,6 +43,11 @@ end
 ActiveJob::Base.queue_adapter = :iteration_test
 
 class Product < ActiveRecord::Base
+  has_many :comments
+end
+
+class Comment < ActiveRecord::Base
+  belongs_to :product
 end
 
 host = ENV["USING_DEV"] == "1" ? "job-iteration.railgun" : "localhost"
@@ -65,9 +70,17 @@ Sidekiq.configure_client do |config|
   config.redis = { host: host }
 end
 
-ActiveRecord::Base.connection.create_table(Product.table_name, force: true) do |t|
-  t.string(:name)
-  t.timestamps
+ActiveRecord::Schema.define do
+  create_table(:products, force: true) do |t|
+    t.string(:name)
+    t.timestamps
+  end
+
+  create_table(:comments, force: true) do |t|
+    t.string(:name)
+    t.belongs_to(:product)
+    t.timestamps
+  end
 end
 
 DatabaseCleaner.strategy = :truncation
@@ -114,7 +127,18 @@ class IterationUnitTest < ActiveSupport::TestCase
 
   def insert_fixtures
     10.times do |n|
-      Product.create!(name: "lipstick #{n}")
+      product = Product.create!(name: "lipstick #{n}")
+
+      5.times do |i|
+        product.comments.create!(name: "comment #{i} for #{product.name}")
+      end
     end
+  end
+
+  def track_queries(&block)
+    queries = []
+    query_cb = ->(*, payload) { queries << payload[:sql] }
+    ActiveSupport::Notifications.subscribed(query_cb, "sql.active_record", &block)
+    queries
   end
 end

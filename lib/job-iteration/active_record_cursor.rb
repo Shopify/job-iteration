@@ -18,7 +18,7 @@ module JobIteration
       end
     end
 
-    def initialize(relation, columns = nil, position = nil)
+    def initialize(relation, columns = nil, position = nil, inclusive: false)
       columns ||= "#{relation.table_name}.#{relation.primary_key}"
       @columns = Array.wrap(columns)
       self.position = Array.wrap(position)
@@ -32,6 +32,7 @@ module JobIteration
       end
 
       @base_relation = relation.reorder(@columns.join(","))
+      @inclusive = inclusive
       @reached_end = false
     end
 
@@ -70,6 +71,7 @@ module JobIteration
 
       update_from_record(records.last) unless records.empty?
       @reached_end = records.size < batch_size
+      @inclusive = false
 
       records.empty? ? nil : records
     end
@@ -79,7 +81,9 @@ module JobIteration
     def conditions
       i = @position.size - 1
       column = @columns[i]
-      conditions = if @columns.size == @position.size
+      conditions = if @inclusive
+        "#{column} >= ?"
+      elsif @columns.size == @position.size
         "#{column} > ?"
       else
         "#{column} >= ?"
@@ -87,7 +91,11 @@ module JobIteration
       while i > 0
         i -= 1
         column = @columns[i]
-        conditions = "#{column} > ? OR (#{column} = ? AND (#{conditions}))"
+        conditions = if @inclusive
+          "#{column} >= ? OR (#{column} = ? AND (#{conditions}))"
+        else
+          "#{column} > ? OR (#{column} = ? AND (#{conditions}))"
+        end
       end
       ret = @position.reduce([conditions]) { |params, value| params << value << value }
       ret.pop

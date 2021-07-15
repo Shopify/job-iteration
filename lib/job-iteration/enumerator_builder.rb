@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 require_relative "./active_record_batch_enumerator"
 require_relative "./active_record_enumerator"
+require_relative "./active_record_nested_records_enumerator"
 require_relative "./csv_enumerator"
 require_relative "./throttle_enumerator"
 require "forwardable"
@@ -135,6 +136,14 @@ module JobIteration
       ).to_enum
     end
 
+    def build_active_record_enumerator_on_nested_records(scopes, cursor:, **args)
+      JobIteration::ActiveRecordNestedRecordsEnumerator.new(
+        scopes,
+        cursor: cursor,
+        **args
+      ).each
+    end
+
     alias_method :once, :build_once_enumerator
     alias_method :times, :build_times_enumerator
     alias_method :array, :build_array_enumerator
@@ -142,6 +151,7 @@ module JobIteration
     alias_method :active_record_on_batches, :build_active_record_enumerator_on_batches
     alias_method :active_record_on_batch_relations, :build_active_record_enumerator_on_batch_relations
     alias_method :throttle, :build_throttle_enumerator
+    alias_method :active_record_on_nested_records, :build_active_record_enumerator_on_nested_records
 
     private
 

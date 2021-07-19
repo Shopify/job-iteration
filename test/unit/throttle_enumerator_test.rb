@@ -12,12 +12,18 @@ module JobIteration
 
       cattr_accessor :on_complete_called, instance_accessor: false
       self.on_complete_called = 0
+      cattr_accessor :on_reenqueue_called, instance_accessor: false
+      self.on_reenqueue_called = 0
 
       cattr_accessor :should_throttle_sequence, instance_accessor: false
       self.should_throttle_sequence = []
 
       on_complete do
         self.class.on_complete_called += 1
+      end
+
+      on_reenqueue do
+        self.class.on_reenqueue_called += 1
       end
 
       def build_enumerator(_params, cursor:)
@@ -36,13 +42,18 @@ module JobIteration
       end
     end
 
-    setup do
-      IterationThrottleJob.iterations_performed = []
+    class IterationThrottleJobHaltReenqueue < IterationThrottleJob
+      on_reenqueue do |_job|
+        throw(:abort)
+      end
     end
 
-    teardown do
-      IterationThrottleJob.on_complete_called = 0
-      IterationThrottleJob.should_throttle_sequence = []
+    setup do
+      IterationThrottleJob.descendants.each do |klass|
+        klass.iterations_performed = []
+        klass.on_complete_called = 0
+        klass.on_reenqueue_called = 0
+      end
     end
 
     test "throttle enumerator proxies wrapped enumerator" do
@@ -90,6 +101,17 @@ module JobIteration
       assert_equal 0, enqueued.first.fetch("cursor_position")
 
       assert_equal [1], IterationThrottleJob.iterations_performed
+    end
+
+    test "do not push back to queue if reenqueue callback abort" do
+      IterationThrottleJobHaltReenqueue.should_throttle_sequence = [false, true, false]
+
+      IterationThrottleJobHaltReenqueue.perform_now({})
+
+      enqueued = ActiveJob::Base.queue_adapter.enqueued_jobs
+      assert_equal 0, enqueued.size
+
+      assert_equal [1], IterationThrottleJobHaltReenqueue.iterations_performed
     end
 
     test "does not pushed back to queue if not throttle" do

@@ -16,4 +16,38 @@ up:
       met?: mysql -uroot -h job-iteration.railgun job_iteration_test -e "SELECT 1" &> /dev/null
 
 commands:
-  test: bundle exec rake
+  test:
+    run:  bin/test "$@"
+    syntax:
+      optional: filename testnamepattern
+    aliases: [t]
+    desc: run tests
+    long_desc: |
+      {{bold:Default}}
+      =======
+      Run the entire test suite.
+
+        Examples:
+        {{command:dev test}}
+        {{command:dev t}}
+
+      {{bold:Run all tests in a file}}
+      ========================
+      Include the file path.
+
+        Example:
+        {{command:dev test test/unit/iteration_test.rb}}
+
+      {{bold:Run a single test in a given file}}
+      ========================
+      Include the file path and the name of the test you'd like to run.
+
+        Example:
+        {{command:dev test test/unit/iteration_test.rb test_that_it_has_a_version_number}}
+
+      {{bold:Run all tests in a given file whose name contains a string}}
+      ========================
+      Include the file path and the string that the test names should contain.
+
+        Example:
+        {{command:dev test test/unit/iteration_test.rb version_number}}

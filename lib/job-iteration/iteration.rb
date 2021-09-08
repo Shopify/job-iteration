@@ -65,7 +65,7 @@ module JobIteration
 
       def interruptors
         @interruptors ||= [
-          ->(job) { JobIteration.interruption_adapter.call }
+          ->(_) { JobIteration.interruption_adapter.call },
         ]
         @interruptors
       end

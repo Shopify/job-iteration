@@ -1,0 +1,32 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+def main
+  begin
+    command = create_command
+  rescue ArgumentError => e
+    abort(e.message)
+  end
+  puts "Running #{command.join(" ")}"
+  system(*command)
+end
+
+def create_command
+  case ARGV.length
+  when 0
+    ["bundle", "exec", "rake", "test"]
+  when 1
+    filename = ARGV[0]
+    ["bundle", "exec", "rake", "test", "TEST=#{filename}"]
+  when 2
+    filename = ARGV[0]
+    test_name = ARGV[1]
+    test_name_with_underscores = test_name.tr(" ", "_")
+    test_name_pattern = "/#{Regexp.escape(test_name_with_underscores)}/"
+    ["bundle", "exec", "rake", "test", "TEST=#{filename}", "TESTOPTS=\"--name=#{test_name_pattern} -v\""]
+  else
+    raise ArgumentError, "Too many arguments. Did you forget to put the test name in quotes?"
+  end
+end
+
+main

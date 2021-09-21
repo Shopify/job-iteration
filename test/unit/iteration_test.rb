@@ -246,11 +246,13 @@ class JobIterationTest < IterationUnitTest
 
   def assert_raises_cursor_error(&block)
     error = assert_raises(JobIteration::Iteration::CursorError, &block)
-    inspected_cursor = begin
-                         error.cursor.inspect
-                       rescue NoMethodError
-                         Object.instance_method(:inspect).bind(error.cursor).call
-                       end
+    inspected_cursor =
+      begin
+        error.cursor.inspect
+      rescue NoMethodError
+        Object.instance_method(:inspect).bind(error.cursor).call
+      end
+
     assert_equal(
       "Cursor must be composed of objects capable of built-in (de)serialization: " \
       "Strings, Integers, Floats, Arrays, Hashes, true, false, or nil. " \

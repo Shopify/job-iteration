@@ -1,4 +1,5 @@
 ### Master (unreleased)
+- Drop support for ruby 2.5
 
 ## v1.1.14 (May 28, 2021)
 

@@ -1,0 +1,16 @@
+version: 2
+
+updates:
+
+  - package-ecosystem: bundler
+    directory: '/'
+    versioning-strategy: increase
+    open-pull-requests-limit: 100
+    insecure-external-code-execution: allow
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: github-actions
+    directory: '/'
+    schedule:
+      interval: daily

@@ -547,13 +547,13 @@ module JobIteration
     end
 
     def test_supports_multiple_job_arguments
-      MultiArgumentIterationJob.perform_later(2, %w(a b c))
+      MultiArgumentIterationJob.perform_later(2, ["a", "b", "c"])
 
       work_one_job
 
       expected = [
-        [0, 2, %w(a b c)],
-        [1, 2, %w(a b c)],
+        [0, 2, ["a", "b", "c"]],
+        [1, 2, ["a", "b", "c"]],
       ]
       assert_equal(expected, MultiArgumentIterationJob.records_performed)
     end

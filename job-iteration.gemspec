@@ -8,7 +8,7 @@ Gem::Specification.new do |spec|
   spec.required_ruby_version = ">= 2.6"
   spec.name          = "job-iteration"
   spec.version       = JobIteration::VERSION
-  spec.authors       = %w(Shopify)
+  spec.authors       = ["Shopify"]
   spec.email         = ["ops-accounts+shipit@shopify.com"]
 
   spec.summary       = "Makes your background jobs interruptible and resumable."
@@ -21,7 +21,7 @@ Gem::Specification.new do |spec|
   end
   spec.bindir        = "exe"
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
-  spec.require_paths = %w(lib)
+  spec.require_paths = ["lib"]
 
   spec.metadata["changelog_uri"] = "https://github.com/Shopify/job-iteration/blob/master/CHANGELOG.md"
   spec.metadata["allowed_push_host"] = "https://rubygems.org"

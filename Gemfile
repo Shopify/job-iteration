@@ -21,7 +21,6 @@ gem "pry"
 gem "mocha"
 
 gem "rubocop-shopify", require: false
-gem "rubocop", "<= 1.12.1", require: false # 1.13.0 drops Ruby 2.4 support
 gem "yard"
 gem "rake"
 

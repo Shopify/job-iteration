@@ -2,7 +2,7 @@ inherit_gem:
   rubocop-shopify: rubocop.yml
 
 AllCops:
-  TargetRubyVersion: 2.4.4
+  TargetRubyVersion: 2.6.5
   Exclude:
     - 'vendor/bundle/**/*'
 Lint/SuppressedException:

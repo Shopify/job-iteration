@@ -9,4 +9,3 @@
 .ruby-version
 .rubocop-http---shopify-github-io-ruby-style-guide-rubocop-yml
 gemfiles/*.lock
-Gemfile.lock

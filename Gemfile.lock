@@ -39,7 +39,7 @@ GEM
     mono_logger (1.1.0)
     multi_json (1.13.1)
     mustermann (1.0.3)
-    mysql2 (0.5.2)
+    mysql2 (0.5.3)
     parallel (1.21.0)
     parser (3.0.2.0)
       ast (~> 2.4.1)

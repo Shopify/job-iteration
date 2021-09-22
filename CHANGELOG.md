@@ -1,5 +1,9 @@
 ### Master (unreleased)
-- Drop support for ruby 2.5
+
+## v1.2.0 (Sept 21, 2021)
+- [107](https://github.com/Shopify/job-iteration/pull/107) - Remove broken links from README
+- [108](https://github.com/Shopify/job-iteration/pull/108) - Drop support for ruby 2.5
+- [110](https://github.com/Shopify/job-iteration/pull/110) - Update rubocop TargetRubyVersion
 
 ## v1.1.14 (May 28, 2021)
 

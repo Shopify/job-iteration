@@ -46,7 +46,7 @@ GEM
     pry (0.12.2)
       coderay (~> 1.1.0)
       method_source (~> 0.9.0)
-    rack (2.0.7)
+    rack (2.2.3)
     rack-protection (2.0.5)
       rack
     rainbow (3.0.0)
@@ -111,7 +111,6 @@ DEPENDENCIES
   rake
   redis
   resque
-  rubocop (<= 1.12.1)
   rubocop-shopify
   sidekiq
   sorbet-runtime

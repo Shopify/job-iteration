@@ -51,7 +51,7 @@ GEM
       rack
     rainbow (3.0.0)
     rake (12.3.2)
-    redis (4.1.0)
+    redis (4.4.0)
     redis-namespace (1.6.0)
       redis (>= 3.0.4)
     regexp_parser (2.1.1)

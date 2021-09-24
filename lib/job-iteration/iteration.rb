@@ -65,7 +65,7 @@ module JobIteration
 
       def interruptors
         @interruptors ||= [
-          ->(_) { JobIteration.max_job_runtime && start_time && (Time.now.utc - start_time) > JobIteration.max_job_runtime },
+          ->(job) { JobIteration.max_job_runtime && job.start_time && (Time.now.utc - job.start_time) > JobIteration.max_job_runtime },
           ->(_) { JobIteration.interruption_adapter.call },
         ]
         @interruptors

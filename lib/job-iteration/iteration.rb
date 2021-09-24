@@ -65,6 +65,7 @@ module JobIteration
 
       def interruptors
         @interruptors ||= [
+          ->(_) { JobIteration.max_job_runtime && start_time && (Time.now.utc - start_time) > JobIteration.max_job_runtime },
           ->(_) { JobIteration.interruption_adapter.call },
         ]
         @interruptors
@@ -267,13 +268,8 @@ module JobIteration
     end
 
     def job_should_exit?
-      job_ran_past_max_runtime? ||
-        self.class.interruptors.any? { |interrupt_proc| interrupt_proc.call(self) } ||
+      self.class.interruptors.any? { |interrupt_proc| interrupt_proc.call(self) } ||
         (defined?(super) && super)
-    end
-
-    def job_ran_past_max_runtime?
-      JobIteration.max_job_runtime && start_time && (Time.now.utc - start_time) > JobIteration.max_job_runtime
     end
 
     def run_complete_callbacks?(completed)

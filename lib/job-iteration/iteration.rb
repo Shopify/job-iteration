@@ -6,6 +6,13 @@ module JobIteration
   module Iteration
     extend ActiveSupport::Concern
 
+    attr_accessor(
+      :cursor_position,
+      :start_time,
+      :times_interrupted,
+      :total_time,
+    )
+
     class CursorError < ArgumentError
       attr_reader :cursor
 
@@ -29,13 +36,6 @@ module JobIteration
     end
 
     included do |_base|
-      attr_accessor(
-        :cursor_position,
-        :start_time,
-        :times_interrupted,
-        :total_time,
-      )
-
       define_callbacks :start
       define_callbacks :shutdown
       define_callbacks :complete

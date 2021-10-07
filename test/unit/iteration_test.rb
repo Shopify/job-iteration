@@ -255,8 +255,8 @@ class JobIterationTest < IterationUnitTest
 
     assert_equal(
       "Cursor must be composed of objects capable of built-in (de)serialization: " \
-      "Strings, Integers, Floats, Arrays, Hashes, true, false, or nil. " \
-      "(#{inspected_cursor})",
+        "Strings, Integers, Floats, Arrays, Hashes, true, false, or nil. " \
+        "(#{inspected_cursor})",
       error.message,
     )
   end

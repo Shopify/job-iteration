@@ -6,6 +6,13 @@ module JobIteration
   module Iteration
     extend ActiveSupport::Concern
 
+    attr_accessor(
+      :cursor_position,
+      :start_time,
+      :times_interrupted,
+      :total_time,
+    )
+
     class CursorError < ArgumentError
       attr_reader :cursor
 
@@ -29,13 +36,6 @@ module JobIteration
     end
 
     included do |_base|
-      attr_accessor(
-        :cursor_position,
-        :start_time,
-        :times_interrupted,
-        :total_time,
-      )
-
       define_callbacks :start
       define_callbacks :shutdown
       define_callbacks :complete
@@ -159,7 +159,7 @@ module JobIteration
 
       logger.info(
         "[JobIteration::Iteration] Enumerator found nothing to iterate! " \
-        "times_interrupted=#{times_interrupted} cursor_position=#{cursor_position}"
+          "times_interrupted=#{times_interrupted} cursor_position=#{cursor_position}"
       ) unless found_record
 
       adjust_total_time
@@ -167,10 +167,8 @@ module JobIteration
       true
     end
 
-    def record_unit_of_work
-      ActiveSupport::Notifications.instrument("each_iteration.iteration", iteration_instrumentation_tags) do
-        yield
-      end
+    def record_unit_of_work(&block)
+      ActiveSupport::Notifications.instrument("each_iteration.iteration", iteration_instrumentation_tags, &block)
     end
 
     def reenqueue_iteration_job
@@ -210,7 +208,7 @@ module JobIteration
 
       raise CursorError.new(
         "Cursor must be composed of objects capable of built-in (de)serialization: " \
-        "Strings, Integers, Floats, Arrays, Hashes, true, false, or nil.",
+          "Strings, Integers, Floats, Arrays, Hashes, true, false, or nil.",
         cursor: cursor,
       )
     end
@@ -227,7 +225,7 @@ module JobIteration
         parameters = method_parameters(:build_enumerator)
         unless valid_cursor_parameter?(parameters)
           raise ArgumentError, "Iteration job (#{self.class}) #build_enumerator " \
-          "expects the keyword argument `cursor`"
+            "expects the keyword argument `cursor`"
         end
       else
         raise ArgumentError, "Iteration job (#{self.class}) must implement #build_enumerator " \

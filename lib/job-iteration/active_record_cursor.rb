@@ -13,7 +13,7 @@ module JobIteration
       def initialize
         super(
           "The relation cannot use ORDER BY or LIMIT due to the way how iteration with a cursor is designed. " \
-          "You can use other ways to limit the number of rows, e.g. a WHERE condition on the primary key column."
+            "You can use other ways to limit the number of rows, e.g. a WHERE condition on the primary key column."
         )
       end
     end

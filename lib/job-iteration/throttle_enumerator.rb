@@ -1,5 +1,6 @@
 # typed: true
 # frozen_string_literal: true
+
 module JobIteration
   # ThrottleEnumerator allows you to throttle iterations
   # based on external signal (e.g. database health).

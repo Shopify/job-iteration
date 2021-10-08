@@ -1,5 +1,9 @@
 ### Master (unreleased)
 
+## v1.3.0 (Oct 7, 2021)
+- [133](https://github.com/Shopify/job-iteration/pull/133) - Moves attributes out of JobIteration::Iteration included block
+
+
 ## v1.2.0 (Sept 21, 2021)
 - [107](https://github.com/Shopify/job-iteration/pull/107) - Remove broken links from README
 - [108](https://github.com/Shopify/job-iteration/pull/108) - Drop support for ruby 2.5

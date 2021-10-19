@@ -37,6 +37,7 @@ module JobIteration
 
     included do |_base|
       define_callbacks :start
+      define_callbacks :reenqueue
       define_callbacks :shutdown
       define_callbacks :complete
     end
@@ -53,6 +54,10 @@ module JobIteration
 
       def on_shutdown(*filters, &blk)
         set_callback(:shutdown, :after, *filters, &blk)
+      end
+
+      def on_reenqueue(*filters, &blk)
+        set_callback(:reenqueue, :before, *filters, &blk)
       end
 
       def on_complete(*filters, &blk)
@@ -96,6 +101,18 @@ module JobIteration
     def retry_job(*, **)
       super unless defined?(@retried) && @retried
       @retried = true
+    end
+
+    def reenqueue_iteration_job(options = {})
+      self.executions -= 1 if executions > 1
+      ActiveSupport::Notifications.instrument("interrupted.iteration", iteration_instrumentation_tags)
+      logger.info("[JobIteration::Iteration] Interrupting and re-enqueueing the job cursor_position=#{cursor_position}")
+
+      adjust_total_time
+      self.times_interrupted += 1
+
+      self.already_in_queue = true if respond_to?(:already_in_queue=)
+      retry_job(options)
     end
 
     private
@@ -152,8 +169,9 @@ module JobIteration
         end
 
         next unless job_should_exit?
-        self.executions -= 1 if executions > 1
-        reenqueue_iteration_job
+        run_callbacks(:reenqueue) do
+          reenqueue_iteration_job
+        end
         return false
       end
 
@@ -169,17 +187,6 @@ module JobIteration
 
     def record_unit_of_work(&block)
       ActiveSupport::Notifications.instrument("each_iteration.iteration", iteration_instrumentation_tags, &block)
-    end
-
-    def reenqueue_iteration_job
-      ActiveSupport::Notifications.instrument("interrupted.iteration", iteration_instrumentation_tags)
-      logger.info("[JobIteration::Iteration] Interrupting and re-enqueueing the job cursor_position=#{cursor_position}")
-
-      adjust_total_time
-      self.times_interrupted += 1
-
-      self.already_in_queue = true if respond_to?(:already_in_queue=)
-      retry_job
     end
 
     def adjust_total_time

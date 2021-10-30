@@ -42,7 +42,41 @@ end
 
 ActiveJob::Base.queue_adapter = :iteration_test
 
-class Product < ActiveRecord::Base
+if defined?(ActiveRecord.queues) || defined?(ActiveRecord::Base.queues)
+  class ApplicationJob < ::ActiveJob::Base
+  end
+
+  require "active_record/destroy_association_async_job"
+  require "job-iteration/destroy_association_job"
+
+  ActiveRecord::Base.destroy_association_async_job = JobIteration::DestroyAssociationJob
+
+  class Product < ActiveRecord::Base
+    has_many :variants, dependent: :destroy_async
+  end
+
+  class SoftDeletedProduct < ActiveRecord::Base
+    self.table_name = "products"
+    has_many :variants, foreign_key: "product_id", dependent: :destroy_async, ensuring_owner_was: :deleted?
+
+    def deleted?
+      deleted
+    end
+
+    def destroy
+      update!(deleted: true)
+      run_callbacks(:destroy)
+      run_callbacks(:commit)
+    end
+  end
+else
+  class Product < ActiveRecord::Base
+    has_many :variants, dependent: :destroy
+  end
+end
+
+class Variant < ActiveRecord::Base
+  belongs_to :product
 end
 
 host = ENV["USING_DEV"] == "1" ? "job-iteration.railgun" : "localhost"
@@ -71,6 +105,13 @@ end
 
 ActiveRecord::Base.connection.create_table(Product.table_name, force: true) do |t|
   t.string(:name)
+  t.string(:deleted, default: false)
+  t.timestamps
+end
+
+ActiveRecord::Base.connection.create_table(Variant.table_name, force: true) do |t|
+  t.references(:product)
+  t.string(:color)
   t.timestamps
 end
 

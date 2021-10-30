@@ -1,7 +1,7 @@
 ### Master (unreleased)
-
 - [241](https://github.com/Shopify/job-iteration/pull/241) - Require Ruby 2.7+, dropping 2.6 support
 - [241](https://github.com/Shopify/job-iteration/pull/241) - Require Rails 6.0+, dropping 5.2 support
+- [140](https://github.com/Shopify/job-iteration/pull/140) - Add `JobIteration::DestroyAssociationJob` to be used by Active Record associations with the `dependent: :destroy_async` option
 
 ## v1.3.6 (Mar 9, 2022)
 

@@ -28,14 +28,14 @@ module JobIteration
 
     def to_enum
       Enumerator.new(-> { @enum.size }) do |yielder|
-        @enum.each do |*val|
+        loop do
           if should_throttle?
             ActiveSupport::Notifications.instrument("throttled.iteration", job_class: @job.class.name)
             @job.retry_job(wait: @backoff)
             throw(:abort, :skip_complete_callbacks)
           end
 
-          yielder.yield(*val)
+          yielder.yield(*@enum.next_values)
         end
       end
     end

@@ -1,5 +1,9 @@
 ### Master (unreleased)
 
+## v1.3.1 (Nov1, 2021)
+- [87](https://github.com/Shopify/job-iteration/pull/87) - Do not evaluate enumerator when throttled
+
+
 ## v1.3.0 (Oct 7, 2021)
 - [133](https://github.com/Shopify/job-iteration/pull/133) - Moves attributes out of JobIteration::Iteration included block
 

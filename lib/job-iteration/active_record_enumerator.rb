@@ -34,7 +34,7 @@ module JobIteration
     end
 
     def size
-      @relation.count
+      @relation.count(:all)
     end
 
     private

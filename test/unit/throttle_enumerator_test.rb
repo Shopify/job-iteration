@@ -125,7 +125,7 @@ module JobIteration
     end
 
     test "does not evaluate enumerator when throttled" do
-      skip("Deferred until 2.0.0")
+      skip_until_version("2.0.0")
       CustomizableThrottleJob.perform_now({
         enumerator: Enumerator.new { raise StandardError, "should not evaluate when throttled" },
         throttle_on: -> { true },
@@ -133,7 +133,7 @@ module JobIteration
     end
 
     test "can only wrap another enumerator" do
-      skip("Deferred until 2.0.0")
+      skip_until_version("2.0.0")
       error = assert_raises(ArgumentError) do
         CustomizableThrottleJob.perform_now({
           enumerator: [],

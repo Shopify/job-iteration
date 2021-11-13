@@ -96,6 +96,10 @@ module ActiveSupport
     setup do
       Redis.current.flushdb
     end
+
+    def skip_until_version(version)
+      skip("Deferred until version #{version}") if Gem::Version.new(JobIteration::VERSION) < Gem::Version.new(version)
+    end
   end
 end
 

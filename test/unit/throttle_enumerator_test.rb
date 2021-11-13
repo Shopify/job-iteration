@@ -132,6 +132,17 @@ module JobIteration
       })
     end
 
+    test "can only wrap another enumerator" do
+      skip("Deferred until 2.0.0")
+      error = assert_raises(ArgumentError) do
+        CustomizableThrottleJob.perform_now({
+          enumerator: [],
+          throttle_on: -> { true },
+        })
+      end
+      assert_equal("wrapped object must be Enumerator, not Array", error.message)
+    end
+
     test "throttle event is instrumented" do
       IterationThrottleJob.should_throttle_sequence = [true]
 

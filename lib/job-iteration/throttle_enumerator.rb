@@ -20,6 +20,10 @@ module JobIteration
   # In that case, it will re-enqueue the job with a specified backoff.
   class ThrottleEnumerator
     def initialize(enum, job, throttle_on:, backoff:)
+      unless Enumerator === enum
+        raise ArgumentError, "#{self.class} must wrap an Enumerator, not a #{enum.class}"
+      end
+
       @enum = enum
       @job = job
       @throttle_on = throttle_on

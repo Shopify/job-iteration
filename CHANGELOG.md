@@ -1,7 +1,10 @@
 ### Master (unreleased)
 
+## v1.3.2 (Nov 12, 2021)
+- [148](https://github.com/Shopify/job-iteration/pull/148) - Revert "Do not evaluate enumerator when throttled", due to backwards incompatibility.
+
 ## v1.3.1 (Nov 11, 2021)
-- [87](https://github.com/Shopify/job-iteration/pull/87) - Do not evaluate enumerator when throttled
+- [87](https://github.com/Shopify/job-iteration/pull/87) - Do not evaluate enumerator when throttled (REVERTED)
 
 
 ## v1.3.0 (Oct 7, 2021)

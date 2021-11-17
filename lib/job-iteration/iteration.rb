@@ -68,6 +68,7 @@ module JobIteration
 
     def initialize(*arguments)
       super
+      @needs_reenqueue = false
       self.times_interrupted = 0
       self.total_time = 0.0
       assert_implements_methods!
@@ -132,7 +133,9 @@ module JobIteration
 
       run_callbacks(:shutdown)
 
-      if run_complete_callbacks?(completed)
+      if @needs_reenqueue
+        reenqueue_iteration_job
+      elsif run_complete_callbacks?(completed)
         run_callbacks(:complete)
         output_interrupt_summary
       end
@@ -141,6 +144,8 @@ module JobIteration
     def iterate_with_enumerator(enumerator, arguments)
       arguments = arguments.dup.freeze
       found_record = false
+      @needs_reenqueue = false
+
       enumerator.each do |object_from_enumerator, index|
         # Deferred until 2.0.0
         # assert_valid_cursor!(index)
@@ -153,7 +158,7 @@ module JobIteration
 
         next unless job_should_exit?
         self.executions -= 1 if executions > 1
-        reenqueue_iteration_job
+        @needs_reenqueue = true
         return false
       end
 

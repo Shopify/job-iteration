@@ -1,4 +1,5 @@
 ### Master (unreleased)
+- [153](https://github.com/Shopify/job-iteration/pull/153) - Re-enqueue jobs only after shutdown hooks have run
 
 ## v1.3.0 (Oct 7, 2021)
 - [133](https://github.com/Shopify/job-iteration/pull/133) - Moves attributes out of JobIteration::Iteration included block

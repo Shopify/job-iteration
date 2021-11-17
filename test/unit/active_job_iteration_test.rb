@@ -291,6 +291,24 @@ module JobIteration
       end
     end
 
+    class ShutdownBeforeReenqueJob < ParentJobShouldExitJob
+      include JobIteration::Iteration
+
+      cattr_accessor :jobs_in_queue_on_shutdown, instance_accessor: false
+      self.jobs_in_queue_on_shutdown = 0
+
+      on_shutdown do
+        self.class.jobs_in_queue_on_shutdown = ActiveJob::Base.queue_adapter.enqueued_jobs.size
+      end
+
+      def build_enumerator(cursor:)
+        enumerator_builder.times(3, cursor: cursor)
+      end
+
+      def each_iteration(*)
+      end
+    end
+
     class ReenqueueJob < SingleIterationJob
       def build_enumerator(cursor:)
         enumerator_builder.times(3, cursor: cursor)
@@ -692,6 +710,13 @@ module JobIteration
     def test_respects_job_should_exit_from_parent_class
       JobShouldExitJob.new.perform_now
       assert_equal([0], JobShouldExitJob.records_performed)
+    end
+
+    def test_on_shutdown_called_before_reenqueue
+      job_class = ShutdownBeforeReenqueJob
+      ShutdownBeforeReenqueJob.new.perform_now
+      assert_equal(0, job_class.jobs_in_queue_on_shutdown)
+      assert_jobs_in_queue(1)
     end
 
     def test_mark_job_worker_as_interrupted

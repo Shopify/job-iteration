@@ -1,4 +1,5 @@
 ### Master (unreleased)
+- [153](https://github.com/Shopify/job-iteration/pull/153) - Re-enqueue jobs only after shutdown hooks have run
 
 ## v1.3.2 (Nov 12, 2021)
 - [148](https://github.com/Shopify/job-iteration/pull/148) - Revert "Do not evaluate enumerator when throttled", due to backwards incompatibility.

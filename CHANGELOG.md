@@ -1,4 +1,6 @@
 ### Master (unreleased)
+
+## v.1.3.3 (Nov 17, 2021)
 - [153](https://github.com/Shopify/job-iteration/pull/153) - Re-enqueue jobs only after shutdown hooks have run
 
 ## v1.3.2 (Nov 12, 2021)

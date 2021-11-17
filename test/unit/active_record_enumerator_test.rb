@@ -93,6 +93,18 @@ module JobIteration
       assert_equal([shops, cursor], enum.first)
     end
 
+    test "#size returns the number of items in the relation" do
+      enum = build_enumerator(relation: Product.all)
+
+      assert_equal(10, enum.size)
+    end
+
+    test "#size returns the number of items in a relation with a subset of columns" do
+      enum = build_enumerator(relation: Product.select(:id, :name), columns: [:id, :name])
+
+      assert_equal(10, enum.size)
+    end
+
     private
 
     def build_enumerator(relation: Product.all, batch_size: 2, columns: nil, cursor: nil)

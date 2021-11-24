@@ -29,6 +29,12 @@ module JobIteration
       refute_predicate relation, :loaded?
     end
 
+    test "#each yields relations that preserve the existing conditions (like ActiveRecord::Batches)" do
+      enum = build_enumerator(relation: Product.where("name LIKE 'lipstick%'"))
+      relation, _ = enum.first
+      assert_includes relation.to_sql, "lipstick"
+    end
+
     test "#each yields enumerator when called without a block" do
       enum = build_enumerator.each
       assert enum.is_a?(Enumerator)

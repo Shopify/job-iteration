@@ -65,7 +65,8 @@ module JobIteration
       @cursor = Array.wrap(cursor)
 
       # Yields relations by selecting the primary keys of records in the batch.
-      # Post.where(published: nil) results in an enumerator of relations like: Post.where(ids: batch_of_ids)
+      # Post.where(published: nil) results in an enumerator of relations like:
+      # Post.where(published: nil, ids: batch_of_ids)
       @base_relation.where(@primary_key => ids)
     end
 

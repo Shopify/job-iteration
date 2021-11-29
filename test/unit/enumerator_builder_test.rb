@@ -43,7 +43,12 @@ module JobIteration
     end
 
     test_builder_method(:build_active_record_enumerator_on_batch_relations) do
-      enumerator_builder(wraps: 0).build_active_record_enumerator_on_batch_relations(Product.all, cursor: nil)
+      enumerator_builder(wraps: 1).build_active_record_enumerator_on_batch_relations(Product.all, cursor: nil)
+    end
+
+    test_builder_method("build_active_record_enumerator_on_batch_relations without wrap") do
+      enumerator_builder(wraps: 0)
+        .build_active_record_enumerator_on_batch_relations(Product.all, cursor: nil, wrap: false)
     end
 
     test_builder_method(:build_throttle_enumerator) do

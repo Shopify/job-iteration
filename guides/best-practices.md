@@ -41,6 +41,14 @@ ActiveSupport::Notifications.subscribe('interrupted.iteration') do |_, _, _, _, 
     tags: { job_class: tags[:job_class]&.underscore }
   )
 end
+
+# If you're using ThrottleEnumerator
+ActiveSupport::Notifications.subscribe('throttled.iteration') do |_, _, _, _, tags|
+  StatsD.increment(
+    "iteration.throttled",
+    tags: { job_class: tags[:job_class]&.underscore }
+  )
+end
 ```
 
 ## Max iteration time

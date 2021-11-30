@@ -1,3 +1,4 @@
 --no-private
 --embed-mixins
 --markup markdown
+--exclude lib/job-iteration/integrations/.*

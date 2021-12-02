@@ -10,8 +10,14 @@ module JobIteration
         super
       end
     end
-    # The patch is required in order to call shutdown? on a Resque::Worker instance
-    Resque::Worker.prepend(ResqueIterationExtension)
+
+    # @private
+    module ::Resque
+      class Worker
+        # The patch is required in order to call shutdown? on a Resque::Worker instance
+        prepend(ResqueIterationExtension)
+      end
+    end
 
     JobIteration.interruption_adapter = -> { $resque_worker.try!(:shutdown?) }
   end

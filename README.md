@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/Shopify/job-iteration/actions/workflows/ci.yml/badge.svg)](https://github.com/Shopify/job-iteration/actions/workflows/ci.yml)
 
-Meet Iteration, an extension for [ActiveJob](https://github.com/rails/rails/tree/master/activejob) that makes your jobs interruptible and resumable, saving all progress that the job has made (aka checkpoint for jobs).
+Meet Iteration, an extension for [ActiveJob](https://github.com/rails/rails/tree/main/activejob) that makes your jobs interruptible and resumable, saving all progress that the job has made (aka checkpoint for jobs).
 
 ## Background
 
@@ -223,4 +223,4 @@ The gem is available as open source under the terms of the [MIT License](https:/
 
 ## Code of Conduct
 
-Everyone interacting in the Job::Iteration project’s codebases, issue trackers, chat rooms and mailing lists is expected to follow the [code of conduct](https://github.com/Shopify/job-iteration/blob/master/CODE_OF_CONDUCT.md).
+Everyone interacting in the Job::Iteration project’s codebases, issue trackers, chat rooms and mailing lists is expected to follow the [code of conduct](https://github.com/Shopify/job-iteration/blob/main/CODE_OF_CONDUCT.md).

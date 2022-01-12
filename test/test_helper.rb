@@ -18,7 +18,7 @@ require "mocha/minitest"
 require "database_cleaner"
 
 GlobalID.app = "iteration"
-ActiveRecord::Base.include(GlobalID::Identification) # https://github.com/rails/globalid/blob/master/lib/global_id/railtie.rb
+ActiveRecord::Base.include(GlobalID::Identification) # https://github.com/rails/globalid/blob/main/lib/global_id/railtie.rb
 
 module ActiveJob
   module QueueAdapters

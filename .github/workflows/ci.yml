@@ -13,13 +13,18 @@ jobs:
         - 6379:6379
     strategy:
       matrix:
-        ruby: [2.6, 2.7, 3.0]
+        ruby: ["2.6", "2.7", "3.0"]
         gemfile: [rails_5_2, rails_6_0, rails_edge]
         exclude:
-          - ruby: 2.6
+          - ruby: "2.6"
             gemfile: rails_edge
-          - ruby: 3.0
+          - ruby: "3.0"
             gemfile: rails_5_2
+        include:
+          - ruby: "3.1"
+            gemfile: rails_edge
+          - ruby: head
+            gemfile: rails_edge
     env:
       BUNDLE_GEMFILE: gemfiles/${{ matrix.gemfile }}.gemfile
     steps:

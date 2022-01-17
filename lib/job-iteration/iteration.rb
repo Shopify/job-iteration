@@ -283,7 +283,7 @@ module JobIteration
     def valid_cursor_parameter?(parameters)
       # this condition is when people use the splat operator.
       # def build_enumerator(*)
-      return true if parameters == [[:rest]]
+      return true if parameters == [[:rest]] || parameters == [[:rest, :*]]
 
       parameters.each do |parameter_type, parameter_name|
         next unless parameter_name == :cursor

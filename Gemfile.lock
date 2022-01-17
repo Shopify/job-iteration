@@ -1,3 +1,9 @@
+GIT
+  remote: https://github.com/brianmario/mysql2
+  revision: 25c42c712118b046eb9df7a0f50ffde1a04ee6d1
+  specs:
+    mysql2 (0.5.3)
+
 PATH
   remote: .
   specs:
@@ -42,7 +48,6 @@ GEM
     multi_json (1.15.0)
     mustermann (1.1.1)
       ruby2_keywords (~> 0.0.1)
-    mysql2 (0.5.3)
     parallel (1.21.0)
     parser (3.1.0.0)
       ast (~> 2.4.1)
@@ -109,7 +114,7 @@ DEPENDENCIES
   i18n
   job-iteration!
   mocha
-  mysql2 (~> 0.5)
+  mysql2!
   pry
   rake
   redis
@@ -120,4 +125,4 @@ DEPENDENCIES
   yard
 
 BUNDLED WITH
-   2.2.22
+   2.3.5

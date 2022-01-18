@@ -1,5 +1,9 @@
 ### Master (unreleased)
 
+## v.1.3.4 (Jan 18, 2022)
+
+- [174](https://github.com/Shopify/job-iteration/pull/174) - Fix Ruby 3.2 compatibility
+
 ## v.1.3.3 (Nov 17, 2021)
 - [153](https://github.com/Shopify/job-iteration/pull/153) - Re-enqueue jobs only after shutdown hooks have run
 

@@ -8,6 +8,8 @@ git_source(:github) { |repo_name| "https://github.com/#{repo_name}" }
 gemspec
 
 # for integration testing
+gem 'appmap', :groups => [:development, :test]
+
 gem "sidekiq"
 gem "resque"
 

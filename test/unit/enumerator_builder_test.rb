@@ -11,6 +11,8 @@ module JobIteration
       method.name != method.original_name
     end
 
+    methods -= %i[once array active_record_on_records active_record_on_batches active_record_on_batch_relations times throttle]
+
     define_singleton_method(:test_builder_method) do |builder_method, &block|
       test(".#{builder_method} wraps the enumerator", &block)
       # remove tested method

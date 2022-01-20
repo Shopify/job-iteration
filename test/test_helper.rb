@@ -5,6 +5,8 @@ require "minitest/autorun"
 
 ENV["ITERATION_DISABLE_AUTOCONFIGURE"] = "true"
 
+require 'appmap' # /minitest'
+
 require "job-iteration"
 require "job-iteration/test_helper"
 
@@ -51,18 +53,18 @@ connection_config = {
   adapter: "mysql2",
   database: "job_iteration_test",
   username: "root",
-  host: host,
+  host: ENV['MYSQL_HOST'] || host,
 }
 connection_config[:password] = "root" if ENV["CI"]
 
 ActiveRecord::Base.establish_connection(connection_config)
 
-Redis.current = Redis.new(host: host, timeout: 1.0).tap(&:ping)
+Redis.current = Redis.new(host: ENV['REDIS_HOST'] || host, timeout: 1.0).tap(&:ping)
 
 Resque.redis = Redis.current
 
 Sidekiq.configure_client do |config|
-  config.redis = { host: host }
+  config.redis = { host: ENV['REDIS_HOST'] || host }
 end
 
 ActiveRecord::Base.connection.create_table(Product.table_name, force: true) do |t|

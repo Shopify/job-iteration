@@ -10,6 +10,8 @@ require_relative "../jobs"
 
 redis_host = if ENV["USING_DEV"] == "1"
   "job-iteration.railgun"
+elsif ENV['REDIS_HOST']
+  ENV['REDIS_HOST']
 else
   "localhost"
 end

@@ -1,0 +1,8 @@
+name: job-iteration
+packages:
+  - path: lib
+  - gem: redis
+  - gem: resque
+  - gem: sidekiq
+exclude:
+  - []

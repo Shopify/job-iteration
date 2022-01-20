@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 if ! [ -x "$(command -v mysql)" ];
 then
   echo "Error: mysql is not installed." >&2

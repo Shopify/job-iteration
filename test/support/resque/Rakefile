@@ -13,6 +13,8 @@ require_relative "../jobs"
 
 redis_url = if ENV["USING_DEV"] == "1"
   "job-iteration.railgun:6379"
+elsif ENV['REDIS_HOST']
+  "#{ENV['REDIS_HOST']}:6379"
 else
   "localhost:6379"
 end

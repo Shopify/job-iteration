@@ -1,0 +1,25 @@
+version: '3'
+services:
+  mysql:
+    image: mysql:8.0.26
+    platform: linux/x86_64
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: 'true'
+
+  redis:
+    image: redis
+
+  app:
+    build: .
+    image: job-iteration
+    environment:
+      MYSQL_HOST: mysql
+      REDIS_HOST: redis
+      DATABASE_CLEANER_ALLOW_REMOTE_DATABASE_URL: 'true'
+    entrypoint: bash
+    ports:
+      - '3000'
+    volumes:
+      - .:/work
+    links:
+      - mysql:mysql

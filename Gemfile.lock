@@ -39,7 +39,7 @@ GEM
     database_cleaner-core (2.0.1)
     globalid (1.0.0)
       activesupport (>= 5.0)
-    i18n (1.8.11)
+    i18n (1.9.1)
       concurrent-ruby (~> 1.0)
     method_source (1.0.0)
     minitest (5.15.0)

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'csv'
+require "csv"
 
 module JobIteration
   # CsvEnumerator makes it possible to write an Iteration job

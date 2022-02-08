@@ -56,7 +56,7 @@ module JobIteration
     end
 
     test_builder_method(:build_csv_enumerator) do
-      enum = enumerator_builder(wraps: 0).build_csv_enumerator(CSV.new('test'), cursor: nil)
+      enum = enumerator_builder(wraps: 0).build_csv_enumerator(CSV.new("test"), cursor: nil)
       assert_instance_of(Enumerator::Lazy, enum)
     end
 

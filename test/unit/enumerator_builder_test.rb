@@ -55,6 +55,11 @@ module JobIteration
       enumerator_builder(wraps: 0).build_throttle_enumerator(nil, throttle_on: -> { false }, backoff: 1)
     end
 
+    test_builder_method(:build_csv_enumerator) do
+      enum = enumerator_builder(wraps: 0).build_csv_enumerator(CSV.new('test'), cursor: nil)
+      assert_instance_of(Enumerator::Lazy, enum)
+    end
+
     # checks that all the non-alias methods were tested
     raise "methods not tested: #{methods.inspect}" unless methods.empty?
 

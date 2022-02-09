@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require "csv"
-
 module JobIteration
   # CsvEnumerator makes it possible to write an Iteration job
   # that uses CSV file as a collection to Iterate.

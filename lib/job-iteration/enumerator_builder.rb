@@ -138,6 +138,10 @@ module JobIteration
       ).to_enum
     end
 
+    def build_csv_enumerator(enumerable, cursor:)
+      CsvEnumerator.new(enumerable).rows(cursor: cursor)
+    end
+
     alias_method :once, :build_once_enumerator
     alias_method :times, :build_times_enumerator
     alias_method :array, :build_array_enumerator
@@ -145,6 +149,7 @@ module JobIteration
     alias_method :active_record_on_batches, :build_active_record_enumerator_on_batches
     alias_method :active_record_on_batch_relations, :build_active_record_enumerator_on_batch_relations
     alias_method :throttle, :build_throttle_enumerator
+    alias_method :csv, :build_csv_enumerator
 
     private
 

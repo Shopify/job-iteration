@@ -123,7 +123,7 @@ class CsvJob < ApplicationJob
 
   def build_enumerator(import_id, cursor:)
     import = Import.find(import_id)
-    JobIteration::CsvEnumerator.new(import.csv).rows(cursor: cursor)
+    enumerator_builder.csv(import.csv, cursor: cursor)
   end
 
   def each_iteration(csv_row)

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "test_helper"
+require "csv"
 
 module JobIteration
   class EnumeratorBuilderTest < ActiveSupport::TestCase
@@ -55,8 +56,27 @@ module JobIteration
       enumerator_builder(wraps: 0).build_throttle_enumerator(nil, throttle_on: -> { false }, backoff: 1)
     end
 
+    test_builder_method(:build_csv_enumerator) do
+      enumerator_builder(wraps: 0).build_csv_enumerator(CSV.new("test"), cursor: nil)
+    end
+
     # checks that all the non-alias methods were tested
     raise "methods not tested: #{methods.inspect}" unless methods.empty?
+
+    test "#build_csv_enumerator uses the CsvEnumerator class"  do
+      csv = CSV.open(
+        ["test", "support", "sample_csv_with_headers.csv"].join("/"),
+        converters: :integer,
+        headers: true
+      )
+      builder = EnumeratorBuilder.new(mock, wrapper: mock)
+
+      enum = builder.build_csv_enumerator(csv, cursor: nil)
+      csv_rows = open_csv.map(&:fields)
+      enum.each_with_index do |element_and_cursor, index|
+        assert_equal [csv_rows[index], index], [element_and_cursor[0].fields, element_and_cursor[1]]
+      end
+    end
 
     private
 
@@ -66,6 +86,14 @@ module JobIteration
       builder = EnumeratorBuilder.new(job, wrapper: wrapper)
       wrapper.expects(:wrap).with(builder, anything).times(wraps)
       builder
+    end
+
+    def sample_csv_with_headers
+      ["test", "support", "sample_csv_with_headers.csv"].join("/")
+    end
+
+    def open_csv(options = {})
+      CSV.open(sample_csv_with_headers, converters: :integer, headers: true, **options)
     end
   end
 end

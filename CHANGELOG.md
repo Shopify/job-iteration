@@ -1,5 +1,9 @@
 ### Master (unreleased)
 
+## v.1.3.5 (Feb 10, 2022)
+
+- [183](https://github.com/Shopify/job-iteration/pull/183) - Add `JobIteration::EnumeratorBuilder#build_csv_enumerator`
+
 ## v.1.3.4 (Jan 18, 2022)
 
 - [174](https://github.com/Shopify/job-iteration/pull/174) - Fix Ruby 3.2 compatibility

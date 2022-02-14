@@ -85,7 +85,7 @@ GEM
       rubocop (~> 1.24)
     ruby-progressbar (1.11.0)
     ruby2_keywords (0.0.5)
-    sidekiq (6.4.0)
+    sidekiq (6.4.1)
       connection_pool (>= 2.2.2)
       rack (~> 2.0)
       redis (>= 4.2.0)

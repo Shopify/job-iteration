@@ -57,6 +57,10 @@ connection_config[:password] = "root" if ENV["CI"]
 
 ActiveRecord::Base.establish_connection(connection_config)
 
+Redis.singleton_class.class_eval do
+  attr_accessor :current
+end
+
 Redis.current = Redis.new(host: host, timeout: 1.0).tap(&:ping)
 
 Resque.redis = Redis.current

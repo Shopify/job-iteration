@@ -102,6 +102,7 @@ module JobIteration
       enqueued = ActiveJob::Base.queue_adapter.enqueued_jobs
       assert_equal 1, enqueued.size
       assert_equal 0, enqueued.first.fetch("cursor_position")
+      assert_equal 1, enqueued.first.fetch("times_interrupted")
 
       assert_equal [1], IterationThrottleJob.iterations_performed
     end

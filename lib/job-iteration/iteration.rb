@@ -68,6 +68,7 @@ module JobIteration
 
     def initialize(*arguments)
       super
+      @job_iteration_retry_backoff = nil
       @needs_reenqueue = false
       self.times_interrupted = 0
       self.total_time = 0.0
@@ -132,10 +133,11 @@ module JobIteration
       end
 
       run_callbacks(:shutdown)
+      completed = handle_completed(completed)
 
       if @needs_reenqueue
         reenqueue_iteration_job
-      elsif run_complete_callbacks?(completed)
+      elsif completed
         run_callbacks(:complete)
         output_interrupt_summary
       end
@@ -184,7 +186,7 @@ module JobIteration
       self.times_interrupted += 1
 
       self.already_in_queue = true if respond_to?(:already_in_queue=)
-      retry_job
+      retry_job(wait: @job_iteration_retry_backoff)
     end
 
     def adjust_total_time
@@ -266,18 +268,22 @@ module JobIteration
       JobIteration.interruption_adapter.call || (defined?(super) && super)
     end
 
-    def run_complete_callbacks?(completed)
-      # nil means that someone aborted the job but want to call the on_complete callback
-      if completed.nil?
-        completed = :finished
-      end
-
+    def handle_completed(completed)
       case completed
-      when :finished, true then true
-      # skip_complete_callbacks is returning from ThrottleEnumeratorand we do not want the on_complete callback to
-      # be executed
-      when false, :skip_complete_callbacks then false
+      when nil # someone aborted the job but wants to call the on_complete callback
+        return true
+      when true
+        return true
+      when false, :skip_complete_callbacks
+        return false
+      when Array # used by ThrottleEnumerator
+        reason, backoff = completed
+        raise "Unknown reason: #{reason}" unless reason == :retry
+        @job_iteration_retry_backoff = backoff
+        @needs_reenqueue = true
+        return false
       end
+      raise "Unexpected thrown value: #{completed.inspect}"
     end
 
     def valid_cursor_parameter?(parameters)

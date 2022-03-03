@@ -661,6 +661,7 @@ module JobIteration
       assert_equal(2, AbortingAndSkippingCompleteCallbackActiveRecordIterationJob.records_performed.size)
       assert_equal(0, AbortingAndSkippingCompleteCallbackActiveRecordIterationJob.on_complete_called)
       assert_equal(1, AbortingAndSkippingCompleteCallbackActiveRecordIterationJob.on_shutdown_called)
+      assert_equal(0, ActiveJob::Base.queue_adapter.enqueued_jobs.size)
     end
 
     def test_aborting_skip_complete_callbacks_in_batched_job
@@ -670,6 +671,7 @@ module JobIteration
       assert_equal(2, job_class.records_performed.size)
       assert_equal([3, 3], job_class.records_performed.map(&:size))
       assert_equal(0, job_class.on_complete_called)
+      assert_equal(0, ActiveJob::Base.queue_adapter.enqueued_jobs.size)
     end
 
     def test_checks_for_exit_after_iteration

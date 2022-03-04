@@ -159,6 +159,7 @@ module JobIteration
         end
 
         next unless job_should_exit?
+
         self.executions -= 1 if executions > 1
         @needs_reenqueue = true
         return false
@@ -279,6 +280,7 @@ module JobIteration
       when Array # used by ThrottleEnumerator
         reason, backoff = completed
         raise "Unknown reason: #{reason}" unless reason == :retry
+
         @job_iteration_retry_backoff = backoff
         @needs_reenqueue = true
         return false

@@ -232,6 +232,7 @@ module JobIteration
       def each_iteration(shop)
         @called ||= 0
         raise if @called > 2
+
         self.class.records_performed << shop
         @called += 1
       end

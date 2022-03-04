@@ -1,0 +1,12 @@
+# frozen_string_literal: true
+
+eval_gemfile "../Gemfile"
+
+if Gem::Version.new(RUBY_VERSION.dup) >= Gem::Version.new("3.1")
+  gem "net-imap", require: false
+  gem "net-pop", require: false
+  gem "net-smtp", require: false
+end
+
+gem "activejob", "~> 6.1.0"
+gem "activerecord", "~> 6.1.0"

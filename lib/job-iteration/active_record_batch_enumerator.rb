@@ -34,6 +34,7 @@ module JobIteration
 
     def each
       return to_enum { size } unless block_given?
+
       while (relation = next_batch)
         yield relation, cursor_value
       end
@@ -86,6 +87,7 @@ module JobIteration
 
     def cursor_value
       return @cursor.first if @cursor.size == 1
+
       @cursor
     end
 

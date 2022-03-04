@@ -43,6 +43,7 @@ module JobIteration
     # Builds Enumerator objects that iterates N times and yields number starting from zero.
     def build_times_enumerator(number, cursor:)
       raise ArgumentError, "First argument must be an Integer" unless number.is_a?(Integer)
+
       wrap(self, build_array_enumerator(number.times.to_a, cursor: cursor))
     end
 
@@ -54,6 +55,7 @@ module JobIteration
       if enumerable.any? { |i| defined?(ActiveRecord) && i.is_a?(ActiveRecord::Base) }
         raise ArgumentError, "array cannot contain ActiveRecord objects"
       end
+
       drop =
         if cursor.nil?
           0

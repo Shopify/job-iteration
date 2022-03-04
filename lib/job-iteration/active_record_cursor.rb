@@ -45,6 +45,7 @@ module JobIteration
 
     def position=(position)
       raise "Cursor position cannot contain nil values" if position.any?(&:nil?)
+
       @position = position
     end
 

@@ -45,6 +45,7 @@ module JobIteration
         column_value(record, attribute_name)
       end
       return positions.first if positions.size == 1
+
       positions
     end
 

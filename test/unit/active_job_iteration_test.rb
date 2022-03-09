@@ -691,12 +691,12 @@ module JobIteration
       assert_equal(0, ActiveJob::Base.queue_adapter.enqueued_jobs.size)
     end
 
-    def test_aborting_with_false_will_not_execute_on_complete_callback_or_reenqueue
+    def test_aborting_with_false_will_not_execute_on_complete_callback_but_reenqueue
       push(AbortingIterationJob, false)
       work_one_job
       assert_equal(0, AbortingIterationJob.on_complete_called)
       assert_equal(1, AbortingIterationJob.on_shutdown_called)
-      assert_equal(0, ActiveJob::Base.queue_adapter.enqueued_jobs.size)
+      assert_equal(1, ActiveJob::Base.queue_adapter.enqueued_jobs.size)
     end
 
     def test_throwing_skip_complete_callbacks_in_each_iteration_job_will_not_execute_on_complete_callback

@@ -133,9 +133,9 @@ module JobIteration
       end
 
       run_callbacks(:shutdown)
-      completed = handle_completed(completed)
+      reenqueue, completed = handle_completed(completed)
 
-      if @needs_reenqueue
+      if reenqueue
         reenqueue_iteration_job
       elsif completed
         run_callbacks(:complete)
@@ -146,7 +146,6 @@ module JobIteration
     def iterate_with_enumerator(enumerator, arguments)
       arguments = arguments.dup.freeze
       found_record = false
-      @needs_reenqueue = false
 
       enumerator.each do |object_from_enumerator, index|
         # Deferred until 2.0.0
@@ -160,7 +159,6 @@ module JobIteration
 
         next unless job_should_exit?
         self.executions -= 1 if executions > 1
-        @needs_reenqueue = true
         return false
       end
 
@@ -271,17 +269,18 @@ module JobIteration
     def handle_completed(completed)
       case completed
       when nil # someone aborted the job but wants to call the on_complete callback
-        return true
+        return [false, true]
       when true
-        return true
-      when false, :skip_complete_callbacks
-        return false
+        return [false, true]
+      when false
+        return [true, false]
+      when :skip_complete_callbacks
+        return [false, false]
       when Array # used by ThrottleEnumerator
         reason, backoff = completed
         raise "Unknown reason: #{reason}" unless reason == :retry
         @job_iteration_retry_backoff = backoff
-        @needs_reenqueue = true
-        return false
+        return [true, false]
       end
       raise "Unexpected thrown value: #{completed.inspect}"
     end

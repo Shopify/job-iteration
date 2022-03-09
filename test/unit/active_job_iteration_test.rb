@@ -798,7 +798,7 @@ module JobIteration
 
     def peek_into_queue
       jobs = ActiveJob::Base.queue_adapter.enqueued_jobs
-      assert_operator(jobs.size, :>, 0)
+      raise "no job in queue" unless !jobs.empty?
       ActiveJob::Base.deserialize(jobs.last)
     end
 

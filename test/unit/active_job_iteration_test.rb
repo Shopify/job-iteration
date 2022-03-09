@@ -90,6 +90,16 @@ module JobIteration
       end
     end
 
+    class AbortingIterationJob < SimpleIterationJob
+      def build_enumerator(_, cursor:)
+        enumerator_builder.once(cursor: cursor)
+      end
+
+      def each_iteration(_, value)
+        throw(:abort, value)
+      end
+    end
+
     class AbortingActiveRecordIterationJob < ActiveRecordIterationJob
       def each_iteration(*)
         abort_strategy if self.class.records_performed.size == 2
@@ -654,6 +664,30 @@ module JobIteration
       assert_equal(2, AbortingBatchActiveRecordIterationJob.records_performed.size)
       assert_equal([3, 3], AbortingBatchActiveRecordIterationJob.records_performed.map(&:size))
       assert_equal(1, AbortingBatchActiveRecordIterationJob.on_complete_called)
+      assert_equal(0, ActiveJob::Base.queue_adapter.enqueued_jobs.size)
+    end
+
+    def test_aborting_with_nil_will_execute_on_complete_callback
+      push(AbortingIterationJob, nil)
+      work_one_job
+      assert_equal(1, AbortingIterationJob.on_complete_called)
+      assert_equal(1, AbortingIterationJob.on_shutdown_called)
+      assert_equal(0, ActiveJob::Base.queue_adapter.enqueued_jobs.size)
+    end
+
+    def test_aborting_with_skip_complete_callbacks_will_not_execute_on_complete_callback
+      push(AbortingIterationJob, :skip_complete_callbacks)
+      work_one_job
+      assert_equal(0, AbortingIterationJob.on_complete_called)
+      assert_equal(1, AbortingIterationJob.on_shutdown_called)
+      assert_equal(0, ActiveJob::Base.queue_adapter.enqueued_jobs.size)
+    end
+
+    def test_aborting_with_true_will_execute_on_complete_callback
+      push(AbortingIterationJob, true)
+      work_one_job
+      assert_equal(1, AbortingIterationJob.on_complete_called)
+      assert_equal(1, AbortingIterationJob.on_shutdown_called)
       assert_equal(0, ActiveJob::Base.queue_adapter.enqueued_jobs.size)
     end
 

@@ -1,14 +1,18 @@
 ### Master (unreleased)
 
-## v.1.3.5 (Feb 10, 2022)
+## v1.3.6 (Mar 9, 2022)
+
+- [190](https://github.com/Shopify/job-iteration/pull/190) - Fix updating `times_interrupted` and `total_time` when job is throttled
+
+## v1.3.5 (Feb 10, 2022)
 
 - [183](https://github.com/Shopify/job-iteration/pull/183) - Add `JobIteration::EnumeratorBuilder#build_csv_enumerator`
 
-## v.1.3.4 (Jan 18, 2022)
+## v1.3.4 (Jan 18, 2022)
 
 - [174](https://github.com/Shopify/job-iteration/pull/174) - Fix Ruby 3.2 compatibility
 
-## v.1.3.3 (Nov 17, 2021)
+## v1.3.3 (Nov 17, 2021)
 - [153](https://github.com/Shopify/job-iteration/pull/153) - Re-enqueue jobs only after shutdown hooks have run
 
 ## v1.3.2 (Nov 12, 2021)

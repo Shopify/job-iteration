@@ -1,6 +1,6 @@
 GIT
   remote: https://github.com/brianmario/mysql2
-  revision: 56c0ced2afe2cabe0b3f1a05e8e5e86713ebbc87
+  revision: 96f6102c292daf64b1b3c7c5f79466c96b684b68
   specs:
     mysql2 (0.5.3)
 

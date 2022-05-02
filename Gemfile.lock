@@ -43,7 +43,7 @@ GEM
       concurrent-ruby (~> 1.0)
     method_source (1.0.0)
     minitest (5.15.0)
-    mocha (1.13.0)
+    mocha (1.14.0)
     mono_logger (1.1.1)
     multi_json (1.15.0)
     mustermann (1.1.1)

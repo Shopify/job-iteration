@@ -132,6 +132,24 @@ class CsvJob < ApplicationJob
 end
 ```
 
+```ruby
+class AdditionalArgumentsJob < ApplicationJob
+  include JobIteration::Iteration
+
+  def build_enumerator(message, name, age, cursor:)
+    enumerator_builder.active_record_on_records(
+      User.where(name: name, age: age),
+      cursor: cursor,
+    )
+  end
+
+  # addtional arguments as in #build_enumerator (except the cursor)
+  def each_iteration(user, message, *)
+    user.notify_about_something(message)
+  end
+end
+```
+
 Iteration hooks into Sidekiq and Resque out of the box to support graceful interruption. No extra configuration is required.
 
 ## Guides

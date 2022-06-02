@@ -31,7 +31,7 @@ module JobIteration
         raise ConditionNotSupportedError
       end
 
-      @base_relation = relation.reorder(@columns.join(","))
+      @base_relation = relation.reorder(Arel.sql(@columns.join(",")))
       @reached_end = false
     end
 

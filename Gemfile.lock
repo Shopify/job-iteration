@@ -54,7 +54,7 @@ GEM
     pry (0.14.1)
       coderay (~> 1.1)
       method_source (~> 1.0)
-    rack (2.2.3)
+    rack (2.2.3.1)
     rack-protection (2.2.0)
       rack
     rainbow (3.1.1)
@@ -84,7 +84,7 @@ GEM
       rubocop (~> 1.25)
     ruby-progressbar (1.11.0)
     ruby2_keywords (0.0.5)
-    sidekiq (6.4.2)
+    sidekiq (6.5.0)
       connection_pool (>= 2.2.2)
       rack (~> 2.0)
       redis (>= 4.2.0)

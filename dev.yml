@@ -8,7 +8,7 @@ up:
         or:        [mysql@5.7]
   - ruby:
       version: 2.7.6
-  - railgun
+  - isogun
   - bundler
   - custom:
       name: Create Job Iteration database

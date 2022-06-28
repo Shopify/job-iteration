@@ -242,7 +242,33 @@ class JobIterationTest < IterationUnitTest
     end
   end
 
+  def test_global_max_job_runtime
+    freeze_time
+    with_global_max_job_runtime(1.minute) do
+      klass = build_slow_job_class(iterations: 3, iteration_duration: 30.seconds)
+      klass.perform_now
+      assert_partially_completed_job(cursor_position: 2)
+    end
+  end
+
   private
+
+  # Allows building job classes that read max_job_runtime during the test,
+  # instead of when this file is read
+  def build_slow_job_class(iterations: 3, iteration_duration: 30.seconds)
+    Class.new(ActiveJob::Base) do
+      include JobIteration::Iteration
+      include ActiveSupport::Testing::TimeHelpers
+
+      define_method(:build_enumerator) do |cursor:|
+        enumerator_builder.build_times_enumerator(iterations, cursor: cursor)
+      end
+
+      define_method(:each_iteration) do |*|
+        travel(iteration_duration)
+      end
+    end
+  end
 
   def assert_raises_cursor_error(&block)
     error = assert_raises(JobIteration::Iteration::CursorError, &block)
@@ -261,6 +287,13 @@ class JobIterationTest < IterationUnitTest
     )
   end
 
+  def assert_partially_completed_job(cursor_position:)
+    message = "Expected to find partially completed job enqueued with cursor_position: #{cursor_position}"
+    enqueued_job = ActiveJob::Base.queue_adapter.enqueued_jobs.first
+    refute_nil(enqueued_job, message)
+    assert_equal(cursor_position, enqueued_job.fetch("cursor_position"))
+  end
+
   def push(job, *args)
     job.perform_later(*args)
   end
@@ -268,5 +301,13 @@ class JobIterationTest < IterationUnitTest
   def work_one_job
     job = ActiveJob::Base.queue_adapter.enqueued_jobs.pop
     ActiveJob::Base.execute(job)
+  end
+
+  def with_global_max_job_runtime(new)
+    original = JobIteration.max_job_runtime
+    JobIteration.max_job_runtime = new
+    yield
+  ensure
+    JobIteration.max_job_runtime = original
   end
 end

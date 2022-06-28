@@ -7,7 +7,7 @@ up:
     - mysql-client:
         or:        [mysql@5.7]
   - ruby:
-      version: 2.6.5
+      version: 2.7.6
   - railgun
   - bundler
   - custom:

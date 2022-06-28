@@ -14,12 +14,8 @@ jobs:
     strategy:
       matrix:
         ruby: ["2.7", "3.0", "3.1"]
-        gemfile: [rails_5_2, rails_6_0, rails_6_1, rails_7_0, rails_edge]
+        gemfile: [rails_6_0, rails_6_1, rails_7_0, rails_edge]
         exclude:
-          - ruby: "3.0"
-            gemfile: rails_5_2
-          - ruby: "3.1"
-            gemfile: rails_5_2
           - ruby: "3.1"
             gemfile: rails_6_0
         include:

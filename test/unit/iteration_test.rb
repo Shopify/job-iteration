@@ -251,6 +251,107 @@ class JobIterationTest < IterationUnitTest
     end
   end
 
+  def test_per_class_max_job_runtime_with_default_global
+    freeze_time
+    parent = build_slow_job_class(iterations: 3, iteration_duration: 30.seconds)
+    child = Class.new(parent) do
+      self.job_iteration_max_job_runtime = 1.minute
+    end
+
+    parent.perform_now
+    assert_empty(ActiveJob::Base.queue_adapter.enqueued_jobs)
+
+    child.perform_now
+    assert_partially_completed_job(cursor_position: 2)
+  end
+
+  def test_per_class_max_job_runtime_with_global_set_to_nil
+    freeze_time
+    with_global_max_job_runtime(nil) do
+      parent = build_slow_job_class(iterations: 3, iteration_duration: 30.seconds)
+      child = Class.new(parent) do
+        self.job_iteration_max_job_runtime = 1.minute
+      end
+
+      parent.perform_now
+      assert_empty(ActiveJob::Base.queue_adapter.enqueued_jobs)
+
+      child.perform_now
+      assert_partially_completed_job(cursor_position: 2)
+    end
+  end
+
+  def test_per_class_max_job_runtime_with_global_set
+    freeze_time
+    with_global_max_job_runtime(1.minute) do
+      parent = build_slow_job_class(iterations: 3, iteration_duration: 30.seconds)
+      child = Class.new(parent) do
+        self.job_iteration_max_job_runtime = 30.seconds
+      end
+
+      parent.perform_now
+      assert_partially_completed_job(cursor_position: 2)
+      ActiveJob::Base.queue_adapter.enqueued_jobs = []
+
+      child.perform_now
+      assert_partially_completed_job(cursor_position: 1)
+    end
+  end
+
+  def test_max_job_runtime_cannot_unset_global
+    with_global_max_job_runtime(30.seconds) do
+      klass = Class.new(ActiveJob::Base) do
+        include JobIteration::Iteration
+      end
+
+      error = assert_raises(ArgumentError) do
+        klass.job_iteration_max_job_runtime = nil
+      end
+
+      assert_equal(
+        "job_iteration_max_job_runtime may only decrease; " \
+          "#{klass} tried to increase it from 30 seconds to nil (no limit)",
+        error.message,
+      )
+    end
+  end
+
+  def test_max_job_runtime_cannot_be_higher_than_global
+    with_global_max_job_runtime(30.seconds) do
+      klass = Class.new(ActiveJob::Base) do
+        include JobIteration::Iteration
+      end
+
+      error = assert_raises(ArgumentError) do
+        klass.job_iteration_max_job_runtime = 1.minute
+      end
+
+      assert_equal(
+        "job_iteration_max_job_runtime may only decrease; #{klass} tried to increase it from 30 seconds to 1 minute",
+        error.message,
+      )
+    end
+  end
+
+  def test_max_job_runtime_cannot_be_higher_than_parent
+    with_global_max_job_runtime(1.minute) do
+      parent = Class.new(ActiveJob::Base) do
+        include JobIteration::Iteration
+        self.job_iteration_max_job_runtime = 30.seconds
+      end
+      child = Class.new(parent)
+
+      error = assert_raises(ArgumentError) do
+        child.job_iteration_max_job_runtime = 45.seconds
+      end
+
+      assert_equal(
+        "job_iteration_max_job_runtime may only decrease; #{child} tried to increase it from 30 seconds to 45 seconds",
+        error.message,
+      )
+    end
+  end
+
   private
 
   # Allows building job classes that read max_job_runtime during the test,

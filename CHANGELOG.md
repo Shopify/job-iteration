@@ -1,5 +1,8 @@
 ### Master (unreleased)
 
+- [241](https://github.com/Shopify/job-iteration/pull/241) - Require Ruby 2.7+, dropping 2.6 support
+- [241](https://github.com/Shopify/job-iteration/pull/241) - Require Rails 6.0+, dropping 5.2 support
+
 ## v1.3.6 (Mar 9, 2022)
 
 - [190](https://github.com/Shopify/job-iteration/pull/190) - Fix updating `times_interrupted` and `total_time` when job is throttled

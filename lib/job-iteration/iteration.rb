@@ -13,32 +13,17 @@ module JobIteration
       :total_time,
     )
 
-    class CursorError < ArgumentError
-      attr_reader :cursor
-
-      def initialize(message, cursor:)
-        super(message)
-        @cursor = cursor
-      end
-
-      def message
-        "#{super} (#{inspected_cursor})"
-      end
-
-      private
-
-      def inspected_cursor
-        cursor.inspect
-      rescue NoMethodError
-        # For those brave enough to try to use BasicObject as cursor. Nice try.
-        Object.instance_method(:inspect).bind(cursor).call
-      end
-    end
-
     included do |_base|
       define_callbacks :start
       define_callbacks :shutdown
       define_callbacks :complete
+
+      class_attribute(
+        :enforce_serializable_cursors,
+        instance_writer: false,
+        instance_predicate: false,
+        default: JobIteration.enforce_serializable_cursors,
+      )
     end
 
     module ClassMethods
@@ -63,6 +48,28 @@ module JobIteration
 
       def ban_perform_definition
         raise "Job that is using Iteration (#{self}) cannot redefine #perform"
+      end
+    end
+
+    class CursorError < ArgumentError
+      attr_reader :cursor
+
+      def initialize(message, cursor:)
+        super(message)
+        @cursor = cursor
+      end
+
+      def message
+        "#{super} (#{inspected_cursor})"
+      end
+
+      private
+
+      def inspected_cursor
+        cursor.inspect
+      rescue NoMethodError
+        # For those brave enough to try to use BasicObject as cursor. Nice try.
+        Object.instance_method(:inspect).bind(cursor).call
       end
     end
 
@@ -149,8 +156,7 @@ module JobIteration
       @needs_reenqueue = false
 
       enumerator.each do |object_from_enumerator, index|
-        # Deferred until 2.0.0
-        # assert_valid_cursor!(index)
+        assert_valid_cursor!(index)
 
         record_unit_of_work do
           found_record = true
@@ -218,7 +224,13 @@ module JobIteration
         "Cursor must be composed of objects capable of built-in (de)serialization: " \
           "Strings, Integers, Floats, Arrays, Hashes, true, false, or nil.",
         cursor: cursor,
-      )
+      ) if enforce_serializable_cursors
+
+      Deprecation.warn(<<~DEPRECATION_MESSAGE)
+        The Enumerator returned by #{self.class.name}#build_enumerator yielded a cursor which is unsafe to serialize.
+        Cursors must be composed of objects capable of built-in (de)serialization: Strings, Integers, Floats, Arrays, Hashes, true, false, or nil.
+        This will raise starting in version #{Deprecation.deprecation_horizon} of #{Deprecation.gem_name}!"
+      DEPRECATION_MESSAGE
     end
 
     def assert_implements_methods!

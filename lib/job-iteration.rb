@@ -9,6 +9,8 @@ module JobIteration
 
   INTEGRATIONS = [:resque, :sidekiq]
 
+  Deprecation = ActiveSupport::Deprecation.new("2.0", "JobIteration")
+
   extend self
 
   # Use this to _always_ interrupt the job after it's been running for more than N seconds.
@@ -19,6 +21,25 @@ module JobIteration
   # This setting will make it to always interrupt a job after it's been iterating for 5 minutes.
   # Defaults to nil which means that jobs will not be interrupted except on termination signal.
   attr_accessor :max_job_runtime
+
+  # Set this to `true` to enforce that cursors be composed of objects capable
+  # of built-in (de)serialization: Strings, Integers, Floats, Arrays, Hashes,
+  # true, false, or nil.
+  #
+  #    JobIteration.enforce_serializable_cursors = true
+  #
+  # For more granular control, this can also be configured per job class, and
+  # is inherited by child classes.
+  #
+  #     class MyJob < ActiveJob::Base
+  #       include JobIteration::Iteration
+  #       self.enforce_serializable_cursors = false
+  #       # ...
+  #     end
+  #
+  # Note that non-enforcement is deprecated and enforcement will be mandatory
+  # in version 2.0, at which point this config will go away.
+  attr_accessor :enforce_serializable_cursors
 
   # Used internally for hooking into job processing frameworks like Sidekiq and Resque.
   attr_accessor :interruption_adapter

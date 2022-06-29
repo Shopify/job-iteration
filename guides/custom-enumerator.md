@@ -148,3 +148,5 @@ Instead, the job should take steps to serialize and deserialize the cursor as an
 +    SomeAPI.stream(since: Time.iso8601(cursor))
    end
 ```
+
+Use of unsupported classes is deprecated, and will raise an error in a future version of Job Iteration.

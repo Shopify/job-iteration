@@ -98,7 +98,7 @@ To ensure cursors are not corrupted, they should only be composed of classes Rub
 - `FalseClass` (`false`)
 - `NilClass` (`nil`)
 
-For example, if a `Time` object is given as a cursor (perhaps we are iterating over API resources by creation time), it will be serialized by the job adapter, which typically calls `to_s`, meaning upon resumption the job will unexpectedly get receive a String as cursor instead of the original `Time` object.
+For example, if a `Time` object is given as a cursor (perhaps we are iterating over API resources by creation time), it will be serialized by the job adapter, which typically calls `to_s`, meaning upon resumption the job will unexpectedly receive a String as cursor instead of the original `Time` object.
 
 ```ruby
 require "time"

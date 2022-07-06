@@ -256,7 +256,7 @@ class JobIterationTest < IterationUnitTest
   def test_jobs_using_unserializable_cursor_will_raise_if_enforce_serializable_cursors_set_per_class
     with_global_enforce_serializable_cursors(false) do
       job_class = build_invalid_cursor_job(cursor: :unserializable)
-      job_class.enforce_serializable_cursors = true
+      job_class.job_iteration_enforce_serializable_cursors = true
 
       assert_raises_cursor_error do
         job_class.perform_now
@@ -267,7 +267,7 @@ class JobIterationTest < IterationUnitTest
   def test_jobs_using_unserializable_cursor_will_raise_if_enforce_serializable_cursors_set_in_parent
     with_global_enforce_serializable_cursors(false) do
       parent = build_invalid_cursor_job(cursor: :unserializable)
-      parent.enforce_serializable_cursors = true
+      parent.job_iteration_enforce_serializable_cursors = true
       child = Class.new(parent)
 
       assert_raises_cursor_error do
@@ -279,7 +279,7 @@ class JobIterationTest < IterationUnitTest
   def test_jobs_using_unserializable_cursor_will_not_raise_if_enforce_serializable_cursors_unset_per_class
     with_global_enforce_serializable_cursors(true) do
       job_class = build_invalid_cursor_job(cursor: :unserializable)
-      job_class.enforce_serializable_cursors = false
+      job_class.job_iteration_enforce_serializable_cursors = false
 
       assert_nothing_raised do
         job_class.perform_now

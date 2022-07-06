@@ -19,7 +19,7 @@ module JobIteration
       define_callbacks :complete
 
       class_attribute(
-        :enforce_serializable_cursors,
+        :job_iteration_enforce_serializable_cursors,
         instance_writer: false,
         instance_predicate: false,
         default: JobIteration.enforce_serializable_cursors,
@@ -224,7 +224,7 @@ module JobIteration
         "Cursor must be composed of objects capable of built-in (de)serialization: " \
           "Strings, Integers, Floats, Arrays, Hashes, true, false, or nil.",
         cursor: cursor,
-      ) if enforce_serializable_cursors
+      ) if job_iteration_enforce_serializable_cursors
 
       Deprecation.warn(<<~DEPRECATION_MESSAGE)
         The Enumerator returned by #{self.class.name}#build_enumerator yielded a cursor which is unsafe to serialize.

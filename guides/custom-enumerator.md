@@ -31,8 +31,8 @@ class StripeListEnumerator
     pagination_params = {}
     pagination_params[:starting_after] = cursor unless cursor.nil?
 
+    # The following line makes a request, consider adding your rate limiter here.
     @list = resource.public_send(:list, params.merge(pagination_params), options)
-      .auto_paging_each.lazy
   end
 
   def to_enumerator
@@ -45,8 +45,15 @@ class StripeListEnumerator
   # as the cursor on the job. This allows us to properly set the
   # `starting_after` parameter for the API request when resuming.
   def each
-    @list.each do |item, _index|
-      yield item, item.id
+    loop do
+      @list.each do |item, _index|
+        yield item, item.id
+      end
+
+      # The following line makes a request, consider adding your rate limiter here.
+      @list = @list.next_page
+
+      break if @list.empty?
     end
   end
 end
@@ -55,6 +62,10 @@ end
 ```ruby
 class StripeJob < ActiveJob::Base
   include JobIteration::Iteration
+
+  # If you added your own rate limiting above, handle it here. For example:
+  # retry_on(MyRateLimiter::LimitExceededError, wait: 30.seconds, attempts: :unlimited)
+  # Use an exponential back-off strategy when Stripe's API returns errors.
 
   def build_enumerator(params, cursor:)
     StripeListEnumerator.new(

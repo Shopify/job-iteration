@@ -85,15 +85,19 @@ module JobIteration
 
     def serialize # @private
       super.merge(
-        "cursor_position" => cursor_position,
+        "cursor_position" => serialized_cursor_position,
         "times_interrupted" => times_interrupted,
         "total_time" => total_time,
       )
     end
 
+    # FIXME: Move this
+    attr_accessor :serialized_cursor_position
+
     def deserialize(job_data) # @private
       super
-      self.cursor_position = job_data["cursor_position"]
+      self.serialized_cursor_position = job_data["cursor_position"]
+      self.cursor_position = deserialize_cursor(serialized_cursor_position)
       self.times_interrupted = job_data["times_interrupted"] || 0
       self.total_time = job_data["total_time"] || 0
     end
@@ -150,18 +154,42 @@ module JobIteration
       end
     end
 
+    # FIXME: Move these to private
+    def serialize_cursor(cursor)
+      ActiveJob::Arguments.serialize([cursor]).first
+    rescue ActiveJob::SerializationError
+      # TODO: Change this error message to call out ActiveJob::Serializers instead
+      raise CursorError.new(
+        "CURSOR ERROR MESSAGE TBD (mention serializers)",
+        cursor: cursor,
+      ) if job_iteration_enforce_serializable_cursors
+
+      Deprecation.warn(<<~DEPRECATION_MESSAGE)
+        The Enumerator returned by #{self.class.name}#build_enumerator yielded a cursor which is unsafe to serialize.
+
+        TBD MENTION SERIALIZERS!
+
+        This will raise starting in version #{Deprecation.deprecation_horizon} of #{Deprecation.gem_name}!"
+      DEPRECATION_MESSAGE
+    end
+
+    def deserialize_cursor(cursor)
+      ActiveJob::Arguments.deserialize([cursor]).first
+    end
+
     def iterate_with_enumerator(enumerator, arguments)
       arguments = arguments.dup.freeze
       found_record = false
       @needs_reenqueue = false
 
       enumerator.each do |object_from_enumerator, index|
-        assert_valid_cursor!(index)
+        serialized_cursor_position = serialize_cursor(index)
 
         record_unit_of_work do
           found_record = true
           each_iteration(object_from_enumerator, *arguments)
           self.cursor_position = index
+          self.serialized_cursor_position = serialized_cursor_position
         end
 
         next unless job_should_exit?
@@ -213,24 +241,6 @@ module JobIteration
             )
           end
       EOS
-    end
-
-    # The adapter must be able to serialize and deserialize the cursor back into an equivalent object.
-    # https://github.com/mperham/sidekiq/wiki/Best-Practices#1-make-your-job-parameters-small-and-simple
-    def assert_valid_cursor!(cursor)
-      return if serializable?(cursor)
-
-      raise CursorError.new(
-        "Cursor must be composed of objects capable of built-in (de)serialization: " \
-          "Strings, Integers, Floats, Arrays, Hashes, true, false, or nil.",
-        cursor: cursor,
-      ) if job_iteration_enforce_serializable_cursors
-
-      Deprecation.warn(<<~DEPRECATION_MESSAGE)
-        The Enumerator returned by #{self.class.name}#build_enumerator yielded a cursor which is unsafe to serialize.
-        Cursors must be composed of objects capable of built-in (de)serialization: Strings, Integers, Floats, Arrays, Hashes, true, false, or nil.
-        This will raise starting in version #{Deprecation.deprecation_horizon} of #{Deprecation.gem_name}!"
-      DEPRECATION_MESSAGE
     end
 
     def assert_implements_methods!
@@ -309,22 +319,6 @@ module JobIteration
         next unless parameter_name == :cursor
         return true if [:keyreq, :key].include?(parameter_type)
       end
-      false
-    end
-
-    SIMPLE_SERIALIZABLE_CLASSES = [String, Integer, Float, NilClass, TrueClass, FalseClass].freeze
-    private_constant :SIMPLE_SERIALIZABLE_CLASSES
-    def serializable?(object)
-      # Subclasses must be excluded, hence not using is_a? or ===.
-      if object.instance_of?(Array)
-        object.all? { |element| serializable?(element) }
-      elsif object.instance_of?(Hash)
-        object.all? { |key, value| serializable?(key) && serializable?(value) }
-      else
-        SIMPLE_SERIALIZABLE_CLASSES.any? { |klass| object.instance_of?(klass) }
-      end
-    rescue NoMethodError
-      # BasicObject doesn't respond to instance_of, but we can't serialize it anyway
       false
     end
   end

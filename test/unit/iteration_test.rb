@@ -141,94 +141,46 @@ class JobIterationTest < IterationUnitTest
     assert_includes(methods_added, :foo)
   end
 
-  def test_jobs_using_time_cursor_will_raise
+  UnserializableCursor = Class.new
+  SerializableCursor = Class.new
+
+  class SerializableCursorSerializer < ActiveJob::Serializers::ObjectSerializer
+    def serialize(_)
+      super({})
+    end
+
+    def deserialize(_)
+      klass.new
+    end
+
+    private
+
+    def klass
+      SerializableCursor
+    end
+  end
+  ActiveJob::Serializers.add_serializers(SerializableCursorSerializer)
+
+  def test_jobs_using_unserializable_cursor_will_raise
     skip_until_version("2.0.0")
 
-    job_class = build_invalid_cursor_job(cursor: Time.now)
+    job_class = build_invalid_cursor_job(cursor: UnserializableCursor.new)
 
     assert_raises_cursor_error do
       job_class.perform_now
     end
   end
 
-  def test_jobs_using_time_cursor_is_deprecated
-    job_class = build_invalid_cursor_job(cursor: Time.now)
+  def test_jobs_using_unserializable_cursor_is_deprecated
+    job_class = build_invalid_cursor_job(cursor: UnserializableCursor.new)
 
     assert_cursor_deprecation_warning_on_perform(job_class)
   end
 
-  def test_jobs_using_active_record_cursor_will_raise
-    skip_until_version("2.0.0")
+  def test_jobs_using_serializable_cursor_is_not_deprecated
+    job_class = build_invalid_cursor_job(cursor: SerializableCursor.new)
 
-    refute_nil(Product.first)
-
-    job_class = build_invalid_cursor_job(cursor: Product.first)
-
-    assert_raises_cursor_error do
-      job_class.perform_now
-    end
-  end
-
-  def test_jobs_using_active_record_cursor_is_deprecated
-    refute_nil(Product.first)
-
-    job_class = build_invalid_cursor_job(cursor: Product.first)
-
-    assert_cursor_deprecation_warning_on_perform(job_class)
-  end
-
-  def test_jobs_using_symbol_cursor_will_raise
-    skip_until_version("2.0.0")
-
-    job_class = build_invalid_cursor_job(cursor: :symbol)
-
-    assert_raises_cursor_error do
-      job_class.perform_now
-    end
-  end
-
-  def test_jobs_using_symbol_cursor_is_deprecated
-    job_class = build_invalid_cursor_job(cursor: :symbol)
-
-    assert_cursor_deprecation_warning_on_perform(job_class)
-  end
-
-  def test_jobs_using_string_subclass_cursor_will_raise
-    skip_until_version("2.0.0")
-
-    string_subclass = Class.new(String)
-    string_subclass.define_singleton_method(:name) { "StringSubclass" }
-
-    job_class = build_invalid_cursor_job(cursor: string_subclass.new)
-
-    assert_raises_cursor_error do
-      job_class.perform_now
-    end
-  end
-
-  def test_jobs_using_string_subclass_cursor_is_deprecated
-    string_subclass = Class.new(String)
-    string_subclass.define_singleton_method(:name) { "StringSubclass" }
-
-    job_class = build_invalid_cursor_job(cursor: string_subclass.new)
-
-    assert_cursor_deprecation_warning_on_perform(job_class)
-  end
-
-  def test_jobs_using_basic_object_cursor_will_raise
-    skip_until_version("2.0.0")
-
-    job_class = build_invalid_cursor_job(cursor: BasicObject.new)
-
-    assert_raises_cursor_error do
-      job_class.perform_now
-    end
-  end
-
-  def test_jobs_using_basic_object_cursor_is_deprecated
-    job_class = build_invalid_cursor_job(cursor: BasicObject.new)
-
-    assert_cursor_deprecation_warning_on_perform(job_class)
+    assert_no_cursor_deprecation_warning_on_perform(job_class)
   end
 
   def test_jobs_using_complex_but_serializable_cursor_is_not_deprecated
@@ -337,7 +289,9 @@ class JobIterationTest < IterationUnitTest
   def assert_cursor_deprecation_warning_on_perform(job_class)
     expected_message = <<~MESSAGE.chomp
       DEPRECATION WARNING: The Enumerator returned by #{job_class.name}#build_enumerator yielded a cursor which is unsafe to serialize.
-      Cursors must be composed of objects capable of built-in (de)serialization: Strings, Integers, Floats, Arrays, Hashes, true, false, or nil.
+
+      TBD MENTION SERIALIZERS!
+
       This will raise starting in version #{JobIteration::Deprecation.deprecation_horizon} of #{JobIteration::Deprecation.gem_name}!
     MESSAGE
 

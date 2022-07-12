@@ -33,7 +33,7 @@ module JobIteration
   #
   #     class MyJob < ActiveJob::Base
   #       include JobIteration::Iteration
-  #       self.enforce_serializable_cursors = false
+  #       self.job_iteration_enforce_serializable_cursors = false
   #       # ...
   #     end
   #

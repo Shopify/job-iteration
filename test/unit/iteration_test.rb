@@ -138,6 +138,27 @@ class JobIterationTest < IterationUnitTest
     end
   end
 
+  class JobThatInterruptsItself < ActiveJob::Base
+    include JobIteration::Iteration
+
+    cattr_accessor :iterations_performed, instance_accessor: false
+    self.iterations_performed = []
+
+    stop_iterating_on(->(job) { job.class.iterations_performed.size >= 1 })
+
+    def build_enumerator(_params, cursor:)
+      enumerator_builder.build_array_enumerator([1, 2, 3], cursor: cursor)
+    end
+
+    def each_iteration(record, _params)
+      self.class.iterations_performed << record
+    end
+  end
+
+  setup do
+    JobThatInterruptsItself.iterations_performed = []
+  end
+
   def test_jobs_that_define_build_enumerator_and_each_iteration_will_not_raise
     push(JobWithRightMethods, "walrus" => "best")
     work_one_job
@@ -240,6 +261,12 @@ class JobIterationTest < IterationUnitTest
     freeze_time do
       JobThatCompletesAfter3Seconds.perform_now(->(job) { assert_equal(3, job.total_time) })
     end
+  end
+
+  def test_jobs_can_define_custom_interruption_triggers
+    JobThatInterruptsItself.perform_now({})
+
+    assert_equal([1], JobThatInterruptsItself.iterations_performed)
   end
 
   private

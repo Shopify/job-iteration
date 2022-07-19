@@ -59,6 +59,18 @@ module JobIteration
         set_callback(:complete, :after, *filters, &blk)
       end
 
+      def stop_iterating_on(interrupt_proc)
+        interruptors << interrupt_proc
+      end
+
+      def interruptors
+        @interruptors ||= [
+          ->(job) { JobIteration.max_job_runtime && job.start_time && (Time.now.utc - job.start_time) > JobIteration.max_job_runtime },
+          ->(_) { JobIteration.interruption_adapter.call },
+        ]
+        @interruptors
+      end
+
       private
 
       def ban_perform_definition
@@ -262,11 +274,8 @@ module JobIteration
     end
 
     def job_should_exit?
-      if ::JobIteration.max_job_runtime && start_time && (Time.now.utc - start_time) > ::JobIteration.max_job_runtime
-        return true
-      end
-
-      JobIteration.interruption_adapter.call || (defined?(super) && super)
+      self.class.interruptors.any? { |interrupt_proc| interrupt_proc.call(self) } ||
+        (defined?(super) && super)
     end
 
     def handle_completed(completed)

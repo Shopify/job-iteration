@@ -1,5 +1,47 @@
 # Best practices
 
+## Batch iteration
+
+Regardless of the active record enumerator used in the task, `job-iteration` gem loads records in batches of 100 (by default).
+The following two tasks produce equivalent database queries,
+however `RecordsJob` task allows for more frequent interruptions by doing just one thing in the `each_iteration` method.
+
+```ruby
+# bad
+class BatchesJob < ApplicationJob
+  include JobIteration::Iteration
+
+  def build_enumerator(product_id, cursor:)
+    enumerator_builder.active_record_on_batches(
+      Comment.where(product_id: product_id),
+      cursor: cursor,
+      batch_size: 5,
+    )
+  end
+
+  def each_iteration(batch_of_comments, product_id)
+    batch_of_comments.each(&:destroy)
+  end
+end
+
+# good
+class RecordsJob < ApplicationJob
+  include JobIteration::Iteration
+
+  def build_enumerator(product_id, cursor:)
+    enumerator_builder.active_record_on_records(
+      Comment.where(product_id: product_id),
+      cursor: cursor,
+      batch_size: 5,
+    )
+  end
+
+  def each_iteration(comment, product_id)
+    comment.destroy
+  end
+end
+```
+
 ## Instrumentation
 
 Iteration leverages `ActiveSupport::Notifications` which lets you instrument all kind of events:

@@ -69,17 +69,15 @@ class BatchesJob < ApplicationJob
 
   def build_enumerator(product_id, cursor:)
     enumerator_builder.active_record_on_batches(
-      Product.find(product_id).comments,
+      Comment.where(product_id: product_id).select(:id),
       cursor: cursor,
       batch_size: 100,
     )
   end
 
   def each_iteration(batch_of_comments, product_id)
-    # batch_of_comments will contain batches of 100 records
-    batch_of_comments.each do |comment|
-      DeleteCommentJob.perform_later(comment)
-    end
+    comment_ids = batch_of_comments.map(&:id)
+    CommentService.call(comment_ids: comment_ids)
   end
 end
 ```

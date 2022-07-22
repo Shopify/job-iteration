@@ -39,6 +39,33 @@ module JobIteration
       define_callbacks :start
       define_callbacks :shutdown
       define_callbacks :complete
+
+      class_attribute(
+        :job_iteration_max_job_runtime,
+        instance_writer: false,
+        instance_predicate: false,
+        default: JobIteration.max_job_runtime,
+      )
+
+      singleton_class.prepend(PrependedClassMethods)
+    end
+
+    module PrependedClassMethods
+      def job_iteration_max_job_runtime=(new)
+        existing = job_iteration_max_job_runtime
+
+        if existing && (!new || new > existing)
+          existing_label = existing.inspect
+          new_label = new ? new.inspect : "#{new.inspect} (no limit)"
+          raise(
+            ArgumentError,
+            "job_iteration_max_job_runtime may only decrease; " \
+              "#{self} tried to increase it from #{existing_label} to #{new_label}",
+          )
+        end
+
+        super
+      end
     end
 
     module ClassMethods
@@ -262,7 +289,7 @@ module JobIteration
     end
 
     def job_should_exit?
-      if ::JobIteration.max_job_runtime && start_time && (Time.now.utc - start_time) > ::JobIteration.max_job_runtime
+      if job_iteration_max_job_runtime && start_time && (Time.now.utc - start_time) > job_iteration_max_job_runtime
         return true
       end
 

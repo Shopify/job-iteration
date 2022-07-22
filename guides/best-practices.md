@@ -108,3 +108,18 @@ JobIteration.max_job_runtime = 5.minutes # nil by default
 ```
 
 Use this accessor to tweak how often you'd like the job to interrupt itself.
+
+### Per job max job runtime
+
+For more granular control, `job_iteration_max_job_runtime` can be set **per-job class**. This allows both incremental adoption, as well as using a conservative global setting, and an aggressive setting on a per-job basis.
+
+```ruby
+class MyJob < ApplicationJob
+  include JobIteration::Iteration
+
+  self.job_iteration_max_job_runtime = 3.minutes
+
+  # ...
+```
+
+This setting will be inherited by any child classes, although it can be further overridden. Note that no class can **increase** the `max_job_runtime` it has inherited; it can only be **decreased**. No job can increase its `max_job_runtime` beyond the global limit.

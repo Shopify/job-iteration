@@ -18,6 +18,15 @@ module JobIteration
   #
   # This setting will make it to always interrupt a job after it's been iterating for 5 minutes.
   # Defaults to nil which means that jobs will not be interrupted except on termination signal.
+  #
+  # This setting can be further reduced (but not increased) by using the inheritable per-class
+  # job_iteration_max_job_runtime setting.
+  # @example
+  #
+  #   class MyJob < ActiveJob::Base
+  #     include JobIteration::Iteration
+  #     self.job_iteration_max_job_runtime = 1.minute
+  #     # ...
   attr_accessor :max_job_runtime
 
   # Used internally for hooking into job processing frameworks like Sidekiq and Resque.

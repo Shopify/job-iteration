@@ -26,7 +26,7 @@ module JobIteration
       end
 
       if relation.arel.orders.present? || relation.arel.taken.present?
-        raise ConditionNotSupportedError
+        raise JobIteration::ActiveRecordCursor::ConditionNotSupportedError
       end
 
       @base_relation = relation.reorder(@columns.join(","))

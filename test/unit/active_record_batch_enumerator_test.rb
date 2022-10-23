@@ -125,6 +125,12 @@ module JobIteration
       assert_equal expected_num_queries, queries.size
     end
 
+    test "enumerator will raise ConditionNotSupportedError if the relation is ordered" do
+      assert_raise(JobIteration::ActiveRecordCursor::ConditionNotSupportedError) do
+        build_enumerator(relation: Product.order(created_at: :desc))
+      end
+    end
+
     private
 
     def build_enumerator(relation: Product.all, batch_size: 2, columns: nil, cursor: nil)

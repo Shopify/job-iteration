@@ -43,7 +43,7 @@ GEM
     json (2.6.2)
     method_source (1.0.0)
     minitest (5.16.2)
-    mocha (1.14.0)
+    mocha (1.16.0)
     mono_logger (1.1.1)
     multi_json (1.15.0)
     mustermann (1.1.1)

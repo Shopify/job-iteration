@@ -24,10 +24,10 @@ module JobIteration
         enumerator_builder.build_throttle_enumerator(
           enumerator_builder.build_array_enumerator(
             [1, 2, 3],
-            cursor: cursor
+            cursor: cursor,
           ),
           throttle_on: -> { IterationThrottleJob.should_throttle_sequence.shift },
-          backoff: 30.seconds
+          backoff: 30.seconds,
         )
       end
 
@@ -65,7 +65,7 @@ module JobIteration
         .throttle(
           enum,
           throttle_on: -> { false },
-          backoff: 30.seconds
+          backoff: 30.seconds,
         )
 
       assert_equal enum.size, throttle_enum.size
@@ -76,7 +76,7 @@ module JobIteration
       enum = enumerator_builder.build_throttle_enumerator(
         enumerator_builder.active_record_on_records(Product.all, cursor: nil),
         throttle_on: -> { false },
-        backoff: 30.seconds
+        backoff: 30.seconds,
       )
 
       product = Product.all.first

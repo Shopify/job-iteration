@@ -19,10 +19,12 @@ module JobIteration
     # compatibility with raw calls to EnumeratorBuilder. Think of these wrappers
     # the way you should a middleware.
     class Wrapper < Enumerator
-      def self.wrap(_builder, enum)
-        new(-> { enum.size }) do |yielder|
-          enum.each do |*val|
-            yielder.yield(*val)
+      class << self
+        def wrap(_builder, enum)
+          new(-> { enum.size }) do |yielder|
+            enum.each do |*val|
+              yielder.yield(*val)
+            end
           end
         end
       end
@@ -99,7 +101,7 @@ module JobIteration
       enum = build_active_record_enumerator(
         scope,
         cursor: cursor,
-        **args
+        **args,
       ).records
       wrap(self, enum)
     end
@@ -114,7 +116,7 @@ module JobIteration
       enum = build_active_record_enumerator(
         scope,
         cursor: cursor,
-        **args
+        **args,
       ).batches
       wrap(self, enum)
     end
@@ -125,7 +127,7 @@ module JobIteration
       enum = JobIteration::ActiveRecordBatchEnumerator.new(
         scope,
         cursor: cursor,
-        **args
+        **args,
       ).each
       enum = wrap(self, enum) if wrap
       enum
@@ -136,7 +138,7 @@ module JobIteration
         enum,
         @job,
         throttle_on: throttle_on,
-        backoff: backoff
+        backoff: backoff,
       ).to_enum
     end
 
@@ -163,7 +165,7 @@ module JobIteration
       JobIteration::ActiveRecordEnumerator.new(
         scope,
         cursor: cursor,
-        **args
+        **args,
       )
     end
   end

@@ -67,7 +67,7 @@ module JobIteration
       csv = CSV.open(
         ["test", "support", "sample_csv_with_headers.csv"].join("/"),
         converters: :integer,
-        headers: true
+        headers: true,
       )
       builder = EnumeratorBuilder.new(mock, wrapper: mock)
 

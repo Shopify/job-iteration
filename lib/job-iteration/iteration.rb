@@ -194,7 +194,7 @@ module JobIteration
 
       logger.info(
         "[JobIteration::Iteration] Enumerator found nothing to iterate! " \
-          "times_interrupted=#{times_interrupted} cursor_position=#{cursor_position}"
+          "times_interrupted=#{times_interrupted} cursor_position=#{cursor_position}",
       ) unless found_record
 
       adjust_total_time
@@ -252,7 +252,7 @@ module JobIteration
       unless respond_to?(:each_iteration, true)
         raise(
           ArgumentError,
-          "Iteration job (#{self.class}) must implement #each_iteration method"
+          "Iteration job (#{self.class}) must implement #each_iteration method",
         )
       end
 

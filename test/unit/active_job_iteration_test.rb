@@ -67,7 +67,7 @@ module JobIteration
         enumerator_builder.active_record_on_batches(
           Product.all,
           cursor: cursor,
-          batch_size: 3
+          batch_size: 3,
         )
       end
 
@@ -112,7 +112,7 @@ module JobIteration
         enumerator_builder.active_record_on_batches(
           Product.all,
           cursor: cursor,
-          batch_size: 3
+          batch_size: 3,
         )
       end
 
@@ -136,7 +136,7 @@ module JobIteration
       def build_enumerator(cursor:)
         enumerator_builder.active_record_on_records(
           Product.order("country DESC"),
-          cursor: cursor
+          cursor: cursor,
         )
       end
 
@@ -148,7 +148,7 @@ module JobIteration
       def build_enumerator(cursor:)
         enumerator_builder.active_record_on_records(
           Product.limit(5),
-          cursor: cursor
+          cursor: cursor,
         )
       end
 
@@ -200,7 +200,7 @@ module JobIteration
           Product.all,
           cursor: cursor,
           columns: [:updated_at, :id],
-          batch_size: 2
+          batch_size: 2,
         )
       end
 
@@ -225,7 +225,7 @@ module JobIteration
       def build_enumerator(cursor:)
         enumerator_builder.active_record_on_records(
           Product.all,
-          cursor: cursor
+          cursor: cursor,
         )
       end
 

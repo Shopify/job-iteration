@@ -15,7 +15,6 @@ require "active_job"
 require "active_record"
 require "pry"
 require "mocha/minitest"
-require "database_cleaner"
 
 GlobalID.app = "iteration"
 ActiveRecord::Base.include(GlobalID::Identification) # https://github.com/rails/globalid/blob/main/lib/global_id/railtie.rb
@@ -74,8 +73,6 @@ ActiveRecord::Base.connection.create_table(Product.table_name, force: true) do |
   t.timestamps
 end
 
-DatabaseCleaner.strategy = :truncation
-
 module LoggingHelpers
   def assert_logged(message)
     old_logger = ActiveJob::Base.logger
@@ -117,12 +114,16 @@ class IterationUnitTest < ActiveSupport::TestCase
 
   teardown do
     ActiveJob::Base.queue_adapter.enqueued_jobs = []
-    DatabaseCleaner.clean
+    truncate_fixtures
   end
 
   def insert_fixtures
     10.times do |n|
       Product.create!(name: "lipstick #{n}")
     end
+  end
+
+  def truncate_fixtures
+    ActiveRecord::Base.connection.truncate(Product.table_name)
   end
 end

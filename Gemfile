@@ -15,7 +15,6 @@ gem "mysql2", github: "brianmario/mysql2"
 gem "globalid"
 gem "i18n"
 gem "redis"
-gem "database_cleaner"
 
 gem "pry"
 gem "mocha"

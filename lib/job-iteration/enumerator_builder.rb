@@ -4,6 +4,7 @@ require_relative "./active_record_batch_enumerator"
 require_relative "./active_record_enumerator"
 require_relative "./csv_enumerator"
 require_relative "./throttle_enumerator"
+require_relative "./nested_enumerator"
 require "forwardable"
 
 module JobIteration
@@ -146,6 +147,40 @@ module JobIteration
       CsvEnumerator.new(enumerable).rows(cursor: cursor)
     end
 
+    # Builds Enumerator for nested iteration.
+    #
+    # @param enums [Array<Proc>] an Array of Procs, each should return an Enumerator.
+    #   Each proc from enums should accept the yielded items from the parent enumerators
+    #     and the `cursor` as its arguments.
+    #   Each proc's `cursor` argument is its part from the `build_enumerator`'s `cursor` array.
+    # @param cursor [Array<Object>] array of offsets for each of the enums to start iteration from
+    #
+    # @example
+    #   def build_enumerator(cursor:)
+    #     enumerator_builder.nested(
+    #       [
+    #         ->(cursor) {
+    #           enumerator_builder.active_record_on_records(Shop.all, cursor: cursor)
+    #         },
+    #         ->(shop, cursor) {
+    #           enumerator_builder.active_record_on_records(shop.products, cursor: cursor)
+    #         },
+    #         ->(_shop, product, cursor) {
+    #           enumerator_builder.active_record_on_batch_relations(product.product_variants, cursor: cursor)
+    #         }
+    #       ],
+    #       cursor: cursor
+    #     )
+    #   end
+    #
+    #   def each_iteration(product_variants_relation)
+    #     # do something
+    #   end
+    #
+    def build_nested_enumerator(enums, cursor:)
+      NestedEnumerator.new(enums, cursor: cursor).each
+    end
+
     alias_method :once, :build_once_enumerator
     alias_method :times, :build_times_enumerator
     alias_method :array, :build_array_enumerator
@@ -154,6 +189,7 @@ module JobIteration
     alias_method :active_record_on_batch_relations, :build_active_record_enumerator_on_batch_relations
     alias_method :throttle, :build_throttle_enumerator
     alias_method :csv, :build_csv_enumerator
+    alias_method :nested, :build_nested_enumerator
 
     private
 

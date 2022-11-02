@@ -130,6 +130,27 @@ class CsvJob < ApplicationJob
 end
 ```
 
+```ruby
+class NestedIterationJob < ApplicationJob
+  include JobIteration::Iteration
+
+  def build_enumerator(cursor:)
+    enumerator_builder.nested(
+      [
+        ->(cursor) { enumerator_builder.active_record_on_records(Shop.all, cursor: cursor) },
+        ->(shop, cursor) { enumerator_builder.active_record_on_records(shop.products, cursor: cursor) },
+        ->(_shop, product, cursor) { enumerator_builder.active_record_on_batch_relations(product.product_variants, cursor: cursor) }
+      ],
+      cursor: cursor
+    )
+  end
+
+  def each_iteration(product_variants_relation)
+    # do something
+  end
+end
+```
+
 Iteration hooks into Sidekiq and Resque out of the box to support graceful interruption. No extra configuration is required.
 
 ## Guides

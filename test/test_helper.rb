@@ -42,6 +42,11 @@ end
 ActiveJob::Base.queue_adapter = :iteration_test
 
 class Product < ActiveRecord::Base
+  has_many :comments
+end
+
+class Comment < ActiveRecord::Base
+  belongs_to :product
 end
 
 host = ENV["USING_DEV"] == "1" ? "job-iteration.railgun" : "localhost"
@@ -68,9 +73,16 @@ Sidekiq.configure_client do |config|
   config.redis = { host: host }
 end
 
-ActiveRecord::Base.connection.create_table(Product.table_name, force: true) do |t|
-  t.string(:name)
-  t.timestamps
+ActiveRecord::Schema.define do
+  create_table(:products, force: true) do |t|
+    t.string(:name)
+    t.timestamps
+  end
+
+  create_table(:comments, force: true) do |t|
+    t.string(:content)
+    t.belongs_to(:product)
+  end
 end
 
 module LoggingHelpers
@@ -118,9 +130,16 @@ class IterationUnitTest < ActiveSupport::TestCase
   end
 
   def insert_fixtures
-    10.times do |n|
-      Product.create!(name: "lipstick #{n}")
-    end
+    now = Time.now
+    products = 10.times.map { |n| { name: "lipstick #{n}", created_at: now - n, updated_at: now - n } }
+    Product.insert_all!(products)
+
+    comments = Product.order(:id).limit(3).map.with_index do |product, index|
+      comments_count = index + 1
+      comments_count.times.map { |n| { content: "#{product.name} comment ##{n}", product_id: product.id } }
+    end.flatten
+
+    Comment.insert_all!(comments)
   end
 
   def truncate_fixtures

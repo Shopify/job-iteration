@@ -1,5 +1,6 @@
 ### Master (unreleased)
 
+- [295](https://github.com/Shopify/job-iteration/pull/295) - Support nested iteration
 - [241](https://github.com/Shopify/job-iteration/pull/241) - Require Ruby 2.7+, dropping 2.6 support
 - [241](https://github.com/Shopify/job-iteration/pull/241) - Require Rails 6.0+, dropping 5.2 support
 - [240](https://github.com/Shopify/job-iteration/pull/240) - Allow setting inheritable per-job `job_iteration_max_job_runtime`

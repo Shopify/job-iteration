@@ -42,6 +42,15 @@ end
 ActiveJob::Base.queue_adapter = :iteration_test
 
 class Product < ActiveRecord::Base
+  has_many :comments
+end
+
+class Comment < ActiveRecord::Base
+  belongs_to :product
+end
+
+class TravelRoute < ActiveRecord::Base
+  self.primary_key = [:origin, :destination]
 end
 
 class TravelRoute < ActiveRecord::Base
@@ -72,14 +81,21 @@ Sidekiq.configure_client do |config|
   config.redis = { host: host }
 end
 
-ActiveRecord::Base.connection.create_table(:products, force: true) do |t|
-  t.string(:name)
-  t.timestamps
-end
+ActiveRecord::Schema.define do
+  create_table(:products, force: true) do |t|
+    t.string(:name)
+    t.timestamps
+  end
 
-ActiveRecord::Base.connection.create_table(:travel_routes, force: true, primary_key: [:origin, :destination]) do |t|
-  t.string(:destination)
-  t.string(:origin)
+  create_table(:comments, force: true) do |t|
+    t.string(:content)
+    t.belongs_to(:product)
+  end
+
+  create_table(:travel_routes, force: true, primary_key: [:origin, :destination]) do |t|
+    t.string(:destination)
+    t.string(:origin)
+  end
 end
 
 module LoggingHelpers
@@ -129,14 +145,22 @@ class IterationUnitTest < ActiveSupport::TestCase
   private
 
   def insert_fixtures
-    10.times do |n|
-      Product.create!(name: "lipstick #{n}")
-    end
+    now = Time.now
+    products = 10.times.map { |n| { name: "lipstick #{n}", created_at: now - n, updated_at: now - n } }
+    Product.insert_all!(products)
+
+    comments = Product.order(:id).limit(3).map.with_index do |product, index|
+      comments_count = index + 1
+      comments_count.times.map { |n| { content: "#{product.name} comment ##{n}", product_id: product.id } }
+    end.flatten
+
+    Comment.insert_all!(comments)
   end
 
   def truncate_fixtures
     ActiveRecord::Base.connection.truncate(TravelRoute.table_name)
     ActiveRecord::Base.connection.truncate(Product.table_name)
+    ActiveRecord::Base.connection.truncate(Comment.table_name)
   end
 
   def with_global_default_retry_backoff(backoff)

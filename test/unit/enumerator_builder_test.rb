@@ -60,6 +60,20 @@ module JobIteration
       enumerator_builder(wraps: 0).build_csv_enumerator(CSV.new("test"), cursor: nil)
     end
 
+    test_builder_method(:build_nested_enumerator) do
+      enumerator_builder(wraps: 0).build_nested_enumerator(
+        [
+          ->(cursor) {
+            enumerator_builder.build_active_record_enumerator_on_records(Product.all, cursor: cursor)
+          },
+          ->(product, cursor) {
+            enumerator_builder.build_active_record_enumerator_on_records(product.comments, cursor: cursor)
+          },
+        ],
+        cursor: nil,
+      )
+    end
+
     # checks that all the non-alias methods were tested
     raise "methods not tested: #{methods.inspect}" unless methods.empty?
 

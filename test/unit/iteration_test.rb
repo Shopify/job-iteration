@@ -178,6 +178,26 @@ class JobIterationTest < IterationUnitTest
     end
   end
 
+  class JobWithNestedEnumerator < ActiveJob::Base
+    include JobIteration::Iteration
+    def build_enumerator(_params, cursor:)
+      enumerator_builder.nested(
+        [
+          ->(cursor) {
+            enumerator_builder.build_times_enumerator(3, cursor: cursor)
+          },
+          ->(_integer, cursor) {
+            enumerator_builder.build_times_enumerator(4, cursor: cursor)
+          },
+        ],
+        cursor: cursor,
+      )
+    end
+
+    def each_iteration(*)
+    end
+  end
+
   def test_jobs_that_define_build_enumerator_and_each_iteration_will_not_raise
     push(JobWithRightMethods, "walrus" => "best")
     work_one_job
@@ -437,6 +457,30 @@ class JobIterationTest < IterationUnitTest
 
     expected = [
       { job_class: "JobIterationTest::FailingJob", cursor_position: 0 },
+    ]
+    assert_equal(expected, events)
+  end
+
+  def test_nested_each_iteration_instrumentation
+    events = []
+    callback = lambda { |_, _, _, _, tags| events << tags }
+    ActiveSupport::Notifications.subscribed(callback, "each_iteration.iteration") do
+      JobWithNestedEnumerator.perform_now({})
+    end
+
+    expected = [
+      { job_class: "JobIterationTest::JobWithNestedEnumerator", cursor_position: [nil, nil] },
+      { job_class: "JobIterationTest::JobWithNestedEnumerator", cursor_position: [nil, 0] },
+      { job_class: "JobIterationTest::JobWithNestedEnumerator", cursor_position: [nil, 1] },
+      { job_class: "JobIterationTest::JobWithNestedEnumerator", cursor_position: [nil, 2] },
+      { job_class: "JobIterationTest::JobWithNestedEnumerator", cursor_position: [0, nil] },
+      { job_class: "JobIterationTest::JobWithNestedEnumerator", cursor_position: [0, 0] },
+      { job_class: "JobIterationTest::JobWithNestedEnumerator", cursor_position: [0, 1] },
+      { job_class: "JobIterationTest::JobWithNestedEnumerator", cursor_position: [0, 2] },
+      { job_class: "JobIterationTest::JobWithNestedEnumerator", cursor_position: [1, nil] },
+      { job_class: "JobIterationTest::JobWithNestedEnumerator", cursor_position: [1, 0] },
+      { job_class: "JobIterationTest::JobWithNestedEnumerator", cursor_position: [1, 1] },
+      { job_class: "JobIterationTest::JobWithNestedEnumerator", cursor_position: [1, 2] },
     ]
     assert_equal(expected, events)
   end

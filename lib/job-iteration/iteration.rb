@@ -189,7 +189,7 @@ module JobIteration
         # Deferred until 2.0.0
         # assert_valid_cursor!(cursor_from_enumerator)
 
-        tags = instrumentation_tags.merge(cursor_position: cursor_from_enumerator)
+        tags = instrumentation_tags.merge(cursor_position: cursor_from_enumerator.dup)
         ActiveSupport::Notifications.instrument("each_iteration.iteration", tags) do
           found_record = true
           each_iteration(object_from_enumerator, *arguments)

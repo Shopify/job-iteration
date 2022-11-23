@@ -174,18 +174,18 @@ module JobIteration
       arguments = arguments.dup.freeze
       found_record = false
       @needs_reenqueue = false
-
       enumerator.each do |object_from_enumerator, index|
         # Deferred until 2.0.0
         # assert_valid_cursor!(index)
-
-        record_unit_of_work do
-          found_record = true
-          each_iteration(object_from_enumerator, *arguments)
-          self.cursor_position = index
+        interruption_timer do
+          record_unit_of_work do
+            found_record = true
+            each_iteration(object_from_enumerator, *arguments)
+            self.cursor_position = index
+          end
         end
 
-        next unless job_should_exit?
+        next unless job_should_exit? || @timeout_exceeded
 
         self.executions -= 1 if executions > 1
         @needs_reenqueue = true
@@ -200,6 +200,39 @@ module JobIteration
       adjust_total_time
 
       true
+    end
+
+    STOP_SIGNAL = Object.new
+    TimeoutError = Class.new(StandardError)
+
+    def interruption_timer
+      Signal.trap("USR1") { raise TimeoutError }
+      with_timeout { yield }
+    rescue TimeoutError
+      @timeout_exceeded = true
+    end
+
+    def with_timeout(delay: 25.seconds)
+      mvar = Concurrent::MVar.new
+      begin
+        timer_th = Thread.new do
+          result = mvar.take(delay)
+          Thread.exit if result == STOP_SIGNAL
+
+          stop_iteration!
+        end
+        yield
+      end
+    ensure
+      # When we no longer need the timer, we can't simply stop it with Thread#kill
+      # because that's unsafe to external resources.
+      # Instead, we signal to the thread that it should shutdown.
+      mvar.try_put!(STOP_SIGNAL)
+      timer_th&.join
+    end
+
+    def stop_iteration!
+      Process.kill("USR1", ::Process.pid)
     end
 
     def record_unit_of_work(&block)

@@ -9,7 +9,7 @@ Meet Iteration, an extension for [ActiveJob](https://github.com/rails/rails/tree
 Imagine the following job:
 
 ```ruby
-class SimpleJob < ApplicationJob
+class SimpleJob < ActiveJob::Base
   def perform
     User.find_each do |user|
       user.notify_about_something
@@ -43,7 +43,7 @@ And then execute:
 In the job, include `JobIteration::Iteration` module and start describing the job with two methods (`build_enumerator` and `each_iteration`) instead of `perform`:
 
 ```ruby
-class NotifyUsersJob < ApplicationJob
+class NotifyUsersJob < ActiveJob::Base
   include JobIteration::Iteration
 
   def build_enumerator(cursor:)
@@ -64,7 +64,7 @@ end
 Check out more examples of Iterations:
 
 ```ruby
-class BatchesJob < ApplicationJob
+class BatchesJob < ActiveJob::Base
   include JobIteration::Iteration
 
   def build_enumerator(product_id, cursor:)
@@ -83,7 +83,7 @@ end
 ```
 
 ```ruby
-class BatchesAsRelationJob < ApplicationJob
+class BatchesAsRelationJob < ActiveJob::Base
   include JobIteration::Iteration
 
   def build_enumerator(product_id, cursor:)
@@ -102,7 +102,7 @@ end
 ```
 
 ```ruby
-class ArrayJob < ApplicationJob
+class ArrayJob < ActiveJob::Base
   include JobIteration::Iteration
 
   def build_enumerator(cursor:)
@@ -116,7 +116,7 @@ end
 ```
 
 ```ruby
-class CsvJob < ApplicationJob
+class CsvJob < ActiveJob::Base
   include JobIteration::Iteration
 
   def build_enumerator(import_id, cursor:)

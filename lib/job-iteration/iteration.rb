@@ -7,7 +7,7 @@ module JobIteration
     extend ActiveSupport::Concern
 
     attr_accessor(
-      :cursor_position
+      :cursor_position,
       :times_interrupted
     )
 

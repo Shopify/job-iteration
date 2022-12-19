@@ -8,7 +8,7 @@ module JobIteration
 
     attr_accessor(
       :cursor_position,
-      :times_interrupted
+      :times_interrupted,
     )
 
     # The time where the job starts running. If the job is interrupted and runs again, the value is updated.

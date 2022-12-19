@@ -7,11 +7,16 @@ module JobIteration
     extend ActiveSupport::Concern
 
     attr_accessor(
-      :cursor_position,
-      :start_time,
-      :times_interrupted,
-      :total_time,
+      :cursor_position
+      :times_interrupted
     )
+
+    # The time where the job starts running. If the job is interrupted and runs again, the value is updated.
+    attr_accessor :start_time
+
+    # The total time the job has been performing including multiple iterations.
+    # The time isn't reset if the job is interrupted. 
+    attr_accessor :total_time
 
     class CursorError < ArgumentError
       attr_reader :cursor

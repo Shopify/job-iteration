@@ -95,7 +95,7 @@ module JobIteration
 
     def initialize(*arguments)
       super
-      @job_iteration_retry_backoff = nil
+      @job_iteration_retry_backoff = JobIteration.default_retry_backoff
       @needs_reenqueue = false
       self.times_interrupted = 0
       self.total_time = 0.0

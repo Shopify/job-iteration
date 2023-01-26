@@ -29,6 +29,16 @@ module JobIteration
   #     # ...
   attr_accessor :max_job_runtime
 
+  # Configures a delay duration to wait before resuming an interrupted job.
+  # @example
+  #
+  #   JobIteration.default_retry_backoff = 10.seconds
+  #
+  # Defaults to nil which means interrupted jobs will be retried immediately.
+  # This value will be ignored when an interruption is raised by a throttle enumerator,
+  # where the throttle backoff value will take precedence over this setting.
+  attr_accessor :default_retry_backoff
+
   # Used internally for hooking into job processing frameworks like Sidekiq and Resque.
   attr_accessor :interruption_adapter
 

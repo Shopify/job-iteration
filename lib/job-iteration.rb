@@ -1,8 +1,10 @@
 # frozen_string_literal: true
 
+require "active_job"
 require_relative "./job-iteration/version"
 require_relative "./job-iteration/enumerator_builder"
 require_relative "./job-iteration/iteration"
+require_relative "./job-iteration/log_subscriber"
 
 module JobIteration
   IntegrationLoadError = Class.new(StandardError)
@@ -10,6 +12,10 @@ module JobIteration
   INTEGRATIONS = [:resque, :sidekiq]
 
   extend self
+
+  attr_accessor :logger
+
+  self.logger = ActiveJob::Base.logger
 
   # Use this to _always_ interrupt the job after it's been running for more than N seconds.
   # @example

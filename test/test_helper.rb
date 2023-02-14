@@ -75,9 +75,9 @@ end
 
 module LoggingHelpers
   def assert_logged(message)
-    old_logger = ActiveJob::Base.logger
+    old_logger = JobIteration.logger
     log = StringIO.new
-    ActiveJob::Base.logger = Logger.new(log)
+    JobIteration.logger = Logger.new(log)
 
     begin
       yield
@@ -85,12 +85,12 @@ module LoggingHelpers
       log.rewind
       assert_match(message, log.read)
     ensure
-      ActiveJob::Base.logger = old_logger
+      JobIteration.logger = old_logger
     end
   end
 end
 
-ActiveJob::Base.logger = Logger.new(IO::NULL)
+JobIteration.logger = Logger.new(IO::NULL)
 
 module ActiveSupport
   class TestCase

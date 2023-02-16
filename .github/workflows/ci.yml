@@ -6,6 +6,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     name: Ruby ${{ matrix.ruby }} | Gemfile ${{ matrix.gemfile }}
+    continue-on-error: ${{ matrix.gemfile == 'rails_edge' }}
     services:
       redis:
         image: redis

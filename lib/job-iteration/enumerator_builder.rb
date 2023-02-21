@@ -160,10 +160,14 @@ module JobIteration
         raise ArgumentError, "scope must be an ActiveRecord::Relation"
       end
 
+      args_tags = args.delete(:instrument_tags)
+      instrument_tags = { job_class: @job.class.name }.merge(args_tags || {})
+
       JobIteration::ActiveRecordEnumerator.new(
         scope,
         cursor: cursor,
-        **args
+        instrument_tags: instrument_tags,
+        **args,
       )
     end
   end

@@ -57,6 +57,13 @@ module JobIteration
       assert_equal([shops, shops.last.id], enum.first)
     end
 
+    test "enumerator next batch is instrumented" do
+      instrument_tags = { job_class: "JobClass", custom_tag: "CustomTag" }
+      ActiveSupport::Notifications.expects(:instrument).with("cursor.iteration", instrument_tags)
+      enum = build_enumerator(instrument_tags: instrument_tags).batches
+      enum.first
+    end
+
     test "columns are configurable" do
       enum = build_enumerator(columns: [:updated_at]).batches
       shops = Product.order(:updated_at).take(2)
@@ -107,12 +114,13 @@ module JobIteration
 
     private
 
-    def build_enumerator(relation: Product.all, batch_size: 2, columns: nil, cursor: nil)
+    def build_enumerator(relation: Product.all, batch_size: 2, columns: nil, cursor: nil, instrument_tags: nil)
       JobIteration::ActiveRecordEnumerator.new(
         relation,
         batch_size: batch_size,
         columns: columns,
         cursor: cursor,
+        instrument_tags: instrument_tags,
       )
     end
   end

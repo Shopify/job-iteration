@@ -39,6 +39,21 @@ module JobIteration
       enumerator_builder.build_active_record_enumerator_on_records(Product.all, cursor: nil)
     end
 
+    test "enumerator is created with instrument tags" do
+      instrument_tags = { custom_tag: "CustomTag" }
+      expected_tags = instrument_tags.merge(job_class: "Mocha::Mock")
+
+      JobIteration::ActiveRecordEnumerator.expects(:new)
+        .with(anything, cursor: nil, instrument_tags: expected_tags)
+        .returns(mock({ records: [] }))
+
+      enumerator_builder.build_active_record_enumerator_on_records(
+        Product.all,
+        cursor: nil,
+        instrument_tags: instrument_tags,
+      )
+    end
+
     test_builder_method(:build_active_record_enumerator_on_batches) do
       enumerator_builder.build_active_record_enumerator_on_batches(Product.all, cursor: nil)
     end

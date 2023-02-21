@@ -54,6 +54,9 @@ connection_config = {
 }
 connection_config[:password] = "root" if ENV["CI"]
 
+if ActiveRecord.respond_to?(:async_query_executor)
+  ActiveRecord.async_query_executor = :global_thread_pool
+end
 ActiveRecord::Base.establish_connection(connection_config)
 
 Redis.singleton_class.class_eval do

@@ -138,6 +138,21 @@ class JobIterationTest < IterationUnitTest
     end
   end
 
+  class FailingJob < ActiveJob::Base
+    include JobIteration::Iteration
+    include ActiveSupport::Testing::TimeHelpers
+
+    def build_enumerator(cursor:)
+      enumerator_builder.build_times_enumerator(1, cursor: cursor)
+    end
+
+    def each_iteration(*)
+      travel(10.seconds)
+
+      raise StandardError, "failing job"
+    end
+  end
+
   def test_jobs_that_define_build_enumerator_and_each_iteration_will_not_raise
     push(JobWithRightMethods, "walrus" => "best")
     work_one_job
@@ -349,6 +364,15 @@ class JobIterationTest < IterationUnitTest
         "job_iteration_max_job_runtime may only decrease; #{child} tried to increase it from 30 seconds to 45 seconds",
         error.message,
       )
+    end
+  end
+
+  def test_total_time_is_updated_for_failed_jobs
+    freeze_time do
+      job = FailingJob.new
+      assert_raises(StandardError) { job.perform_now }
+
+      assert_equal(10, job.total_time)
     end
   end
 

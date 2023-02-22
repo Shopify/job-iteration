@@ -197,9 +197,9 @@ module JobIteration
           "times_interrupted=#{times_interrupted} cursor_position=#{cursor_position}",
       ) unless found_record
 
-      adjust_total_time
-
       true
+    ensure
+      adjust_total_time
     end
 
     def record_unit_of_work(&block)

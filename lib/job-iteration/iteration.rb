@@ -210,7 +210,6 @@ module JobIteration
       ActiveSupport::Notifications.instrument("interrupted.iteration", iteration_instrumentation_tags)
       logger.info("[JobIteration::Iteration] Interrupting and re-enqueueing the job cursor_position=#{cursor_position}")
 
-      adjust_total_time
       self.times_interrupted += 1
 
       self.already_in_queue = true if respond_to?(:already_in_queue=)

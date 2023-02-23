@@ -153,6 +153,31 @@ class JobIterationTest < IterationUnitTest
     end
   end
 
+  class SuccessfulJobWithInterruption < ActiveJob::Base
+    include JobIteration::Iteration
+    include ActiveSupport::Testing::TimeHelpers
+    cattr_accessor :total_time_on_complete, instance_accessor: false
+    self.total_time_on_complete = 0
+
+    on_complete do
+      self.class.total_time_on_complete = total_time
+    end
+
+    def build_enumerator(cursor:)
+      enumerator_builder.build_times_enumerator(2, cursor: cursor)
+    end
+
+    def each_iteration(*)
+      travel(10.seconds)
+    end
+
+    private
+
+    def job_should_exit?
+      cursor_position == 0 # interrupt on first run and never again.
+    end
+  end
+
   def test_jobs_that_define_build_enumerator_and_each_iteration_will_not_raise
     push(JobWithRightMethods, "walrus" => "best")
     work_one_job
@@ -364,6 +389,19 @@ class JobIterationTest < IterationUnitTest
         "job_iteration_max_job_runtime may only decrease; #{child} tried to increase it from 30 seconds to 45 seconds",
         error.message,
       )
+    end
+  end
+
+  def test_total_time_is_updated_for_successful_jobs_with_interruptions
+    freeze_time do
+      push(SuccessfulJobWithInterruption)
+
+      work_one_job
+      job = ActiveJob::Base.deserialize(ActiveJob::Base.queue_adapter.enqueued_jobs.last)
+      assert_equal(10, job.total_time)
+
+      work_one_job
+      assert_equal(20, SuccessfulJobWithInterruption.total_time_on_complete)
     end
   end
 

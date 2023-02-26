@@ -124,7 +124,7 @@ class CsvJob < ApplicationJob
     enumerator_builder.csv(import.csv, cursor: cursor)
   end
 
-  def each_iteration(csv_row)
+  def each_iteration(csv_row, import_id)
     # insert csv_row to database
   end
 end

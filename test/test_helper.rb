@@ -32,8 +32,8 @@ module ActiveJob
         enqueued_jobs << job.serialize
       end
 
-      def enqueue_at(job, _delay)
-        enqueued_jobs << job.serialize
+      def enqueue_at(job, timestamp)
+        enqueued_jobs << job.serialize.merge("retry_at" => timestamp)
       end
     end
   end
@@ -117,6 +117,8 @@ class IterationUnitTest < ActiveSupport::TestCase
     truncate_fixtures
   end
 
+  private
+
   def insert_fixtures
     10.times do |n|
       Product.create!(name: "lipstick #{n}")
@@ -125,5 +127,13 @@ class IterationUnitTest < ActiveSupport::TestCase
 
   def truncate_fixtures
     ActiveRecord::Base.connection.truncate(Product.table_name)
+  end
+
+  def with_global_default_retry_backoff(backoff)
+    original_default_retry_backoff = JobIteration.default_retry_backoff
+    JobIteration.default_retry_backoff = backoff
+    yield
+  ensure
+    JobIteration.default_retry_backoff = original_default_retry_backoff
   end
 end

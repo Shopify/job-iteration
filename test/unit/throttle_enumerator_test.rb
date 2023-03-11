@@ -5,6 +5,8 @@ require "test_helper"
 
 module JobIteration
   class ThrottleEnumeratorTest < IterationUnitTest
+    include ActiveSupport::Testing::TimeHelpers
+
     class IterationThrottleJob < ActiveJob::Base
       include JobIteration::Iteration
       cattr_accessor :iterations_performed, instance_accessor: false
@@ -105,6 +107,19 @@ module JobIteration
       assert_equal 1, enqueued.first.fetch("times_interrupted")
 
       assert_equal [1], IterationThrottleJob.iterations_performed
+    end
+
+    test "pushes job back to the queue with the configured throttle backoff" do
+      IterationThrottleJob.should_throttle_sequence = [true]
+
+      with_global_default_retry_backoff(15.seconds) do
+        freeze_time do
+          IterationThrottleJob.perform_now({})
+
+          job = ActiveJob::Base.queue_adapter.enqueued_jobs.first
+          assert_equal(30.seconds.from_now.to_f, job.fetch("retry_at"))
+        end
+      end
     end
 
     test "does not pushed back to queue if not throttle" do

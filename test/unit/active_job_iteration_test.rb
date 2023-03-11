@@ -4,6 +4,8 @@ require "test_helper"
 
 module JobIteration
   class IterationTest < IterationUnitTest
+    include ActiveSupport::Testing::TimeHelpers
+
     class SimpleIterationJob < ActiveJob::Base
       include JobIteration::Iteration
 
@@ -739,6 +741,19 @@ module JobIteration
 
       jobs = ActiveJob::Base.queue_adapter.enqueued_jobs
       assert_equal(1, jobs.size)
+    end
+
+    def test_interrupted_job_uses_default_retry_backoff
+      iterate_exact_times(1.times)
+
+      with_global_default_retry_backoff(15.seconds) do
+        freeze_time do
+          ActiveRecordIterationJob.perform_now
+
+          job = ActiveJob::Base.queue_adapter.enqueued_jobs.first
+          assert_equal(15.seconds.from_now.to_f, job.fetch("retry_at"))
+        end
+      end
     end
 
     private

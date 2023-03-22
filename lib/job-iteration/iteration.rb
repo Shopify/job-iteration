@@ -142,13 +142,12 @@ module JobIteration
       self.start_time = Time.now.utc
 
       enumerator = nil
-      ActiveSupport::Notifications.instrument("build_enumerator.iteration", iteration_instrumentation_tags) do
+      ActiveSupport::Notifications.instrument("build_enumerator.iteration", instrumentation_tags) do
         enumerator = build_enumerator(*arguments, cursor: cursor_position)
       end
 
       unless enumerator
-        logger.info("[JobIteration::Iteration] `build_enumerator` returned nil. " \
-          "Skipping the job.")
+        ActiveSupport::Notifications.instrument("nil_enumerator.iteration", instrumentation_tags)
         return
       end
 
@@ -157,7 +156,10 @@ module JobIteration
       if executions == 1 && times_interrupted == 0
         run_callbacks(:start)
       else
-        ActiveSupport::Notifications.instrument("resumed.iteration", iteration_instrumentation_tags)
+        ActiveSupport::Notifications.instrument(
+          "resumed.iteration",
+          instrumentation_tags.merge(times_interrupted: times_interrupted, total_time: total_time),
+        )
       end
 
       completed = catch(:abort) do
@@ -171,7 +173,10 @@ module JobIteration
         reenqueue_iteration_job
       elsif completed
         run_callbacks(:complete)
-        output_interrupt_summary
+        ActiveSupport::Notifications.instrument(
+          "completed.iteration",
+          instrumentation_tags.merge(times_interrupted: times_interrupted, total_time: total_time),
+        )
       end
     end
 
@@ -184,10 +189,11 @@ module JobIteration
         # Deferred until 2.0.0
         # assert_valid_cursor!(index)
 
-        record_unit_of_work do
+        ActiveSupport::Notifications.instrument("each_iteration.iteration", {}) do |tags|
           found_record = true
           each_iteration(object_from_enumerator, *arguments)
           self.cursor_position = index
+          tags.replace(instrumentation_tags)
         end
 
         next unless job_should_exit?
@@ -197,9 +203,9 @@ module JobIteration
         return false
       end
 
-      logger.info(
-        "[JobIteration::Iteration] Enumerator found nothing to iterate! " \
-          "times_interrupted=#{times_interrupted} cursor_position=#{cursor_position}",
+      ActiveSupport::Notifications.instrument(
+        "not_found.iteration",
+        instrumentation_tags.merge(times_interrupted: times_interrupted),
       ) unless found_record
 
       true
@@ -207,13 +213,8 @@ module JobIteration
       adjust_total_time
     end
 
-    def record_unit_of_work(&block)
-      ActiveSupport::Notifications.instrument("each_iteration.iteration", iteration_instrumentation_tags, &block)
-    end
-
     def reenqueue_iteration_job
-      ActiveSupport::Notifications.instrument("interrupted.iteration", iteration_instrumentation_tags)
-      logger.info("[JobIteration::Iteration] Interrupting and re-enqueueing the job cursor_position=#{cursor_position}")
+      ActiveSupport::Notifications.instrument("interrupted.iteration", instrumentation_tags)
 
       self.times_interrupted += 1
 
@@ -283,13 +284,8 @@ module JobIteration
       method.parameters
     end
 
-    def iteration_instrumentation_tags
-      { job_class: self.class.name }
-    end
-
-    def output_interrupt_summary
-      message = "[JobIteration::Iteration] Completed iterating. times_interrupted=%d total_time=%.3f"
-      logger.info(Kernel.format(message, times_interrupted, total_time))
+    def instrumentation_tags
+      { job_class: self.class.name, cursor_position: cursor_position }
     end
 
     def job_should_exit?

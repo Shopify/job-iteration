@@ -44,19 +44,24 @@ end
 
 ## Instrumentation
 
-Iteration leverages `ActiveSupport::Notifications` which lets you instrument all kind of events:
+Iteration leverages [`ActiveSupport::Notifications`](https://guides.rubyonrails.org/active_support_instrumentation.html)
+to notify you what it's doing. You can subscribe to the following events (listed in order of job lifecycle):
+
+- `build_enumerator.iteration`
+- `throttled.iteration` (when using ThrottleEnumerator)
+- `nil_enumerator.iteration`
+- `resumed.iteration`
+- `each_iteration.iteration`
+- `not_found.iteration`
+- `interrupted.iteration`
+- `completed.iteration`
+
+All events have tags including the job class name and cursor position, some add the amount of times interrupted and/or
+total time the job spent running across interruptions.
 
 ```ruby
 # config/initializers/instrumentation.rb
-ActiveSupport::Notifications.subscribe('build_enumerator.iteration') do |_, started, finished, _, tags|
-  StatsD.distribution(
-    'iteration.build_enumerator',
-    (finished - started),
-    tags: { job_class: tags[:job_class]&.underscore }
-  )
-end
-
-ActiveSupport::Notifications.subscribe('each_iteration.iteration') do |_, started, finished, _, tags|
+ActiveSupport::Notifications.monotonic_subscribe("each_iteration.iteration") do |_, started, finished, _, tags|
   elapsed = finished - started
   StatsD.distribution(
     "iteration.each_iteration",
@@ -68,28 +73,6 @@ ActiveSupport::Notifications.subscribe('each_iteration.iteration') do |_, starte
     Rails.logger.warn "[Iteration] job_class=#{tags[:job_class]} " \
     "each_iteration runtime exceeded limit of #{BackgroundQueue.max_iteration_runtime}s"
   end
-end
-
-ActiveSupport::Notifications.subscribe('resumed.iteration') do |_, _, _, _, tags|
-  StatsD.increment(
-    "iteration.resumed",
-    tags: { job_class: tags[:job_class]&.underscore }
-  )
-end
-
-ActiveSupport::Notifications.subscribe('interrupted.iteration') do |_, _, _, _, tags|
-  StatsD.increment(
-    "iteration.interrupted",
-    tags: { job_class: tags[:job_class]&.underscore }
-  )
-end
-
-# If you're using ThrottleEnumerator
-ActiveSupport::Notifications.subscribe('throttled.iteration') do |_, _, _, _, tags|
-  StatsD.increment(
-    "iteration.throttled",
-    tags: { job_class: tags[:job_class]&.underscore }
-  )
 end
 ```
 

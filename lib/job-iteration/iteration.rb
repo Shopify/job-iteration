@@ -185,15 +185,15 @@ module JobIteration
       found_record = false
       @needs_reenqueue = false
 
-      enumerator.each do |object_from_enumerator, index|
+      enumerator.each do |object_from_enumerator, cursor_from_enumerator|
         # Deferred until 2.0.0
-        # assert_valid_cursor!(index)
+        # assert_valid_cursor!(cursor_from_enumerator)
 
-        ActiveSupport::Notifications.instrument("each_iteration.iteration", {}) do |tags|
+        tags = instrumentation_tags.merge(cursor_position: cursor_from_enumerator)
+        ActiveSupport::Notifications.instrument("each_iteration.iteration", tags) do
           found_record = true
           each_iteration(object_from_enumerator, *arguments)
-          self.cursor_position = index
-          tags.replace(instrumentation_tags)
+          self.cursor_position = cursor_from_enumerator
         end
 
         next unless job_should_exit?

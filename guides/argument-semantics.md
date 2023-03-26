@@ -4,7 +4,7 @@ The call sequence is usually 3 methods:
 
 `perform -> build_enumerator -> each_iteration|each_batch`
 
-In that sense `job-iteration` works more like a framework (it calls your code) than like library (that you would call). When using jobs with parameters, the following rules of thumb are good to keep in mind.
+In that sense `job-iteration` works like a framework (it calls your code) rather than like a library (that you call). When using jobs with parameters, the following rules of thumb are good to keep in mind.
 
 ### Jobs without arguments
 

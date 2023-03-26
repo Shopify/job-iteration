@@ -97,7 +97,7 @@ class HighlyConfigurableGreetingJob < ActiveJob::Base
     # ...
   end
 
-  def each_iteration(subject_line, kwargs)
+  def each_iteration(object_yielded_from_enumerator, subject_line, kwargs)
     name = kwargs.fetch(:sender_name)
     email = kwargs.fetch(:sender_email)
     # ...
@@ -112,3 +112,16 @@ HighlyConfigurableGreetingJob.perform_later(_subject_line = "Greetings everybody
 ```
 
 Note that you cannot use `ruby2_keywords` at present.
+
+### Returning (yielding) from enumerators
+
+When defining a custom enumerator (see the [custom enumerator guide](custom-enumerator.md)) you need to yield two positional arguments from it: the object that will be value for the current iteration (like a single ActiveModel instance, a single number...) and value you want to be persisted as the `cursor` value should `job-iteration` decide to interrupt you. That new `cursor` value does not get passed to `each_iteration`:
+
+```ruby
+Enumerator.new do |yielder|
+  # In this case `cursor` is an Integer
+  cursor.upto(99999) do |offset|
+    yielder.yield(fetch_record_at(offset), offset)
+  end
+end
+```

@@ -23,7 +23,7 @@ class ArglessJob < ActiveJob::Base
   end
 end
 
-To spool the job:
+To enqueue the job:
 
 ```ruby
 ArglessJob.perform_later
@@ -47,7 +47,7 @@ class ArgumentativeJob < ActiveJob::Base
 end
 ```
 
-To spool the job:
+To enqueue the job:
 
 ```ruby
 Argumentative.perform_later(_arg1 = "One", _arg2 = "Two", _arg3 = "Three")
@@ -75,7 +75,7 @@ class ParameterizedJob < ActiveJob::Base
 end
 ```
 
-To spool the job:
+To enqueue the job:
 
 ```ruby
 ParameterizedJob.perform_later(name: "Jane", email: "jane@host.example")
@@ -105,7 +105,7 @@ class HighlyConfigurableGreetingJob < ActiveJob::Base
 end
 ```
 
-To spool the job:
+To enqueue the job:
 
 ```ruby
 HighlyConfigurableGreetingJob.perform_later(_subject_line = "Greetings everybody!", sender_name: "Jane", sender_email: "jane@host.example")

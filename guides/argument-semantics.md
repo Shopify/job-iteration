@@ -50,7 +50,7 @@ end
 To enqueue the job:
 
 ```ruby
-Argumentative.perform_later(_arg1 = "One", _arg2 = "Two", _arg3 = "Three")
+ArgumentativeJob.perform_later(_arg1 = "One", _arg2 = "Two", _arg3 = "Three")
 ```
 
 ### Jobs with keyword arguments

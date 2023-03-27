@@ -34,22 +34,6 @@ Further reading: [Sidekiq signals](https://github.com/mperham/sidekiq/wiki/Signa
 
 In the early versions of Iteration, `build_enumerator` used to return ActiveRecord relations directly, and we would infer the Enumerator based on the type of object. We used to support ActiveRecord relations, arrays and CSVs. This made it hard to add support for other types of enumerations, and it was easy for developers to make mistakes and return an array of ActiveRecord objects, and for us starting to treat that as an array instead of as an ActiveRecord relation.
 
-The current version of Iteration supports _any_ Enumerator. We expose helpers to build enumerators conveniently (`enumerator_builder.active_record_on_records`), but it's up for a developer to implement a custom Enumerator. Consider this example:
+The current version of Iteration supports _any_ Enumerator. We expose helpers to build common enumerators conveniently (`enumerator_builder.active_record_on_records`), but it's up to a developer to implement [a custom Enumerator](custom-enumerator.md).
 
-```ruby
-class MyJob < ActiveJob::Base
-  include JobIteration::Iteration
-
-  def build_enumerator(cursor:)
-    Enumerator.new do
-      Redis.lpop("mylist") # or: Kafka.poll(timeout: 10.seconds)
-    end
-  end
-
-  def each_iteration(element_from_redis)
-    # ...
-  end
-end
-```
-
-Further reading: [ruby-doc](http://ruby-doc.org/core-2.5.1/Enumerator.html), [a great post about Enumerators](http://blog.arkency.com/2014/01/ruby-to-enum-for-enumerator/).
+Further reading: [ruby-doc](https://ruby-doc.org/3.2.1/Enumerator.html), [a great post about Enumerators](http://blog.arkency.com/2014/01/ruby-to-enum-for-enumerator/).

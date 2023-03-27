@@ -82,11 +82,11 @@ To enqueue the job:
 ParameterizedJob.perform_later(name: "Jane", email: "jane@host.example")
 ```
 
-Note that you cannot use `ruby2_keywords` at present.
+Note that you cannot use `ruby2_keywords` at present, and the keyword arguments syntax is not supported in `each_iteration` / `build_enumerator`.
 
 ### Jobs with both positional and keyword arguments
 
-Jobs with keyword arguments will have the keyword arguments available to both `build_enumerator` and `each_iteration`, but these arguments come packaged into a Hash in both cases. You will need to `fetch` or `[]` your parameter from the `Hash` you get passed in:
+Jobs with keyword arguments will have the keyword arguments available to both `build_enumerator` and `each_iteration`, but these arguments come packaged into a Hash in both cases. You will need to `fetch` or `[]` your parameter from the `Hash` you get passed in. Positional arguments get passed first and "unsplatted" (not combined into an array), the `Hash` containing keyword arguments comes after:
 
 ```ruby
 class HighlyConfigurableGreetingJob < ActiveJob::Base
@@ -112,7 +112,7 @@ To enqueue the job:
 HighlyConfigurableGreetingJob.perform_later(_subject_line = "Greetings everybody!", sender_name: "Jane", sender_email: "jane@host.example")
 ```
 
-Note that you cannot use `ruby2_keywords` at present.
+Note that you cannot use `ruby2_keywords` at present, and the keyword arguments syntax is not supported in `each_iteration` / `build_enumerator`.
 
 ### Returning (yielding) from enumerators
 

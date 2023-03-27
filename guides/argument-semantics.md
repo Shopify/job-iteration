@@ -22,6 +22,7 @@ class ArglessJob < ActiveJob::Base
     # ...
   end
 end
+```
 
 To enqueue the job:
 

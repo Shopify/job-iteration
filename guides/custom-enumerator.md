@@ -26,7 +26,7 @@ class StripeListEnumerator
   # @param resource [Stripe::APIResource] The type of Stripe object to request
   # @param params [Hash] Query parameters for the request
   # @param options [Hash] Request options, such as API key or version
-  # @param cursor [String]
+  # @param cursor [String] The Stripe ID of the last item iterated over
   def initialize(resource, params: {}, options: {}, cursor:)
     pagination_params = {}
     pagination_params[:starting_after] = cursor unless cursor.nil?
@@ -47,6 +47,9 @@ class StripeListEnumerator
   def each
     loop do
       @list.each do |item, _index|
+        # The first argument is what gets passed to `each_iteration`.
+        # The second argument (item.id) is going to be persisted as the cursor,
+        # it doesn't get passed to `each_iteration`.
         yield item, item.id
       end
 
@@ -59,27 +62,39 @@ class StripeListEnumerator
 end
 ```
 
+Here we leverage the Stripe cursor pagination where the cursor is an ID of a specific item in the collection. The job
+which uses such an `Enumerator` would then look like so:
+
 ```ruby
-class StripeJob < ActiveJob::Base
+class LoadRefundsForChargeJob < ActiveJob::Base
   include JobIteration::Iteration
 
   # If you added your own rate limiting above, handle it here. For example:
   # retry_on(MyRateLimiter::LimitExceededError, wait: 30.seconds, attempts: :unlimited)
   # Use an exponential back-off strategy when Stripe's API returns errors.
 
-  def build_enumerator(params, cursor:)
+  def build_enumerator(charge_id, cursor:)
     StripeListEnumerator.new(
       Stripe::Refund,
-      params: { charge: "ch_123" },
+      params: { charge: charge_id}, # "charge_id" will be a prefixed Stripe ID such as "chrg_123"
       options: { api_key: "sk_test_123", stripe_version: "2018-01-18" },
       cursor: cursor
     ).to_enumerator
   end
 
-  def each_iteration(stripe_refund, _params)
+  # Note that in this case `each_iteration` will only receive one positional argument per iteration.
+  # If what your enumerator yields is a composite object you will need to unpack it yourself
+  # inside the `each_iteration`.
+  def each_iteration(stripe_refund, charge_id)
     # ...
   end
 end
+```
+
+and you initiate the job with
+
+```ruby
+LoadRefundsForChargeJob.perform_later(_charge_id = "chrg_345")
 ```
 
 We recommend that you read the implementation of the other enumerators that come with the library (`CsvEnumerator`, `ActiveRecordEnumerator`) to gain a better understanding of building Enumerator objects.

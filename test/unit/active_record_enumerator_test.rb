@@ -105,6 +105,19 @@ module JobIteration
       assert_equal(10, enum.size)
     end
 
+    test "enumerator for a relation with a composite primary key" do
+      TravelRoute.create!(origin: "A", destination: "B")
+      TravelRoute.create!(origin: "A", destination: "C")
+      TravelRoute.create!(origin: "B", destination: "A")
+
+      enum = build_enumerator(relation: TravelRoute.all, batch_size: 2)
+
+      cursors = []
+      enum.records.each { |_record, cursor| cursors << cursor }
+
+      assert_equal([["A", "B"], ["A", "C"], ["B", "A"]], cursors)
+    end if ActiveRecord.version >= Gem::Version.new("7.1.0.alpha")
+
     private
 
     def build_enumerator(relation: Product.all, batch_size: 2, columns: nil, cursor: nil)

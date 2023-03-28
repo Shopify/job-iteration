@@ -10,7 +10,11 @@ module JobIteration
     def initialize(relation, columns: nil, batch_size: 100, cursor: nil)
       @relation = relation
       @batch_size = batch_size
-      @columns = Array(columns || "#{relation.table_name}.#{relation.primary_key}")
+      @columns = if columns
+        Array(columns)
+      else
+        Array(relation.primary_key).map { |pk| "#{relation.table_name}.#{pk}" }
+      end
       @cursor = cursor
     end
 

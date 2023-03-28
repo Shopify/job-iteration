@@ -44,6 +44,10 @@ ActiveJob::Base.queue_adapter = :iteration_test
 class Product < ActiveRecord::Base
 end
 
+class TravelRoute < ActiveRecord::Base
+  self.primary_key = [:origin, :destination]
+end
+
 host = ENV["USING_DEV"] == "1" ? "job-iteration.railgun" : "localhost"
 
 connection_config = {
@@ -68,9 +72,14 @@ Sidekiq.configure_client do |config|
   config.redis = { host: host }
 end
 
-ActiveRecord::Base.connection.create_table(Product.table_name, force: true) do |t|
+ActiveRecord::Base.connection.create_table(:products, force: true) do |t|
   t.string(:name)
   t.timestamps
+end
+
+ActiveRecord::Base.connection.create_table(:travel_routes, force: true, primary_key: [:origin, :destination]) do |t|
+  t.string(:destination)
+  t.string(:origin)
 end
 
 module LoggingHelpers
@@ -126,6 +135,7 @@ class IterationUnitTest < ActiveSupport::TestCase
   end
 
   def truncate_fixtures
+    ActiveRecord::Base.connection.truncate(TravelRoute.table_name)
     ActiveRecord::Base.connection.truncate(Product.table_name)
   end
 

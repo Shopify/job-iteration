@@ -19,8 +19,11 @@ module JobIteration
     end
 
     def initialize(relation, columns = nil, position = nil)
-      columns ||= "#{relation.table_name}.#{relation.primary_key}"
-      @columns = Array.wrap(columns)
+      @columns = if columns
+        Array(columns)
+      else
+        Array(relation.primary_key).map { |pk| "#{relation.table_name}.#{pk}" }
+      end
       self.position = Array.wrap(position)
       raise ArgumentError, "Must specify at least one column" if columns.empty?
       if relation.joins_values.present? && !@columns.all? { |column| column.to_s.include?(".") }

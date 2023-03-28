@@ -116,7 +116,7 @@ Note that you cannot use `ruby2_keywords` at present, and the keyword arguments 
 
 ### Returning (yielding) from enumerators
 
-When defining a custom enumerator (see the [custom enumerator guide](custom-enumerator.md)) you need to yield two positional arguments from it: the object that will be value for the current iteration (like a single ActiveModel instance, a single number...) and value you want to be persisted as the `cursor` value should `job-iteration` decide to interrupt you. That new `cursor` value does not get passed to `each_iteration`:
+When defining a custom enumerator (see the [custom enumerator guide](custom-enumerator.md)) you need to yield two positional arguments from it: the object that will be the value for the current iteration (like a single ActiveModel instance, a single number...) and the value you want to be persisted as the `cursor` value should `job-iteration` decide to interrupt you after this iteration. Calling the enumerator with that cursor should return the next object after the one returned in this iteration. That new `cursor` value does not get passed to `each_iteration`:
 
 ```ruby
 Enumerator.new do |yielder|

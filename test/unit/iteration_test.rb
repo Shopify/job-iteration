@@ -414,6 +414,33 @@ class JobIterationTest < IterationUnitTest
     end
   end
 
+  def test_each_iteration_instrumentation
+    events = []
+    callback = lambda { |_, _, _, _, tags| events << tags }
+    ActiveSupport::Notifications.subscribed(callback, "each_iteration.iteration") do
+      JobWithRightMethods.perform_now({})
+    end
+
+    expected = [
+      { job_class: "JobIterationTest::JobWithRightMethods", cursor_position: 0 },
+      { job_class: "JobIterationTest::JobWithRightMethods", cursor_position: 1 },
+    ]
+    assert_equal(expected, events)
+  end
+
+  def test_exception_in_each_iteration_instrumentation
+    events = []
+    callback = lambda { |_, _, _, _, tags| events << tags.except(:exception, :exception_object) }
+    ActiveSupport::Notifications.subscribed(callback, "each_iteration.iteration") do
+      assert_raises(StandardError) { FailingJob.perform_now }
+    end
+
+    expected = [
+      { job_class: "JobIterationTest::FailingJob", cursor_position: 0 },
+    ]
+    assert_equal(expected, events)
+  end
+
   private
 
   # Allows building job classes that read max_job_runtime during the test,

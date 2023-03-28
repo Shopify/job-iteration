@@ -135,6 +135,7 @@ Iteration hooks into Sidekiq and Resque out of the box to support graceful inter
 ## Guides
 
 * [Iteration: how it works](guides/iteration-how-it-works.md)
+* [Job argument semantics](guides/argument-semantics.md)
 * [Best practices](guides/best-practices.md)
 * [Writing custom enumerator](guides/custom-enumerator.md)
 * [Throttling](guides/throttling.md)

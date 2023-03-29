@@ -130,6 +130,27 @@ class CsvJob < ApplicationJob
 end
 ```
 
+```ruby
+class NestedIterationJob < ApplicationJob
+  include JobIteration::Iteration
+
+  def build_enumerator(cursor:)
+    enumerator_builder.nested(
+      [
+        ->(cursor) { enumerator_builder.active_record_on_records(Shop.all, cursor: cursor) },
+        ->(shop, cursor) { enumerator_builder.active_record_on_records(shop.products, cursor: cursor) },
+        ->(_shop, product, cursor) { enumerator_builder.active_record_on_batch_relations(product.product_variants, cursor: cursor) }
+      ],
+      cursor: cursor
+    )
+  end
+
+  def each_iteration(product_variants_relation)
+    # do something
+  end
+end
+```
+
 Iteration hooks into Sidekiq and Resque out of the box to support graceful interruption. No extra configuration is required.
 
 ## Guides
@@ -169,8 +190,6 @@ There a few configuration assumptions that are required for Iteration to work wi
 **What happens if my iteration takes a long time?** We recommend that a single `each_iteration` should take no longer than 30 seconds. In the future, this may raise an exception.
 
 **Why is it important that `each_iteration` takes less than 30 seconds?** When the job worker is scheduled for restart or shutdown, it gets a notice to finish remaining unit of work. To guarantee that no progress is lost we need to make sure that `each_iteration` completes within a reasonable amount of time.
-
-**What do I do if each iteration takes a long time, because it's doing nested operations?** If your `each_iteration` is complex, we recommend enqueuing another job, which will run your nested business logic. We may expose primitives in the future to do this more effectively, but this is not terribly common today.
 
 **Why do I use have to use this ugly helper in `build_enumerator`? Why can't you automatically infer it?** This is how the first version of the API worked. We checked the type of object returned by `build_enumerable`, and whether it was ActiveRecord Relation or an Array, we used the matching adapter. This caused opaque type branching in Iteration internals and it didn’t allow developers to craft their own Enumerators and control the cursor value. We made a decision to _always_ return Enumerator instance from `build_enumerator`. Now we provide explicit helpers to convert ActiveRecord Relation or an Array to Enumerator, and for more complex iteration flows developers can build their own `Enumerator` objects.
 

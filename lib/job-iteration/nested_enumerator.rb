@@ -30,7 +30,9 @@ module JobIteration
       enumerator.each do |object_from_enumerator, cursor_from_enumerator|
         if index == @cursors.size - 1
           # we've reached the innermost enumerator, yield for `iterate_with_enumerator`
-          yield object_from_enumerator, @cursors
+          updated_cursor = @cursors.dup
+          updated_cursor[index] = cursor_from_enumerator
+          yield object_from_enumerator, updated_cursor
         else
           # we need to go deeper
           next_index = index + 1
@@ -38,8 +40,8 @@ module JobIteration
           # reset cursor at the index of the nested enumerator that just finished, so we don't skip items when that
           # index is reused in the next nested iteration
           @cursors[next_index] = nil
+          @cursors[index] = cursor_from_enumerator
         end
-        @cursors[index] = cursor_from_enumerator
       end
     end
   end

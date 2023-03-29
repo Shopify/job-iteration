@@ -469,18 +469,18 @@ class JobIterationTest < IterationUnitTest
     end
 
     expected = [
-      { job_class: "JobIterationTest::JobWithNestedEnumerator", cursor_position: [nil, nil] },
       { job_class: "JobIterationTest::JobWithNestedEnumerator", cursor_position: [nil, 0] },
       { job_class: "JobIterationTest::JobWithNestedEnumerator", cursor_position: [nil, 1] },
       { job_class: "JobIterationTest::JobWithNestedEnumerator", cursor_position: [nil, 2] },
-      { job_class: "JobIterationTest::JobWithNestedEnumerator", cursor_position: [0, nil] },
+      { job_class: "JobIterationTest::JobWithNestedEnumerator", cursor_position: [nil, 3] },
       { job_class: "JobIterationTest::JobWithNestedEnumerator", cursor_position: [0, 0] },
       { job_class: "JobIterationTest::JobWithNestedEnumerator", cursor_position: [0, 1] },
       { job_class: "JobIterationTest::JobWithNestedEnumerator", cursor_position: [0, 2] },
-      { job_class: "JobIterationTest::JobWithNestedEnumerator", cursor_position: [1, nil] },
+      { job_class: "JobIterationTest::JobWithNestedEnumerator", cursor_position: [0, 3] },
       { job_class: "JobIterationTest::JobWithNestedEnumerator", cursor_position: [1, 0] },
       { job_class: "JobIterationTest::JobWithNestedEnumerator", cursor_position: [1, 1] },
       { job_class: "JobIterationTest::JobWithNestedEnumerator", cursor_position: [1, 2] },
+      { job_class: "JobIterationTest::JobWithNestedEnumerator", cursor_position: [1, 3] },
     ]
     assert_equal(expected, events)
   end

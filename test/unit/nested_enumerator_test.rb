@@ -29,7 +29,7 @@ module JobIteration
 
       products = Product.includes(:comments).order(:id).take(3)
       comments = products.flat_map { |product| product.comments.sort_by(&:id) }
-      cursors = [[nil, nil], [1, nil], [1, 2], [2, nil], [2, 4], [2, 5]]
+      cursors = [[nil, 1], [1, 2], [1, 3], [2, 4], [2, 5], [2, 6]]
 
       enum.each_with_index do |(comment, cursor), index|
         expected_comment = comments[index]
@@ -57,7 +57,7 @@ module JobIteration
     test "works with single level nesting" do
       enum = build_enumerator(inner: nil)
       products = Product.order(:id).to_a
-      cursors = [nil] + (1..9).to_a
+      cursors = (1..10).to_a
 
       enum.each_with_index do |(product, cursor), index|
         assert_equal(products[index], product)

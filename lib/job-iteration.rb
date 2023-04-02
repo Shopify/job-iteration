@@ -2,15 +2,12 @@
 
 require "active_job"
 require_relative "./job-iteration/version"
+require_relative "./job-iteration/integrations"
 require_relative "./job-iteration/enumerator_builder"
 require_relative "./job-iteration/iteration"
 require_relative "./job-iteration/log_subscriber"
 
 module JobIteration
-  IntegrationLoadError = Class.new(StandardError)
-
-  INTEGRATIONS = [:resque, :sidekiq]
-
   extend self
 
   attr_accessor :logger
@@ -45,11 +42,6 @@ module JobIteration
   # where the throttle backoff value will take precedence over this setting.
   attr_accessor :default_retry_backoff
 
-  # Used internally for hooking into job processing frameworks like Sidekiq and Resque.
-  attr_accessor :interruption_adapter
-
-  self.interruption_adapter = -> { false }
-
   # Set if you want to use your own enumerator builder instead of default EnumeratorBuilder.
   # @example
   #
@@ -61,29 +53,4 @@ module JobIteration
   attr_accessor :enumerator_builder
 
   self.enumerator_builder = JobIteration::EnumeratorBuilder
-
-  def load_integrations
-    loaded = nil
-    INTEGRATIONS.each do |integration|
-      load_integration(integration)
-      if loaded
-        raise IntegrationLoadError,
-          "#{loaded} integration has already been loaded, but #{integration} is also available. " \
-            "Iteration will only work with one integration."
-      end
-      loaded = integration
-    rescue LoadError
-    end
-  end
-
-  def load_integration(integration)
-    unless INTEGRATIONS.include?(integration)
-      raise IntegrationLoadError,
-        "#{integration} integration is not supported. Available integrations: #{INTEGRATIONS.join(", ")}"
-    end
-
-    require_relative "./job-iteration/integrations/#{integration}"
-  end
 end
-
-JobIteration.load_integrations unless ENV["ITERATION_DISABLE_AUTOCONFIGURE"]

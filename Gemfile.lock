@@ -79,7 +79,7 @@ GEM
       rubocop (~> 1.50)
     ruby-progressbar (1.13.0)
     ruby2_keywords (0.0.5)
-    sidekiq (7.0.8)
+    sidekiq (7.0.9)
       concurrent-ruby (< 2)
       connection_pool (>= 2.3.0)
       rack (>= 2.2.4)

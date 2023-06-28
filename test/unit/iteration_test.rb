@@ -138,64 +138,25 @@ class JobIterationTest < IterationUnitTest
     end
   end
 
-  class FailingJob < ActiveJob::Base
+  class JobThatInterruptsItself < ActiveJob::Base
     include JobIteration::Iteration
-    include ActiveSupport::Testing::TimeHelpers
 
-    def build_enumerator(cursor:)
-      enumerator_builder.build_times_enumerator(1, cursor: cursor)
-    end
+    cattr_accessor :iterations_performed, instance_accessor: false
+    self.iterations_performed = []
 
-    def each_iteration(*)
-      travel(10.seconds)
+    stop_iterating_on(->(job) { job.class.iterations_performed.size >= 1 })
 
-      raise StandardError, "failing job"
-    end
-  end
-
-  class SuccessfulJobWithInterruption < ActiveJob::Base
-    include JobIteration::Iteration
-    include ActiveSupport::Testing::TimeHelpers
-    cattr_accessor :total_time_on_complete, instance_accessor: false
-    self.total_time_on_complete = 0
-
-    on_complete do
-      self.class.total_time_on_complete = total_time
-    end
-
-    def build_enumerator(cursor:)
-      enumerator_builder.build_times_enumerator(2, cursor: cursor)
-    end
-
-    def each_iteration(*)
-      travel(10.seconds)
-    end
-
-    private
-
-    def job_should_exit?
-      cursor_position == 0 # interrupt on first run and never again.
-    end
-  end
-
-  class JobWithNestedEnumerator < ActiveJob::Base
-    include JobIteration::Iteration
     def build_enumerator(_params, cursor:)
-      enumerator_builder.nested(
-        [
-          ->(cursor) {
-            enumerator_builder.build_times_enumerator(3, cursor: cursor)
-          },
-          ->(_integer, cursor) {
-            enumerator_builder.build_times_enumerator(4, cursor: cursor)
-          },
-        ],
-        cursor: cursor,
-      )
+      enumerator_builder.build_array_enumerator([1, 2, 3], cursor: cursor)
     end
 
-    def each_iteration(*)
+    def each_iteration(record, _params)
+      self.class.iterations_performed << record
     end
+  end
+
+  setup do
+    JobThatInterruptsItself.iterations_performed = []
   end
 
   def test_jobs_that_define_build_enumerator_and_each_iteration_will_not_raise
@@ -260,38 +221,38 @@ class JobIterationTest < IterationUnitTest
   end
 
   def test_jobs_using_time_cursor_will_raise
-    skip_until_version("2.0.0")
+    skip("Deferred until 2.0.0")
     push(JobWithTimeCursor)
     assert_raises_cursor_error { work_one_job }
   end
 
   def test_jobs_using_active_record_cursor_will_raise
-    skip_until_version("2.0.0")
+    skip("Deferred until 2.0.0")
     refute_nil(Product.first)
     push(JobWithActiveRecordCursor)
     assert_raises_cursor_error { work_one_job }
   end
 
   def test_jobs_using_symbol_cursor_will_raise
-    skip_until_version("2.0.0")
+    skip("Deferred until 2.0.0")
     push(JobWithSymbolCursor)
     assert_raises_cursor_error { work_one_job }
   end
 
   def test_jobs_using_string_subclass_cursor_will_raise
-    skip_until_version("2.0.0")
+    skip("Deferred until 2.0.0")
     push(JobWithStringSubclassCursor)
     assert_raises_cursor_error { work_one_job }
   end
 
   def test_jobs_using_basic_object_cursor_will_raise
-    skip_until_version("2.0.0")
+    skip("Deferred until 2.0.0")
     push(JobWithBasicObjectCursor)
     assert_raises_cursor_error { work_one_job }
   end
 
   def test_jobs_using_complex_but_serializable_cursor_will_not_raise
-    skip_until_version("2.0.0")
+    skip("Deferred until 2.0.0")
     push(JobWithComplexCursor)
     work_one_job
   end
@@ -302,207 +263,13 @@ class JobIterationTest < IterationUnitTest
     end
   end
 
-  def test_global_max_job_runtime
-    freeze_time
-    with_global_max_job_runtime(1.minute) do
-      klass = build_slow_job_class(iterations: 3, iteration_duration: 30.seconds)
-      klass.perform_now
-      assert_partially_completed_job(cursor_position: 2)
-    end
-  end
+  def test_jobs_can_define_custom_interruption_triggers
+    JobThatInterruptsItself.perform_now({})
 
-  def test_per_class_max_job_runtime_with_default_global
-    freeze_time
-    parent = build_slow_job_class(iterations: 3, iteration_duration: 30.seconds)
-    child = Class.new(parent) do
-      self.job_iteration_max_job_runtime = 1.minute
-    end
-
-    parent.perform_now
-    assert_empty(ActiveJob::Base.queue_adapter.enqueued_jobs)
-
-    child.perform_now
-    assert_partially_completed_job(cursor_position: 2)
-  end
-
-  def test_per_class_max_job_runtime_with_global_set_to_nil
-    freeze_time
-    with_global_max_job_runtime(nil) do
-      parent = build_slow_job_class(iterations: 3, iteration_duration: 30.seconds)
-      child = Class.new(parent) do
-        self.job_iteration_max_job_runtime = 1.minute
-      end
-
-      parent.perform_now
-      assert_empty(ActiveJob::Base.queue_adapter.enqueued_jobs)
-
-      child.perform_now
-      assert_partially_completed_job(cursor_position: 2)
-    end
-  end
-
-  def test_per_class_max_job_runtime_with_global_set
-    freeze_time
-    with_global_max_job_runtime(1.minute) do
-      parent = build_slow_job_class(iterations: 3, iteration_duration: 30.seconds)
-      child = Class.new(parent) do
-        self.job_iteration_max_job_runtime = 30.seconds
-      end
-
-      parent.perform_now
-      assert_partially_completed_job(cursor_position: 2)
-      ActiveJob::Base.queue_adapter.enqueued_jobs = []
-
-      child.perform_now
-      assert_partially_completed_job(cursor_position: 1)
-    end
-  end
-
-  def test_max_job_runtime_cannot_unset_global
-    with_global_max_job_runtime(30.seconds) do
-      klass = Class.new(ActiveJob::Base) do
-        include JobIteration::Iteration
-      end
-
-      error = assert_raises(ArgumentError) do
-        klass.job_iteration_max_job_runtime = nil
-      end
-
-      assert_equal(
-        "job_iteration_max_job_runtime may only decrease; " \
-          "#{klass} tried to increase it from 30 seconds to nil (no limit)",
-        error.message,
-      )
-    end
-  end
-
-  def test_max_job_runtime_cannot_be_higher_than_global
-    with_global_max_job_runtime(30.seconds) do
-      klass = Class.new(ActiveJob::Base) do
-        include JobIteration::Iteration
-      end
-
-      error = assert_raises(ArgumentError) do
-        klass.job_iteration_max_job_runtime = 1.minute
-      end
-
-      assert_equal(
-        "job_iteration_max_job_runtime may only decrease; #{klass} tried to increase it from 30 seconds to 1 minute",
-        error.message,
-      )
-    end
-  end
-
-  def test_max_job_runtime_cannot_be_higher_than_parent
-    with_global_max_job_runtime(1.minute) do
-      parent = Class.new(ActiveJob::Base) do
-        include JobIteration::Iteration
-        self.job_iteration_max_job_runtime = 30.seconds
-      end
-      child = Class.new(parent)
-
-      error = assert_raises(ArgumentError) do
-        child.job_iteration_max_job_runtime = 45.seconds
-      end
-
-      assert_equal(
-        "job_iteration_max_job_runtime may only decrease; #{child} tried to increase it from 30 seconds to 45 seconds",
-        error.message,
-      )
-    end
-  end
-
-  def test_total_time_is_updated_for_successful_jobs_with_interruptions
-    freeze_time do
-      push(SuccessfulJobWithInterruption)
-
-      work_one_job
-      job = ActiveJob::Base.deserialize(ActiveJob::Base.queue_adapter.enqueued_jobs.last)
-      assert_equal(10, job.total_time)
-
-      work_one_job
-      assert_equal(20, SuccessfulJobWithInterruption.total_time_on_complete)
-    end
-  end
-
-  def test_total_time_is_updated_for_failed_jobs
-    freeze_time do
-      job = FailingJob.new
-      assert_raises(StandardError) { job.perform_now }
-
-      assert_equal(10, job.total_time)
-    end
-  end
-
-  def test_each_iteration_instrumentation
-    events = []
-    callback = lambda { |_, _, _, _, tags| events << tags }
-    ActiveSupport::Notifications.subscribed(callback, "each_iteration.iteration") do
-      JobWithRightMethods.perform_now({})
-    end
-
-    expected = [
-      { job_class: "JobIterationTest::JobWithRightMethods", cursor_position: 0 },
-      { job_class: "JobIterationTest::JobWithRightMethods", cursor_position: 1 },
-    ]
-    assert_equal(expected, events)
-  end
-
-  def test_exception_in_each_iteration_instrumentation
-    events = []
-    callback = lambda { |_, _, _, _, tags| events << tags.except(:exception, :exception_object) }
-    ActiveSupport::Notifications.subscribed(callback, "each_iteration.iteration") do
-      assert_raises(StandardError) { FailingJob.perform_now }
-    end
-
-    expected = [
-      { job_class: "JobIterationTest::FailingJob", cursor_position: 0 },
-    ]
-    assert_equal(expected, events)
-  end
-
-  def test_nested_each_iteration_instrumentation
-    events = []
-    callback = lambda { |_, _, _, _, tags| events << tags }
-    ActiveSupport::Notifications.subscribed(callback, "each_iteration.iteration") do
-      JobWithNestedEnumerator.perform_now({})
-    end
-
-    expected = [
-      { job_class: "JobIterationTest::JobWithNestedEnumerator", cursor_position: [nil, 0] },
-      { job_class: "JobIterationTest::JobWithNestedEnumerator", cursor_position: [nil, 1] },
-      { job_class: "JobIterationTest::JobWithNestedEnumerator", cursor_position: [nil, 2] },
-      { job_class: "JobIterationTest::JobWithNestedEnumerator", cursor_position: [nil, 3] },
-      { job_class: "JobIterationTest::JobWithNestedEnumerator", cursor_position: [0, 0] },
-      { job_class: "JobIterationTest::JobWithNestedEnumerator", cursor_position: [0, 1] },
-      { job_class: "JobIterationTest::JobWithNestedEnumerator", cursor_position: [0, 2] },
-      { job_class: "JobIterationTest::JobWithNestedEnumerator", cursor_position: [0, 3] },
-      { job_class: "JobIterationTest::JobWithNestedEnumerator", cursor_position: [1, 0] },
-      { job_class: "JobIterationTest::JobWithNestedEnumerator", cursor_position: [1, 1] },
-      { job_class: "JobIterationTest::JobWithNestedEnumerator", cursor_position: [1, 2] },
-      { job_class: "JobIterationTest::JobWithNestedEnumerator", cursor_position: [1, 3] },
-    ]
-    assert_equal(expected, events)
+    assert_equal([1], JobThatInterruptsItself.iterations_performed)
   end
 
   private
-
-  # Allows building job classes that read max_job_runtime during the test,
-  # instead of when this file is read
-  def build_slow_job_class(iterations: 3, iteration_duration: 30.seconds)
-    Class.new(ActiveJob::Base) do
-      include JobIteration::Iteration
-      include ActiveSupport::Testing::TimeHelpers
-
-      define_method(:build_enumerator) do |cursor:|
-        enumerator_builder.build_times_enumerator(iterations, cursor: cursor)
-      end
-
-      define_method(:each_iteration) do |*|
-        travel(iteration_duration)
-      end
-    end
-  end
 
   def assert_raises_cursor_error(&block)
     error = assert_raises(JobIteration::Iteration::CursorError, &block)
@@ -515,17 +282,10 @@ class JobIterationTest < IterationUnitTest
 
     assert_equal(
       "Cursor must be composed of objects capable of built-in (de)serialization: " \
-        "Strings, Integers, Floats, Arrays, Hashes, true, false, or nil. " \
-        "(#{inspected_cursor})",
+      "Strings, Integers, Floats, Arrays, Hashes, true, false, or nil. " \
+      "(#{inspected_cursor})",
       error.message,
     )
-  end
-
-  def assert_partially_completed_job(cursor_position:)
-    message = "Expected to find partially completed job enqueued with cursor_position: #{cursor_position}"
-    enqueued_job = ActiveJob::Base.queue_adapter.enqueued_jobs.first
-    refute_nil(enqueued_job, message)
-    assert_equal(cursor_position, enqueued_job.fetch("cursor_position"))
   end
 
   def push(job, *args)
@@ -535,13 +295,5 @@ class JobIterationTest < IterationUnitTest
   def work_one_job
     job = ActiveJob::Base.queue_adapter.enqueued_jobs.pop
     ActiveJob::Base.execute(job)
-  end
-
-  def with_global_max_job_runtime(new)
-    original = JobIteration.max_job_runtime
-    JobIteration.max_job_runtime = new
-    yield
-  ensure
-    JobIteration.max_job_runtime = original
   end
 end

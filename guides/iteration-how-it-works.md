@@ -12,7 +12,7 @@ SELECT  `products`.* FROM `products` ORDER BY products.id LIMIT 100
 ```
 
 3. The job iterates over two records of the relation and then receives `SIGTERM` (graceful termination signal) caused by a deploy.
-4. The signal handler sets a flag that makes `job_should_exit?` return `false`.
+4. The signal handler sets a flag that makes `job_should_exit?` return `true`.
 5. After the last iteration is completed, we will check `job_should_exit?` which now returns `true`.
 6. The job stops iterating and pushes itself back to the queue, with the latest `cursor_position` value.
 7. Next time when the job is taken from the queue, we'll load records starting from the last primary key that was processed:

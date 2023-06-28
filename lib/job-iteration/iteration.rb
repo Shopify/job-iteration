@@ -37,6 +37,7 @@ module JobIteration
       )
 
       define_callbacks :start
+      define_callbacks :iteration
       define_callbacks :shutdown
       define_callbacks :complete
     end
@@ -49,6 +50,10 @@ module JobIteration
 
       def on_start(*filters, &blk)
         set_callback(:start, :after, *filters, &blk)
+      end
+
+      def before_iteration(*filters, &blk)
+        set_callback(:iteration, :before, *filters, &blk)
       end
 
       def on_shutdown(*filters, &blk)
@@ -158,8 +163,7 @@ module JobIteration
         # assert_valid_cursor!(index)
 
         record_unit_of_work do
-          found_record = true
-          each_iteration(object_from_enumerator, *arguments)
+          each_iteration(iteration, *arguments)
           self.cursor_position = index
         end
 

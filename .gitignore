@@ -1,11 +1,113 @@
-/.bundle/
-/.yardoc
-/_yardoc/
-/coverage/
-/doc/
-/pkg/
-/spec/reports/
-/tmp/
-.ruby-version
-.rubocop-http---shopify-github-io-ruby-style-guide-rubocop-yml
-gemfiles/*.lock
+// This is a JSONC configuration file for Visual Studio Code.
+// It sets various preferences and configurations for the editor.
+
+{
+  // Sets the icon theme to Material Icon Theme.
+  "workbench.iconTheme": "material-icon-theme",
+
+  // Enables word wrapping in the editor.
+  "editor.wordWrap": "on",
+
+  // Configures auto-save behavior to save files after a delay.
+  "files.autoSave": "afterDelay",
+
+  // Sets the font size of the editor to 16.
+  "editor.fontSize": 16,
+
+  // Enables automatic formatting of code on save.
+  "editor.formatOnSave": true,
+
+  // Enables linked editing, which allows you to edit multiple instances of a symbol at once.
+  "editor.linkedEditing": true,
+
+  // Configures GitHub pull request queries for easier navigation within VS Code.
+  "githubPullRequests.queries": [
+    {
+      "label": "Waiting For My Review",
+      "query": "is:open review-requested:${user}"
+    },
+    {
+      "label": "Assigned To Me",
+      "query": "is:open assignee:${user}"
+    },
+    {
+      "label": "Created By Me",
+      "query": "is:open author:${user}"
+    }
+  ],
+
+   // Enables experimental auto-imports with TabNine extension
+   // https://www.tabnine.com/
+   //
+   // Note: This feature is experimental and may not work as expected.
+   //
+   // To enable this feature, you must have TabNine installed and enabled in your VS Code settings.
+   //
+   // For more information, see https://www.tabnine.com/faq#experimental-auto-imports
+   //
+   // If you don't want to use this feature, set it to false or remove it from your settings.json file.
+
+   //"tabnine.experimentalAutoImports": true,
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -6,18 +6,6 @@ module JobIteration
   module Iteration
     extend ActiveSupport::Concern
 
-    attr_accessor(
-      :cursor_position,
-      :times_interrupted,
-    )
-
-    # The time when the job starts running. If the job is interrupted and runs again, the value is updated.
-    attr_accessor :start_time
-
-    # The total time the job has been running, including multiple iterations.
-    # The time isn't reset if the job is interrupted.
-    attr_accessor :total_time
-
     class CursorError < ArgumentError
       attr_reader :cursor
 
@@ -41,36 +29,17 @@ module JobIteration
     end
 
     included do |_base|
-      define_callbacks :start
-      define_callbacks :shutdown
-      define_callbacks :complete
-
-      class_attribute(
-        :job_iteration_max_job_runtime,
-        instance_writer: false,
-        instance_predicate: false,
-        default: JobIteration.max_job_runtime,
+      attr_accessor(
+        :cursor_position,
+        :start_time,
+        :times_interrupted,
+        :total_time,
       )
 
-      singleton_class.prepend(PrependedClassMethods)
-    end
-
-    module PrependedClassMethods
-      def job_iteration_max_job_runtime=(new)
-        existing = job_iteration_max_job_runtime
-
-        if existing && (!new || new > existing)
-          existing_label = existing.inspect
-          new_label = new ? new.inspect : "#{new.inspect} (no limit)"
-          raise(
-            ArgumentError,
-            "job_iteration_max_job_runtime may only decrease; " \
-              "#{self} tried to increase it from #{existing_label} to #{new_label}",
-          )
-        end
-
-        super
-      end
+      define_callbacks :start
+      define_callbacks :iteration
+      define_callbacks :shutdown
+      define_callbacks :complete
     end
 
     module ClassMethods
@@ -83,12 +52,28 @@ module JobIteration
         set_callback(:start, :after, *filters, &blk)
       end
 
+      def before_iteration(*filters, &blk)
+        set_callback(:iteration, :before, *filters, &blk)
+      end
+
       def on_shutdown(*filters, &blk)
         set_callback(:shutdown, :after, *filters, &blk)
       end
 
       def on_complete(*filters, &blk)
         set_callback(:complete, :after, *filters, &blk)
+      end
+
+      def stop_iterating_on(interrupt_proc)
+        interruptors << interrupt_proc
+      end
+
+      def interruptors
+        @interruptors ||= [
+          ->(job) { JobIteration.max_job_runtime && job.start_time && (Time.now.utc - job.start_time) > JobIteration.max_job_runtime },
+          ->(_) { JobIteration.interruption_adapter.call },
+        ]
+        @interruptors
       end
 
       private
@@ -100,8 +85,6 @@ module JobIteration
 
     def initialize(*arguments)
       super
-      @job_iteration_retry_backoff = JobIteration.default_retry_backoff
-      @needs_reenqueue = false
       self.times_interrupted = 0
       self.total_time = 0.0
       assert_implements_methods!
@@ -142,12 +125,13 @@ module JobIteration
       self.start_time = Time.now.utc
 
       enumerator = nil
-      ActiveSupport::Notifications.instrument("build_enumerator.iteration", instrumentation_tags) do
+      ActiveSupport::Notifications.instrument("build_enumerator.iteration", iteration_instrumentation_tags) do
         enumerator = build_enumerator(*arguments, cursor: cursor_position)
       end
 
       unless enumerator
-        ActiveSupport::Notifications.instrument("nil_enumerator.iteration", instrumentation_tags)
+        logger.info("[JobIteration::Iteration] `build_enumerator` returned nil. " \
+          "Skipping the job.")
         return
       end
 
@@ -156,10 +140,7 @@ module JobIteration
       if executions == 1 && times_interrupted == 0
         run_callbacks(:start)
       else
-        ActiveSupport::Notifications.instrument(
-          "resumed.iteration",
-          instrumentation_tags.merge(times_interrupted: times_interrupted, total_time: total_time),
-        )
+        ActiveSupport::Notifications.instrument("resumed.iteration", iteration_instrumentation_tags)
       end
 
       completed = catch(:abort) do
@@ -167,59 +148,56 @@ module JobIteration
       end
 
       run_callbacks(:shutdown)
-      completed = handle_completed(completed)
 
-      if @needs_reenqueue
-        reenqueue_iteration_job
-      elsif completed
+      if run_complete_callbacks?(completed)
         run_callbacks(:complete)
-        ActiveSupport::Notifications.instrument(
-          "completed.iteration",
-          instrumentation_tags.merge(times_interrupted: times_interrupted, total_time: total_time),
-        )
+        output_interrupt_summary
       end
     end
 
     def iterate_with_enumerator(enumerator, arguments)
       arguments = arguments.dup.freeze
       found_record = false
-      @needs_reenqueue = false
-
-      enumerator.each do |object_from_enumerator, cursor_from_enumerator|
+      enumerator.each do |object_from_enumerator, index|
         # Deferred until 2.0.0
-        # assert_valid_cursor!(cursor_from_enumerator)
+        # assert_valid_cursor!(index)
 
-        tags = instrumentation_tags.merge(cursor_position: cursor_from_enumerator)
-        ActiveSupport::Notifications.instrument("each_iteration.iteration", tags) do
-          found_record = true
-          each_iteration(object_from_enumerator, *arguments)
-          self.cursor_position = cursor_from_enumerator
+        record_unit_of_work do
+          each_iteration(iteration, *arguments)
+          self.cursor_position = index
         end
 
         next unless job_should_exit?
-
         self.executions -= 1 if executions > 1
-        @needs_reenqueue = true
+        reenqueue_iteration_job
         return false
       end
 
-      ActiveSupport::Notifications.instrument(
-        "not_found.iteration",
-        instrumentation_tags.merge(times_interrupted: times_interrupted),
+      logger.info(
+        "[JobIteration::Iteration] Enumerator found nothing to iterate! " \
+        "times_interrupted=#{times_interrupted} cursor_position=#{cursor_position}"
       ) unless found_record
 
-      true
-    ensure
       adjust_total_time
+
+      true
+    end
+
+    def record_unit_of_work
+      ActiveSupport::Notifications.instrument("each_iteration.iteration", iteration_instrumentation_tags) do
+        yield
+      end
     end
 
     def reenqueue_iteration_job
-      ActiveSupport::Notifications.instrument("interrupted.iteration", instrumentation_tags)
+      ActiveSupport::Notifications.instrument("interrupted.iteration", iteration_instrumentation_tags)
+      logger.info("[JobIteration::Iteration] Interrupting and re-enqueueing the job cursor_position=#{cursor_position}")
 
+      adjust_total_time
       self.times_interrupted += 1
 
       self.already_in_queue = true if respond_to?(:already_in_queue=)
-      retry_job(wait: @job_iteration_retry_backoff)
+      retry_job
     end
 
     def adjust_total_time
@@ -248,7 +226,7 @@ module JobIteration
 
       raise CursorError.new(
         "Cursor must be composed of objects capable of built-in (de)serialization: " \
-          "Strings, Integers, Floats, Arrays, Hashes, true, false, or nil.",
+        "Strings, Integers, Floats, Arrays, Hashes, true, false, or nil.",
         cursor: cursor,
       )
     end
@@ -257,7 +235,7 @@ module JobIteration
       unless respond_to?(:each_iteration, true)
         raise(
           ArgumentError,
-          "Iteration job (#{self.class}) must implement #each_iteration method",
+          "Iteration job (#{self.class}) must implement #each_iteration method"
         )
       end
 
@@ -265,7 +243,7 @@ module JobIteration
         parameters = method_parameters(:build_enumerator)
         unless valid_cursor_parameter?(parameters)
           raise ArgumentError, "Iteration job (#{self.class}) #build_enumerator " \
-            "expects the keyword argument `cursor`"
+          "expects the keyword argument `cursor`"
         end
       else
         raise ArgumentError, "Iteration job (#{self.class}) must implement #build_enumerator " \
@@ -284,41 +262,38 @@ module JobIteration
       method.parameters
     end
 
-    def instrumentation_tags
-      { job_class: self.class.name, cursor_position: cursor_position }
+    def iteration_instrumentation_tags
+      { job_class: self.class.name }
+    end
+
+    def output_interrupt_summary
+      message = "[JobIteration::Iteration] Completed iterating. times_interrupted=%d total_time=%.3f"
+      logger.info(Kernel.format(message, times_interrupted, total_time))
     end
 
     def job_should_exit?
-      if job_iteration_max_job_runtime && start_time && (Time.now.utc - start_time) > job_iteration_max_job_runtime
-        return true
-      end
-
-      JobIteration.interruption_adapter.call || (defined?(super) && super)
+      self.class.interruptors.any? { |interrupt_proc| interrupt_proc.call(self) } ||
+        (defined?(super) && super)
     end
 
-    def handle_completed(completed)
-      case completed
-      when nil # someone aborted the job but wants to call the on_complete callback
-        return true
-      when true
-        return true
-      when false, :skip_complete_callbacks
-        return false
-      when Array # used by ThrottleEnumerator
-        reason, backoff = completed
-        raise "Unknown reason: #{reason}" unless reason == :retry
-
-        @job_iteration_retry_backoff = backoff
-        @needs_reenqueue = true
-        return false
+    def run_complete_callbacks?(completed)
+      # nil means that someone aborted the job but want to call the on_complete callback
+      if completed.nil?
+        completed = :finished
       end
-      raise "Unexpected thrown value: #{completed.inspect}"
+
+      case completed
+      when :finished, true then true
+      # skip_complete_callbacks is returning from ThrottleEnumeratorand we do not want the on_complete callback to
+      # be executed
+      when false, :skip_complete_callbacks then false
+      end
     end
 
     def valid_cursor_parameter?(parameters)
       # this condition is when people use the splat operator.
       # def build_enumerator(*)
-      return true if parameters == [[:rest]] || parameters == [[:rest, :*]]
+      return true if parameters == [[:rest]]
 
       parameters.each do |parameter_type, parameter_name|
         next unless parameter_name == :cursor

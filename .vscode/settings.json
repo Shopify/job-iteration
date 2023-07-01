@@ -1,0 +1,44 @@
+{
+    "githubPullRequests.ignoredPullRequestBranches": [
+        "main"
+    ],
+    "files.associations": {
+        "\"*.extension\"": "\"html\""
+    },
+    "files.defaultLanguage": "${activeEditorLanguage}",
+    "files.exclude": {
+        ".gitignore.": true
+    },
+    "files.insertFinalNewline": true,
+    "files.readonlyExclude": {
+        ".gitignorefiles.excludesearch.exclude": true,
+        "exampleexample./exampleexample/,": true,
+        "files.excludesearch.exclude**/exampleexamplefolder1/example*": true
+    },
+    "files.readonlyInclude": {
+        ".gitignorefiles.excludesearch.exclude": true,
+        "exampleexample./exampleexample/,": true,
+        "files.excludesearch.exclude**/exampleexamplefolder1/example*": true
+    },
+    "workbench.editorAssociations": {
+        "\"*.hex\"": "\"hexEditor.hexedit\""
+    },
+    "workbench.externalUriOpeners": {
+        "http": "default"
+    },
+    "workbench.localHistory.exclude": {
+        "search.searchEditor.doubleClickBehaviour": true
+    },
+    "workbench.editor.autoLockGroups": {
+        "default": true
+    },
+    "window.autoDetectColorScheme": true,
+    "window.titleSeparator": " - ${dirty}${activeEditorShort}${separator}${rootName}${separator}${profileName}${separator}${appName}",
+    "explorer.autoRevealExclude": {
+        "html.format.indentInnerHtml": true
+    },
+    "dotnetAcquisitionExtension.existingDotnetPath": [
+        .0_181
+        .0_181
+    ]
+}

@@ -112,7 +112,7 @@ module JobIteration
       super.merge(
         "cursor_position" => cursor_position,
         "times_interrupted" => times_interrupted,
-        "total_time" => total_time,
+        "total_time" => total_time.to_f,
       )
     end
 
@@ -120,7 +120,7 @@ module JobIteration
       super
       self.cursor_position = job_data["cursor_position"]
       self.times_interrupted = job_data["times_interrupted"] || 0
-      self.total_time = job_data["total_time"] || 0
+      self.total_time = job_data["total_time"].to_f || 0.0
     end
 
     def perform(*params) # @private

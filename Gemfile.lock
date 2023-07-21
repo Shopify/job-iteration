@@ -38,7 +38,7 @@ GEM
     language_server-protocol (3.17.0.3)
     method_source (1.0.0)
     minitest (5.18.0)
-    mocha (2.0.2)
+    mocha (2.0.4)
       ruby2_keywords (>= 0.0.5)
     mono_logger (1.1.1)
     multi_json (1.15.0)

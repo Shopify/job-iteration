@@ -60,7 +60,7 @@ module JobIteration
     end
 
     def next_batch(batch_size)
-      return nil if @reached_end
+      return if @reached_end
 
       relation = @base_relation.limit(batch_size)
 

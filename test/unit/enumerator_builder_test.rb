@@ -77,7 +77,7 @@ module JobIteration
     # checks that all the non-alias methods were tested
     raise "methods not tested: #{methods.inspect}" unless methods.empty?
 
-    test "#build_csv_enumerator uses the CsvEnumerator class"  do
+    test "#build_csv_enumerator uses the CsvEnumerator class" do
       csv = CSV.open(
         ["test", "support", "sample_csv_with_headers.csv"].join("/"),
         converters: :integer,

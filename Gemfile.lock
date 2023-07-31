@@ -90,7 +90,7 @@ GEM
       redis-client (>= 0.14.0)
     sinatra (1.0)
       rack (>= 1.0)
-    sorbet-runtime (0.5.10929)
+    sorbet-runtime (0.5.10940)
     tzinfo (2.0.6)
       concurrent-ruby (~> 1.0)
     unicode-display_width (2.4.2)

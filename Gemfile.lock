@@ -53,9 +53,9 @@ GEM
     rack (3.0.8)
     rainbow (3.1.1)
     rake (13.0.6)
-    redis (5.0.6)
+    redis (5.0.7)
       redis-client (>= 0.9.0)
-    redis-client (0.14.1)
+    redis-client (0.15.0)
       connection_pool
     redis-namespace (1.10.0)
       redis (>= 4)

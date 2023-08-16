@@ -119,8 +119,8 @@ module JobIteration
     def deserialize(job_data) # @private
       super
       self.cursor_position = job_data["cursor_position"]
-      self.times_interrupted = job_data["times_interrupted"] || 0
-      self.total_time = job_data["total_time"] || 0
+      self.times_interrupted = Integer(job_data["times_interrupted"] || 0)
+      self.total_time = Float(job_data["total_time"] || 0.0)
     end
 
     def perform(*params) # @private

@@ -41,12 +41,24 @@ jobs:
         run: |
           sudo systemctl start mysql.service
           mysql -uroot -h localhost -proot -e "CREATE DATABASE job_iteration_test;"
-      - name: Rubocop
-        run: bundle exec rubocop
       - name: Ruby tests
         run: bundle exec rake test
         env:
           REDIS_HOST: localhost
           REDIS_PORT: ${{ job.services.redis.ports[6379] }}
+
+  lint:
+    runs-on: ubuntu-latest
+    name: Lint
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.2"
+          bundler-cache: true
+      - name: Rubocop
+        run: bundle exec rubocop
       - name: Documentation correctly written
         run: bundle exec yardoc --no-output --no-save --no-stats --fail-on-warning

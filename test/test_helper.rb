@@ -146,15 +146,14 @@ class IterationUnitTest < ActiveSupport::TestCase
 
   def insert_fixtures
     now = Time.now
-    products = 10.times.map { |n| { name: "lipstick #{n}", created_at: now - n, updated_at: now - n } }
-    Product.insert_all!(products)
+    10.times { |n| Product.create!(name: "lipstick #{n}", created_at: now - n, updated_at: now - n) }
 
-    comments = Product.order(:id).limit(3).map.with_index do |product, index|
+    Product.order(:id).limit(3).map.with_index do |product, index|
       comments_count = index + 1
       comments_count.times.map { |n| { content: "#{product.name} comment ##{n}", product_id: product.id } }
-    end.flatten
-
-    Comment.insert_all!(comments)
+    end.flatten.each do |comment|
+      Comment.create!(**comment)
+    end
   end
 
   def truncate_fixtures

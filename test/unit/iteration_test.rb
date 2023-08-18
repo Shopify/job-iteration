@@ -485,6 +485,11 @@ class JobIterationTest < IterationUnitTest
     assert_equal(expected, events)
   end
 
+  def test_perform_returns_nil
+    # i.e. perform is "void", and nobody should depend on the return value
+    assert_nil(JobWithRightMethods.perform_now({}))
+  end
+
   private
 
   # Allows building job classes that read max_job_runtime during the test,

@@ -125,6 +125,8 @@ module JobIteration
 
     def perform(*params) # @private
       interruptible_perform(*params)
+
+      nil
     end
 
     def retry_job(*, **)

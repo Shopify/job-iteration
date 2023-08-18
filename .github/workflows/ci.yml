@@ -25,6 +25,8 @@ jobs:
             gemfile: rails_5_2
           - ruby: "3.1"
             gemfile: rails_5_2
+          - ruby: "3.2"
+            gemfile: rails_5_2
           - ruby: "3.1"
             gemfile: rails_6_0
           - ruby: "3.2"

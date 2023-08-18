@@ -2,7 +2,6 @@
 
 - [365](https://github.com/Shopify/job-iteration/pull/365) - Support composite primary key as a cursor
 - [241](https://github.com/Shopify/job-iteration/pull/241) - Require Ruby 2.7+, dropping 2.6 support
-- [241](https://github.com/Shopify/job-iteration/pull/241) - Require Rails 6.0+, dropping 5.2 support
 - [240](https://github.com/Shopify/job-iteration/pull/240) - Allow setting inheritable per-job `job_iteration_max_job_runtime`
 - [289](https://github.com/Shopify/job-iteration/pull/289) - Fix uninitialized constant error when raising `ConditionNotSupportedError` from `ActiveRecordBatchEnumerator`
 - [310](https://github.com/Shopify/job-iteration/pull/310) - Support nested iteration

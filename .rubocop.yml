@@ -4,7 +4,7 @@ inherit_gem:
 AllCops:
   TargetRubyVersion: 2.7.6
   Exclude:
-    - 'vendor/bundle/**/*'
+    - "vendor/bundle/**/*"
 Lint/SuppressedException:
   Exclude:
     - lib/job-iteration.rb
@@ -16,5 +16,5 @@ Naming/FileName:
     - lib/job-iteration.rb
 Style/MethodCallWithArgsParentheses:
   Exclude:
-    - 'gemfiles/*'
+    - "gemfiles/*"
     - Gemfile

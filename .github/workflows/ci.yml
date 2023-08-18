@@ -11,7 +11,7 @@ jobs:
       redis:
         image: redis
         ports:
-        - 6379:6379
+          - 6379:6379
     strategy:
       matrix:
         ruby: ["2.7", "3.0", "3.1", "3.2"]
@@ -22,7 +22,7 @@ jobs:
           - ruby: "3.2"
             gemfile: rails_6_0
           - ruby: "3.2"
-            gemfile: rails_6_1        
+            gemfile: rails_6_1
 
         include:
           - ruby: head
@@ -30,23 +30,23 @@ jobs:
     env:
       BUNDLE_GEMFILE: gemfiles/${{ matrix.gemfile }}.gemfile
     steps:
-    - name: Check out code
-      uses: actions/checkout@v3
-    - name: Set up Ruby ${{ matrix.ruby }}
-      uses: ruby/setup-ruby@v1
-      with:
-        ruby-version: ${{ matrix.ruby }}
-        bundler-cache: true
-    - name: Start MySQL and create DB
-      run: |
-        sudo systemctl start mysql.service
-        mysql -uroot -h localhost -proot -e "CREATE DATABASE job_iteration_test;"
-    - name: Rubocop
-      run: bundle exec rubocop
-    - name: Ruby tests
-      run: bundle exec rake test
-      env:
-        REDIS_HOST: localhost
-        REDIS_PORT: ${{ job.services.redis.ports[6379] }}
-    - name: Documentation correctly written
-      run: bundle exec yardoc --no-output --no-save --no-stats --fail-on-warning
+      - name: Check out code
+        uses: actions/checkout@v3
+      - name: Set up Ruby ${{ matrix.ruby }}
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+          bundler-cache: true
+      - name: Start MySQL and create DB
+        run: |
+          sudo systemctl start mysql.service
+          mysql -uroot -h localhost -proot -e "CREATE DATABASE job_iteration_test;"
+      - name: Rubocop
+        run: bundle exec rubocop
+      - name: Ruby tests
+        run: bundle exec rake test
+        env:
+          REDIS_HOST: localhost
+          REDIS_PORT: ${{ job.services.redis.ports[6379] }}
+      - name: Documentation correctly written
+        run: bundle exec yardoc --no-output --no-save --no-stats --fail-on-warning

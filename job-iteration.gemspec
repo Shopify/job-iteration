@@ -5,7 +5,7 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require "job-iteration/version"
 
 Gem::Specification.new do |spec|
-  spec.required_ruby_version = ">= 2.7"
+  spec.required_ruby_version = ">= 2.6"
   spec.name          = "job-iteration"
   spec.version       = JobIteration::VERSION
   spec.authors       = ["Shopify"]
@@ -27,5 +27,5 @@ Gem::Specification.new do |spec|
   spec.metadata["allowed_push_host"] = "https://rubygems.org"
 
   spec.add_development_dependency("activerecord")
-  spec.add_dependency("activejob", ">= 6.0")
+  spec.add_dependency("activejob", ">= 5.2")
 end

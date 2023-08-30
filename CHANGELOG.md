@@ -1,6 +1,6 @@
 ### Main (unreleased)
 
-- [367](https://github.com/Shopify/job-iteration/pull/367) - Iteration can use multiple Active Job backends simultaneously by inferring the interruption adapter from the job's `queue_adapter_name`. `JobIteration.interruption_adapter` and `.load_integrations` have been removed. `JobIteration::Integrations.register` has been added.
+- [367](https://github.com/Shopify/job-iteration/pull/367) - Iteration can use multiple Active Job backends simultaneously by inferring the interruption adapter from the job's `queue_adapter_name`. Iteration will now raise `JobIteration::Integrations::LoadError` if no interruption adapter is found for the job's queue adapter, instead of never interrupting the job. `JobIteration.interruption_adapter` and `.load_integrations` have been removed. `JobIteration::Integrations.register` has been added.
 
 ## v1.4.0 (Aug 23, 2023)
 

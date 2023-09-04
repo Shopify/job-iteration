@@ -13,9 +13,13 @@ module JobIteration
 
   extend self
 
-  attr_accessor :logger
+  attr_writer :logger
 
-  self.logger = ActiveJob::Base.logger
+  class << self
+    def logger
+      @logger || ActiveJob::Base.logger
+    end
+  end
 
   # Use this to _always_ interrupt the job after it's been running for more than N seconds.
   # @example

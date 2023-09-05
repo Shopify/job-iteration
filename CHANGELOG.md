@@ -1,6 +1,10 @@
 ### Main (unreleased)
 
-Nil
+## v1.4.1 (Sep 5, 2023)
+
+### Bug fixes
+
+- [427](https://github.com/Shopify/job-iteration/pull/427) - Use the Rails application logger. Changes from [338](https://github.com/Shopify/job-iteration/pull/338) resulted in logging to the original value of ActiveJob.logger, not the one configured by the Rails application.
 
 ## v1.4.0 (Aug 23, 2023)
 

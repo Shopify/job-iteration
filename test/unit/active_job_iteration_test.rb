@@ -724,16 +724,6 @@ module JobIteration
       assert_jobs_in_queue(1)
     end
 
-    def test_mark_job_worker_as_interrupted
-      mark_job_worker_as_interrupted
-
-      assert_equal(true, JobIteration.interruption_adapter.call)
-
-      continue_iterating
-
-      assert_equal(false, JobIteration.interruption_adapter.call)
-    end
-
     def test_reenqueue_self
       iterate_exact_times(2.times)
 

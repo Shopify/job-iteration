@@ -57,38 +57,6 @@ module JobIteration
       assert_equal([shops, shops.last.id], enum.first)
     end
 
-    class StubbedCursor
-      include ActiveSupport::Testing::TimeHelpers
-      def initialize(wait_time:)
-        @wait_time = wait_time
-      end
-
-      def next_batch(*)
-        travel(@wait_time)
-      end
-    end
-
-    test "enumerator next batch is instrumented with proper duration" do
-      wait_time = 15.seconds
-      freeze_time do
-        stubbed_cursor = StubbedCursor.new(wait_time: wait_time)
-
-        ActiveSupport::Notifications.subscribe("active_record_cursor.iteration") do |*args|
-          ActiveSupport::Notifications.unsubscribe("active_record_cursor.iteration")
-          event = ActiveSupport::Notifications::Event.new(*args)
-          assert_equal(wait_time.in_milliseconds, event.duration)
-        end
-        enum = build_enumerator
-        enum.send(:instrument_next_batch, stubbed_cursor)
-      end
-    end
-
-    test "enumerator next batch is instrumented" do
-      ActiveSupport::Notifications.expects(:instrument).with("active_record_cursor.iteration")
-      enum = build_enumerator.batches
-      enum.first
-    end
-
     test "columns are configurable" do
       enum = build_enumerator(columns: [:updated_at]).batches
       shops = Product.order(:updated_at).take(2)

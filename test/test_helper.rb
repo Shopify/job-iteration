@@ -3,6 +3,8 @@
 $LOAD_PATH.unshift(File.expand_path("../../lib", __FILE__))
 require "minitest/autorun"
 
+ENV["ITERATION_DISABLE_AUTOCONFIGURE"] = "true"
+
 require "job-iteration"
 require "job-iteration/test_helper"
 
@@ -38,7 +40,6 @@ module ActiveJob
 end
 
 ActiveJob::Base.queue_adapter = :iteration_test
-JobIteration::Integrations.register("iteration_test", -> { false })
 
 class Product < ActiveRecord::Base
   has_many :comments

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "job-iteration"
+require "job-iteration/integrations/sidekiq"
 
 require "active_job"
 require "i18n"

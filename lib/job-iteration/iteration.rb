@@ -136,10 +136,6 @@ module JobIteration
 
     private
 
-    def interruption_adapter
-      @interruption_adapter ||= JobIteration::Integrations.load(self.class.queue_adapter_name)
-    end
-
     def enumerator_builder
       JobIteration.enumerator_builder.new(self)
     end
@@ -299,7 +295,7 @@ module JobIteration
         return true
       end
 
-      interruption_adapter.call || (defined?(super) && super)
+      JobIteration.interruption_adapter.call || (defined?(super) && super)
     end
 
     def handle_completed(completed)

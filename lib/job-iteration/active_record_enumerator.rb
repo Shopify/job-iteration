@@ -31,7 +31,7 @@ module JobIteration
     def batches
       cursor = finder_cursor
       Enumerator.new(method(:size)) do |yielder|
-        while (records = instrument_next_batch(cursor))
+        while (records = cursor.next_batch(@batch_size))
           yielder.yield(records, cursor_value(records.last)) if records.any?
         end
       end
@@ -42,12 +42,6 @@ module JobIteration
     end
 
     private
-
-    def instrument_next_batch(cursor)
-      ActiveSupport::Notifications.instrument("active_record_cursor.iteration") do
-        cursor.next_batch(@batch_size)
-      end
-    end
 
     def cursor_value(record)
       positions = @columns.map do |column|

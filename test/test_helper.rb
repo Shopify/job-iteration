@@ -53,8 +53,8 @@ class TravelRoute < ActiveRecord::Base
   self.primary_key = [:origin, :destination]
 end
 
-class TravelRoute < ActiveRecord::Base
-  self.primary_key = [:origin, :destination]
+class Order < ActiveRecord::Base
+  self.primary_key = [:shop_id, :id]
 end
 
 host = ENV["USING_DEV"] == "1" ? "job-iteration.railgun" : "localhost"
@@ -95,6 +95,11 @@ ActiveRecord::Schema.define do
   create_table(:travel_routes, force: true, primary_key: [:origin, :destination]) do |t|
     t.string(:destination)
     t.string(:origin)
+  end
+
+  create_table(:orders, force: true) do |t|
+    t.integer(:shop_id)
+    t.string(:name)
   end
 end
 

@@ -1,5 +1,12 @@
 ### Main (unreleased)
 
+### Bug fixes
+
+- [431](https://github.com/Shopify/job-iteration/pull/431) - Use `#id_value` instead of `send(:id)`
+when generating position for cursor based on `:id` column (Rails 7.1 and above, where composite
+primary models are now supported). This ensures we grab the value of the id column, rather than a
+potentially composite primary key value.
+
 ## v1.4.1 (Sep 5, 2023)
 
 ### Bug fixes

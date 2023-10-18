@@ -21,6 +21,12 @@ SELECT  `products`.* FROM `products` ORDER BY products.id LIMIT 100
 SELECT  `products`.* FROM `products` WHERE (products.id > 2) ORDER BY products.id LIMIT 100
 ```
 
+## Exceptions inside `each_iteration`
+
+When an unrescued exception happens inside the `each_iteration` block, the job will stop and re-enqueue itself with the last successful cursor. This means that the iteration that failed will be retried with the same parameters and the cursor will only move if that iteration succeeds. This behaviour may be enough for intermittent errors, such as network connection failures, but if your execution is deterministic and you have an error, subsequent iterations will never run.
+
+In other words, if you are trying to process 100 records but the job consistently fails on the 61st, only the first 60 will be processed and the job will try to process the 61st record until retries are exhausted.
+
 ## Signals
 
 It's critical to know [UNIX signals](https://www.tutorialspoint.com/unix/unix-signals-traps.htm) in order to understand how interruption works. There are two main signals that Sidekiq and Resque use: `SIGTERM` and `SIGKILL`. `SIGTERM` is the graceful termination signal which means that the process should exit _soon_, not immediately. For Iteration, it means that we have time to wait for the last iteration to finish and to push job back to the queue with the last cursor position.

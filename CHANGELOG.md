@@ -2,6 +2,7 @@
 
 ### Bug fixes
 
+- [436](https://github.com/Shopify/job-iteration/pull/436) - Defer reading `JobIteration.max_job_runtime` until runtime, instead of closing around the value at the time of job definition.
 - [431](https://github.com/Shopify/job-iteration/pull/431) - Use `#id_value` instead of `send(:id)`
 when generating position for cursor based on `:id` column (Rails 7.1 and above, where composite
 primary models are now supported). This ensures we grab the value of the id column, rather than a

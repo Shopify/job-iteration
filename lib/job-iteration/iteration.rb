@@ -40,7 +40,7 @@ module JobIteration
       end
     end
 
-    included do |_base|
+    included do |base|
       define_callbacks :start
       define_callbacks :shutdown
       define_callbacks :complete
@@ -49,10 +49,16 @@ module JobIteration
         :job_iteration_max_job_runtime,
         instance_writer: false,
         instance_predicate: false,
-        default: JobIteration.max_job_runtime,
       )
 
-      singleton_class.prepend(PrependedClassMethods)
+      class << base
+        prepend(PrependedClassMethods)
+
+        def job_iteration_max_job_runtime
+          # Lookup default every time, instead of closing around its value when the class is defined.
+          JobIteration.max_job_runtime
+        end
+      end
     end
 
     module PrependedClassMethods

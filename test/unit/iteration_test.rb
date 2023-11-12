@@ -311,6 +311,17 @@ class JobIterationTest < IterationUnitTest
     end
   end
 
+  def test_global_max_job_runtime_with_updated_value
+    freeze_time
+    with_global_max_job_runtime(10.minutes) do
+      klass = build_slow_job_class(iterations: 3, iteration_duration: 30.seconds)
+      with_global_max_job_runtime(1.minute) do
+        klass.perform_now
+        assert_partially_completed_job(cursor_position: 2)
+      end
+    end
+  end
+
   def test_per_class_max_job_runtime_with_default_global
     freeze_time
     parent = build_slow_job_class(iterations: 3, iteration_duration: 30.seconds)

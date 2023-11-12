@@ -47,30 +47,9 @@ module JobIteration
 
       class_attribute(
         :job_iteration_max_job_runtime,
-        instance_writer: false,
+        instance_accessor: false,
         instance_predicate: false,
-        default: JobIteration.max_job_runtime,
       )
-
-      singleton_class.prepend(PrependedClassMethods)
-    end
-
-    module PrependedClassMethods
-      def job_iteration_max_job_runtime=(new)
-        existing = job_iteration_max_job_runtime
-
-        if existing && (!new || new > existing)
-          existing_label = existing.inspect
-          new_label = new ? new.inspect : "#{new.inspect} (no limit)"
-          raise(
-            ArgumentError,
-            "job_iteration_max_job_runtime may only decrease; " \
-              "#{self} tried to increase it from #{existing_label} to #{new_label}",
-          )
-        end
-
-        super
-      end
     end
 
     module ClassMethods
@@ -291,11 +270,20 @@ module JobIteration
     end
 
     def job_should_exit?
-      if job_iteration_max_job_runtime && start_time && (Time.now.utc - start_time) > job_iteration_max_job_runtime
-        return true
-      end
+      max_job_runtime = job_iteration_max_job_runtime
+      return true if max_job_runtime && start_time && (Time.now.utc - start_time) > max_job_runtime
 
       JobIteration.interruption_adapter.call || (defined?(super) && super)
+    end
+
+    def job_iteration_max_job_runtime
+      global_max = JobIteration.max_job_runtime
+      class_max = self.class.job_iteration_max_job_runtime
+
+      return global_max unless class_max
+      return class_max unless global_max
+
+      [global_max, class_max].min
     end
 
     def handle_completed(completed)

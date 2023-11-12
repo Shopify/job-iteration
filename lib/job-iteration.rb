@@ -29,13 +29,21 @@ module JobIteration
   # This setting will make it to always interrupt a job after it's been iterating for 5 minutes.
   # Defaults to nil which means that jobs will not be interrupted except on termination signal.
   #
-  # This setting can be further reduced (but not increased) by using the inheritable per-class
-  # job_iteration_max_job_runtime setting.
+  # This setting can be overriden by using the inheritable per-class job_iteration_max_job_runtime setting. At runtime,
+  # the lower of the two will be used.
   # @example
   #
   #   class MyJob < ActiveJob::Base
   #     include JobIteration::Iteration
   #     self.job_iteration_max_job_runtime = 1.minute
+  #     # ...
+  #
+  # Note that if a sub-class overrides its parent's setting, only the global and sub-class setting will be considered,
+  # not the parent's.
+  # @example
+  #
+  #   class ChildJob < MyJob
+  #     self.job_iteration_max_job_runtime = 3.minutes # MyJob's 1.minute will be discarded.
   #     # ...
   attr_accessor :max_job_runtime
 

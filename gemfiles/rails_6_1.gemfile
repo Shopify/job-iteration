@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+@rails_gems_requirements = "~> 6.1.0"
+
 eval_gemfile "../Gemfile"
 
 if Gem::Version.new(RUBY_VERSION.dup) >= Gem::Version.new("3.1")
@@ -7,6 +9,3 @@ if Gem::Version.new(RUBY_VERSION.dup) >= Gem::Version.new("3.1")
   gem "net-pop", require: false
   gem "net-smtp", require: false
 end
-
-gem "activejob", "~> 6.1.0"
-gem "activerecord", "~> 6.1.0"

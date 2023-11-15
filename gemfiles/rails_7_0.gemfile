@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-eval_gemfile "../Gemfile"
+@rails_gems_requirements = "~> 7.0.0"
 
-gem "activejob", "~> 7.0.0"
-gem "activerecord", "~> 7.0.0"
+eval_gemfile "../Gemfile"

@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-eval_gemfile "../Gemfile"
+@rails_gems_requirements = { github: "rails/rails", branch: "main" }
 
-gem "activejob", github: "rails/rails", branch: "main"
-gem "activerecord", github: "rails/rails", branch: "main"
+eval_gemfile "../Gemfile"

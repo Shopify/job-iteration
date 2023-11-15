@@ -51,11 +51,11 @@ jobs:
           ruby-version: ${{ matrix.ruby }}
           bundler-cache: false
           bundler: Gemfile.lock
-      - name: Update bundler
-        run: gem update bundler && bundler update --bundler
+      - name: Print bundler version
+        run: bundle -v
       - name: Manually install dependencies with specific bundler version
-        run: bundle _2.4.22_ install --jobs 4 --retry 3
-        # run: bundle install --jobs 4 --retry 3
+        # run: bundle _2.4.22_ install --jobs 4 --retry 3
+        run: bundle install --jobs 4 --retry 3
       - name: Start MySQL and create DB
         run: |
           sudo systemctl start mysql.service

@@ -11,6 +11,7 @@ gemspec
 gem "sidekiq"
 gem "resque"
 
+gem "activerecord"
 gem "mysql2", github: "brianmario/mysql2"
 gem "globalid"
 gem "i18n"

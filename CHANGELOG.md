@@ -1,7 +1,13 @@
 ### Main (unreleased)
 
+### Changes
+
+- [437](https://github.com/Shopify/job-iteration/pull/437) - Use minimum between per-class `job_iteration_max_job_runtime` and `JobIteration.max_job_runtime`, instead of enforcing only setting decreasing values.
+  Because it is possible to change the global or parent values after setting the value on a class, it is not possible to truly enforce the decreasing value constraint. Instead, we now use the minimum between the global value and per-class value. This is considered a non-breaking change, as it should not break any **existing** code, it only removes the constraint on new classes.
+
 ### Bug fixes
 
+- [437](https://github.com/Shopify/job-iteration/pull/437) - Defer reading `JobIteration.max_job_runtime` until runtime, instead of closing around the value at the time of job definition.
 - [431](https://github.com/Shopify/job-iteration/pull/431) - Use `#id_value` instead of `send(:id)`
 when generating position for cursor based on `:id` column (Rails 7.1 and above, where composite
 primary models are now supported). This ensures we grab the value of the id column, rather than a

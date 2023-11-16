@@ -11,6 +11,17 @@ gemspec
 gem "sidekiq"
 gem "resque"
 
+if defined?(@rails_gems_requirements) && @rails_gems_requirements
+  # We avoid the `gem "..."` syntax here so Dependabot doesn't try to update these gems.
+  [
+    "activejob",
+    "activerecord",
+  ].each { |name| gem name, @rails_gems_requirements }
+else
+  # gem "activejob" # Set in gemspec
+  gem "activerecord"
+end
+
 gem "mysql2", github: "brianmario/mysql2"
 gem "globalid"
 gem "i18n"

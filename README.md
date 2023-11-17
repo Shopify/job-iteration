@@ -213,6 +213,8 @@ class MyJob < ApplicationJob
 end
 ```
 
+See [the guide on Custom Enumerator](guides/custom-enumerator.md) for details.
+
 ## Credits
 
 This project would not be possible without these individuals (in alphabetical order):

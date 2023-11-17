@@ -63,64 +63,6 @@ class JobIterationTest < IterationUnitTest
     end
   end
 
-  class InvalidCursorJob < ActiveJob::Base
-    include JobIteration::Iteration
-    def each_iteration(*)
-      raise "Cursor invalid. This should never run!"
-    end
-  end
-
-  class JobWithTimeCursor < InvalidCursorJob
-    def build_enumerator(cursor:)
-      [["item", cursor || Time.now]].to_enum
-    end
-  end
-
-  class JobWithSymbolCursor < InvalidCursorJob
-    def build_enumerator(cursor:)
-      [["item", cursor || :symbol]].to_enum
-    end
-  end
-
-  class JobWithActiveRecordCursor < InvalidCursorJob
-    def build_enumerator(cursor:)
-      [["item", cursor || Product.first]].to_enum
-    end
-  end
-
-  class JobWithStringSubclassCursor < InvalidCursorJob
-    StringSubClass = Class.new(String)
-
-    def build_enumerator(cursor:)
-      [["item", cursor || StringSubClass.new]].to_enum
-    end
-  end
-
-  class JobWithBasicObjectCursor < InvalidCursorJob
-    def build_enumerator(cursor:)
-      [["item", cursor || BasicObject.new]].to_enum
-    end
-  end
-
-  class JobWithComplexCursor < ActiveJob::Base
-    include JobIteration::Iteration
-    def build_enumerator(cursor:)
-      [[
-        "item",
-        cursor || [{
-          "string" => "abc",
-          "integer" => 123,
-          "float" => 4.56,
-          "booleans" => [true, false],
-          "null" => nil,
-        }],
-      ]].to_enum
-    end
-
-    def each_iteration(*)
-    end
-  end
-
   class JobThatCompletesAfter3Seconds < ActiveJob::Base
     include JobIteration::Iteration
     include ActiveSupport::Testing::TimeHelpers
@@ -198,6 +140,23 @@ class JobIterationTest < IterationUnitTest
     end
   end
 
+  class InfiniteCursorLoggingJob < ActiveJob::Base
+    include JobIteration::Iteration
+    class << self
+      def cursors
+        @cursors ||= []
+      end
+    end
+
+    def build_enumerator(cursor:)
+      self.class.cursors << cursor
+      ["VALUE", "CURSOR"].cycle
+    end
+
+    def each_iteration(*)
+    end
+  end
+
   def test_jobs_that_define_build_enumerator_and_each_iteration_will_not_raise
     push(JobWithRightMethods, "walrus" => "best")
     work_one_job
@@ -259,41 +218,171 @@ class JobIterationTest < IterationUnitTest
     assert_includes(methods_added, :foo)
   end
 
-  def test_jobs_using_time_cursor_will_raise
-    skip_until_version("2.0.0")
-    push(JobWithTimeCursor)
-    assert_raises_cursor_error { work_one_job }
+  UnserializableCursor = Class.new
+
+  class SerializableCursor
+    include GlobalID::Identification
+
+    def id
+      "singleton"
+    end
+
+    class << self
+      def find(_id)
+        new
+      end
+    end
   end
 
-  def test_jobs_using_active_record_cursor_will_raise
+  def test_jobs_using_unserializable_cursor_will_raise
     skip_until_version("2.0.0")
-    refute_nil(Product.first)
-    push(JobWithActiveRecordCursor)
-    assert_raises_cursor_error { work_one_job }
+
+    job_class = build_invalid_cursor_job(cursor: UnserializableCursor.new)
+
+    assert_raises(ActiveJob::SerializationError) do
+      job_class.perform_now
+    end
   end
 
-  def test_jobs_using_symbol_cursor_will_raise
-    skip_until_version("2.0.0")
-    push(JobWithSymbolCursor)
-    assert_raises_cursor_error { work_one_job }
+  def test_jobs_using_unserializable_cursor_is_deprecated
+    job_class = build_invalid_cursor_job(cursor: UnserializableCursor.new)
+
+    assert_cursor_deprecation_warning_on_perform(job_class)
   end
 
-  def test_jobs_using_string_subclass_cursor_will_raise
-    skip_until_version("2.0.0")
-    push(JobWithStringSubclassCursor)
-    assert_raises_cursor_error { work_one_job }
+  def test_jobs_using_serializable_cursor_is_not_deprecated
+    job_class = build_invalid_cursor_job(cursor: SerializableCursor.new)
+
+    assert_no_cursor_deprecation_warning_on_perform(job_class)
   end
 
-  def test_jobs_using_basic_object_cursor_will_raise
-    skip_until_version("2.0.0")
-    push(JobWithBasicObjectCursor)
-    assert_raises_cursor_error { work_one_job }
+  def test_jobs_using_complex_but_serializable_cursor_is_not_deprecated
+    job_class = build_invalid_cursor_job(cursor: [{
+      "string" => "abc",
+      "integer" => 123,
+      "float" => 4.56,
+      "booleans" => [true, false],
+      "null" => nil,
+    }])
+
+    assert_no_cursor_deprecation_warning_on_perform(job_class)
   end
 
-  def test_jobs_using_complex_but_serializable_cursor_will_not_raise
-    skip_until_version("2.0.0")
-    push(JobWithComplexCursor)
-    work_one_job
+  def test_jobs_using_unserializable_cursor_will_raise_if_enforce_serializable_cursors_globally_enabled
+    with_global_enforce_serializable_cursors(true) do
+      job_class = build_invalid_cursor_job(cursor: UnserializableCursor.new)
+
+      assert_raises(ActiveJob::SerializationError) do
+        job_class.perform_now
+      end
+    end
+  end
+
+  def test_jobs_using_unserializable_cursor_will_raise_if_enforce_serializable_cursors_set_per_class
+    with_global_enforce_serializable_cursors(false) do
+      job_class = build_invalid_cursor_job(cursor: UnserializableCursor.new)
+      job_class.job_iteration_enforce_serializable_cursors = true
+
+      assert_raises(ActiveJob::SerializationError) do
+        job_class.perform_now
+      end
+    end
+  end
+
+  def test_jobs_using_unserializable_cursor_will_raise_if_enforce_serializable_cursors_set_in_parent
+    with_global_enforce_serializable_cursors(false) do
+      parent = build_invalid_cursor_job(cursor: UnserializableCursor.new)
+      parent.job_iteration_enforce_serializable_cursors = true
+      child = Class.new(parent)
+
+      assert_raises(ActiveJob::SerializationError) do
+        child.perform_now
+      end
+    end
+  end
+
+  def test_jobs_using_unserializable_cursor_will_not_raise_if_enforce_serializable_cursors_unset_per_class
+    with_global_enforce_serializable_cursors(true) do
+      job_class = build_invalid_cursor_job(cursor: UnserializableCursor.new)
+      job_class.job_iteration_enforce_serializable_cursors = false
+
+      assert_cursor_deprecation_warning_on_perform(job_class)
+    end
+  end
+
+  def test_jobs_using_unserializable_cursor_when_interrupted_should_only_store_the_cursor_and_no_serialized_cursor
+    # We must ensure to store the unserializable cursor in the same way the legacy code did, for backwards compability
+    job_class = build_invalid_cursor_job(cursor: UnserializableCursor.new)
+    with_interruption do
+      assert_cursor_deprecation_warning_on_perform(job_class)
+    end
+
+    job_data = ActiveJob::Base.queue_adapter.enqueued_jobs.last
+    refute_nil(job_data, "interrupted job expected in queue")
+    assert_instance_of(UnserializableCursor, job_data.fetch("cursor_position"))
+    refute_includes(job_data, "serialized_cursor_position")
+  end
+
+  def test_jobs_using_serializable_cursor_when_interrupted_should_store_both_legacy_cursor_and_serialized_cursor
+    # We must ensure to store the legacy cursor for backwards compatibility.
+    job_class = build_invalid_cursor_job(cursor: SerializableCursor.new)
+    with_interruption do
+      assert_no_cursor_deprecation_warning_on_perform(job_class)
+    end
+
+    job_data = ActiveJob::Base.queue_adapter.enqueued_jobs.last
+    refute_nil(job_data, "interrupted job expected in queue")
+    assert_instance_of(SerializableCursor, job_data.fetch("cursor_position"))
+    assert_equal(
+      ActiveJob::Arguments.serialize([SerializableCursor.new]).first,
+      job_data.fetch("serialized_cursor_position"),
+    )
+  end
+
+  def test_job_interrupted_with_only_cursor_position_should_resume
+    # Simulates loading a job serialized by an old version of job-iteration
+    with_interruption do
+      InfiniteCursorLoggingJob.perform_now
+
+      work_one_job do |job_data|
+        job_data["cursor_position"] = "raw cursor"
+        job_data.delete("serialized_cursor_position")
+      end
+
+      assert_equal("raw cursor", InfiniteCursorLoggingJob.cursors.last)
+    end
+  ensure
+    InfiniteCursorLoggingJob.cursors.clear
+  end
+
+  def test_job_interrupted_with_serialized_cursor_position_should_ignore_unserialized_cursor_position
+    # Simulates loading a job serialized by the current version of job-iteration
+    with_interruption do
+      InfiniteCursorLoggingJob.perform_now
+
+      work_one_job do |job_data|
+        job_data["cursor_position"] = "should be ignored"
+        job_data["serialized_cursor_position"] = ActiveJob::Arguments.serialize([SerializableCursor.new]).first
+      end
+
+      assert_instance_of(SerializableCursor, InfiniteCursorLoggingJob.cursors.last)
+    end
+  ensure
+    InfiniteCursorLoggingJob.cursors.clear
+  end
+
+  def test_job_resuming_with_invalid_serialized_cursor_position_should_raise
+    with_interruption do
+      InfiniteCursorLoggingJob.perform_now
+      assert_raises(ActiveJob::DeserializationError) do
+        work_one_job do |job_data|
+          job_data["cursor_position"] = "should be ignored"
+          job_data["serialized_cursor_position"] = UnserializableCursor.new # cannot be deserialized
+        end
+      end
+    end
+  ensure
+    InfiniteCursorLoggingJob.cursors.clear
   end
 
   def test_jobs_using_on_complete_have_accurate_total_time
@@ -519,21 +608,52 @@ class JobIterationTest < IterationUnitTest
     end
   end
 
-  def assert_raises_cursor_error(&block)
-    error = assert_raises(JobIteration::Iteration::CursorError, &block)
-    inspected_cursor =
-      begin
-        error.cursor.inspect
-      rescue NoMethodError
-        Object.instance_method(:inspect).bind(error.cursor).call
+  # This helper allows us to create a class that reads config at test time, instead of when this file is loaded
+  def build_invalid_cursor_job(cursor:)
+    test_cursor = cursor # so we don't collide with the method param below
+    Class.new(ActiveJob::Base) do
+      include JobIteration::Iteration
+      define_method(:build_enumerator) do |cursor:|
+        current_cursor = cursor
+        [["item", current_cursor || test_cursor]].to_enum
       end
+      define_method(:each_iteration) do |*|
+        return if Gem::Version.new(JobIteration::VERSION) < Gem::Version.new("2.0")
 
-    assert_equal(
-      "Cursor must be composed of objects capable of built-in (de)serialization: " \
-        "Strings, Integers, Floats, Arrays, Hashes, true, false, or nil. " \
-        "(#{inspected_cursor})",
-      error.message,
-    )
+        raise "Cursor invalid. Starting in version 2.0, this should never run!"
+      end
+      singleton_class.define_method(:name) do
+        "InvalidCursorJob (#{cursor.class})"
+      end
+    end
+  end
+
+  def assert_cursor_deprecation_warning_on_perform(job_class)
+    expected_message = <<~MESSAGE.chomp
+      DEPRECATION WARNING: The Enumerator returned by #{job_class.name}#build_enumerator yielded a cursor which is unsafe to serialize.
+      See https://github.com/Shopify/job-iteration/blob/main/guides/custom-enumerator.md#cursor-types
+      This will raise starting in version #{JobIteration::Deprecation.deprecation_horizon} of #{JobIteration::Deprecation.gem_name}!
+    MESSAGE
+
+    warned = false
+    with_deprecation_behavior(
+      lambda do |message, *|
+        flunk("expected only one deprecation warning") if warned
+        warned = true
+        assert(
+          message.start_with?(expected_message),
+          "expected deprecation warning \n#{message.inspect}\n to start_with? \n#{expected_message.inspect}",
+        )
+      end,
+    ) { job_class.perform_now }
+
+    assert(warned, "expected deprecation warning")
+  end
+
+  def assert_no_cursor_deprecation_warning_on_perform(job_class)
+    with_deprecation_behavior(
+      ->(message, *) { flunk("Expected no deprecation warning: #{message}") },
+    ) { job_class.perform_now }
   end
 
   def assert_partially_completed_job(cursor_position:)
@@ -548,8 +668,37 @@ class JobIterationTest < IterationUnitTest
   end
 
   def work_one_job
-    job = ActiveJob::Base.queue_adapter.enqueued_jobs.pop
-    ActiveJob::Base.execute(job)
+    job_data = ActiveJob::Base.queue_adapter.enqueued_jobs.pop
+    yield job_data if block_given?
+    ActiveJob::Base.execute(job_data)
+  end
+
+  def with_deprecation_behavior(behavior)
+    original_behaviour = JobIteration::Deprecation.behavior
+    JobIteration::Deprecation.behavior = behavior
+    yield
+  ensure
+    JobIteration::Deprecation.behavior = original_behaviour
+  end
+
+  def with_global_enforce_serializable_cursors(temp)
+    original = JobIteration.enforce_serializable_cursors
+    JobIteration.enforce_serializable_cursors = temp
+    yield
+  ensure
+    JobIteration.enforce_serializable_cursors = original
+  end
+
+  def with_interruption(&block)
+    with_interruption_adapter(-> { true }, &block)
+  end
+
+  def with_interruption_adapter(temp)
+    original = JobIteration.interruption_adapter
+    JobIteration.interruption_adapter = temp
+    yield
+  ensure
+    JobIteration.interruption_adapter = original
   end
 
   def with_global_max_job_runtime(new)

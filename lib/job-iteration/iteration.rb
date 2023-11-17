@@ -18,28 +18,6 @@ module JobIteration
     # The time isn't reset if the job is interrupted.
     attr_accessor :total_time
 
-    class CursorError < ArgumentError
-      attr_reader :cursor
-
-      def initialize(message, cursor:)
-        super(message)
-        @cursor = cursor
-      end
-
-      def message
-        "#{super} (#{inspected_cursor})"
-      end
-
-      private
-
-      def inspected_cursor
-        cursor.inspect
-      rescue NoMethodError
-        # For those brave enough to try to use BasicObject as cursor. Nice try.
-        Object.instance_method(:inspect).bind(cursor).call
-      end
-    end
-
     included do |_base|
       define_callbacks :start
       define_callbacks :shutdown
@@ -47,6 +25,12 @@ module JobIteration
 
       class_attribute(
         :job_iteration_max_job_runtime,
+        instance_accessor: false,
+        instance_predicate: false,
+      )
+
+      class_attribute(
+        :job_iteration_enforce_serializable_cursors,
         instance_accessor: false,
         instance_predicate: false,
       )
@@ -88,16 +72,25 @@ module JobIteration
     ruby2_keywords(:initialize) if respond_to?(:ruby2_keywords, true)
 
     def serialize # @private
-      super.merge(
-        "cursor_position" => cursor_position,
+      iteration_job_data = {
+        "cursor_position" => cursor_position, # Backwards compatibility
         "times_interrupted" => times_interrupted,
         "total_time" => total_time,
-      )
+      }
+
+      begin
+        iteration_job_data["serialized_cursor_position"] = serialize_cursor(cursor_position)
+      rescue ActiveJob::SerializationError
+        raise if job_iteration_enforce_serializable_cursors?
+        # No point in duplicating the deprecation warning from assert_valid_cursor!
+      end
+
+      super.merge(iteration_job_data)
     end
 
     def deserialize(job_data) # @private
       super
-      self.cursor_position = job_data["cursor_position"]
+      self.cursor_position = cursor_position_from_job_data(job_data)
       self.times_interrupted = Integer(job_data["times_interrupted"] || 0)
       self.total_time = Float(job_data["total_time"] || 0.0)
     end
@@ -167,8 +160,7 @@ module JobIteration
       @needs_reenqueue = false
 
       enumerator.each do |object_from_enumerator, cursor_from_enumerator|
-        # Deferred until 2.0.0
-        # assert_valid_cursor!(cursor_from_enumerator)
+        assert_valid_cursor!(cursor_from_enumerator)
 
         tags = instrumentation_tags.merge(cursor_position: cursor_from_enumerator)
         ActiveSupport::Notifications.instrument("each_iteration.iteration", tags) do
@@ -222,16 +214,16 @@ module JobIteration
       EOS
     end
 
-    # The adapter must be able to serialize and deserialize the cursor back into an equivalent object.
-    # https://github.com/mperham/sidekiq/wiki/Best-Practices#1-make-your-job-parameters-small-and-simple
     def assert_valid_cursor!(cursor)
-      return if serializable?(cursor)
+      serialize_cursor(cursor)
+    rescue ActiveJob::SerializationError
+      raise if job_iteration_enforce_serializable_cursors?
 
-      raise CursorError.new(
-        "Cursor must be composed of objects capable of built-in (de)serialization: " \
-          "Strings, Integers, Floats, Arrays, Hashes, true, false, or nil.",
-        cursor: cursor,
-      )
+      Deprecation.warn(<<~DEPRECATION_MESSAGE, caller_locations(3))
+        The Enumerator returned by #{self.class.name}#build_enumerator yielded a cursor which is unsafe to serialize.
+        See https://github.com/Shopify/job-iteration/blob/main/guides/custom-enumerator.md#cursor-types
+        This will raise starting in version #{Deprecation.deprecation_horizon} of #{Deprecation.gem_name}!"
+      DEPRECATION_MESSAGE
     end
 
     def assert_implements_methods!
@@ -286,6 +278,13 @@ module JobIteration
       [global_max, class_max].min
     end
 
+    def job_iteration_enforce_serializable_cursors? # TODO: Add a test for the edge case of registering it afterwards
+      per_class_setting = self.class.job_iteration_enforce_serializable_cursors
+      return per_class_setting unless per_class_setting.nil?
+
+      !!JobIteration.enforce_serializable_cursors
+    end
+
     def handle_completed(completed)
       case completed
       when nil # someone aborted the job but wants to call the on_complete callback
@@ -305,6 +304,25 @@ module JobIteration
       raise "Unexpected thrown value: #{completed.inspect}"
     end
 
+    def cursor_position_from_job_data(job_data)
+      if job_data.key?("serialized_cursor_position")
+        deserialize_cursor(job_data.fetch("serialized_cursor_position"))
+      else
+        # Backwards compatibility for
+        # - jobs interrupted before cursor serialization feature shipped, or
+        # - jobs whose cursor could not be serialized
+        job_data.fetch("cursor_position", nil)
+      end
+    end
+
+    def serialize_cursor(cursor)
+      ActiveJob::Arguments.serialize([cursor]).first
+    end
+
+    def deserialize_cursor(cursor)
+      ActiveJob::Arguments.deserialize([cursor]).first
+    end
+
     def valid_cursor_parameter?(parameters)
       # this condition is when people use the splat operator.
       # def build_enumerator(*)
@@ -314,22 +332,6 @@ module JobIteration
         next unless parameter_name == :cursor
         return true if [:keyreq, :key].include?(parameter_type)
       end
-      false
-    end
-
-    SIMPLE_SERIALIZABLE_CLASSES = [String, Integer, Float, NilClass, TrueClass, FalseClass].freeze
-    private_constant :SIMPLE_SERIALIZABLE_CLASSES
-    def serializable?(object)
-      # Subclasses must be excluded, hence not using is_a? or ===.
-      if object.instance_of?(Array)
-        object.all? { |element| serializable?(element) }
-      elsif object.instance_of?(Hash)
-        object.all? { |key, value| serializable?(key) && serializable?(value) }
-      else
-        SIMPLE_SERIALIZABLE_CLASSES.any? { |klass| object.instance_of?(klass) }
-      end
-    rescue NoMethodError
-      # BasicObject doesn't respond to instance_of, but we can't serialize it anyway
       false
     end
   end

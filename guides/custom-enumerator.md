@@ -101,6 +101,62 @@ and you initiate the job with
 LoadRefundsForChargeJob.perform_later(charge_id = "chrg_345")
 ```
 
+### Cursor Serialization
+
+Cursors should be of a [type that Active Job can serialize](https://guides.rubyonrails.org/active_job_basics.html#supported-types-for-arguments).
+
+For example, consider:
+
+```ruby
+FancyCursor = Struct.new(:wrapped_value) do
+  def to_s
+    wrapped_value
+  end
+end
+```
+
+```ruby
+def build_enumerator(cursor:)
+  Enumerator.new do |yielder|
+    # ...something with fancy cursor...
+    yielder.yield 123, FancyCursor.new(:abc)
+  end
+end
+```
+
+If this job was interrupted, Active Job would be unable to serialize
+`FancyCursor`, and Job Iteration would fallback to the legacy behavior of not
+serializing the cursor. This would typically result in the queue adapter
+eventually serializing the cursor as JSON by calling `.to_s` on it. The cursor
+would be deserialized as `:abc`, rather than the intended `FancyCursor.new(:abc)`.
+
+To avoid this, job authors should take care to ensure that their cursor is
+serializable by Active Job. This can be done in a couple ways, such as:
+- [adding `GlobalID` support to the cursor class](https://guides.rubyonrails.org/active_job_basics.html#globalid)
+- [implementing a custom Active Job argument serializer for the cursor class](https://guides.rubyonrails.org/active_job_basics.html#serializers)
+- handling (de)serialization in the job/enumerator itself
+    ```ruby
+     def build_enumerator(cursor:)
+       fancy_cursor = FancyCursor.new(cursor) unless cursor.nil?
+       Enumerator.new do |yielder|
+         # ...something with fancy cursor...
+         yielder.yield 123, FancyCursor(:abc).wrapped_value
+       end
+     end
+    ```
+Note that starting in 2.0, Job Iteration will stop supporting fallback behavior
+and raise when it encounters an unserializable cursor. To opt-in to this behavior early, set
+```ruby
+JobIteration.enforce_serializable_cursors = true
+```
+or, to support gradual migration, a per-class option is also available to override the global value, if set:
+```ruby
+class MyJob < ActiveJob::Base
+  include JobIteration::Iteration
+  self.job_iteration_enforce_serializable_cursors = true
+```
+
+
 ## Cursorless enumerator
 
 Sometimes you can ignore the cursor. Consider the following custom `Enumerator` that takes items from a Redis list, which

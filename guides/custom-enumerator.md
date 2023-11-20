@@ -1,19 +1,25 @@
-Iteration leverages the [Enumerator](https://ruby-doc.org/3.2.1/Enumerator.html) pattern from the Ruby standard library,
+# Custom Enumerator
+
+`Iteration` leverages the [Enumerator](https://ruby-doc.org/3.2.1/Enumerator.html) pattern from the Ruby standard library,
 which allows us to use almost any resource as a collection to iterate.
 
 Before writing an enumerator, it is important to understand [how Iteration works](iteration-how-it-works.md) and how
 your enumerator will be used by it. An enumerator must `yield` two things in the following order as positional
 arguments:
 - An object to be processed in a job `each_iteration` method
-- A cursor position, which Iteration will persist if `each_iteration` returns succesfully and the job is forced to shut
+- A cursor position, which `Iteration` will persist if `each_iteration` returns successfully and the job is forced to shut
   down. It can be any data type your job backend can serialize and deserialize correctly.
 
-A job that includes Iteration is first started with `nil` as the cursor. When resuming an interrupted job, Iteration
+A job that includes `Iteration` is first started with `nil` as the cursor. When resuming an interrupted job, `Iteration`
 will deserialize the persisted cursor and pass it to the job's `build_enumerator` method, which your enumerator uses to
 find objects that come _after_ the last successfully processed object. The [array enumerator](https://github.com/Shopify/job-iteration/blob/v1.3.6/lib/job-iteration/enumerator_builder.rb#L50-L67)
 is a simple example which uses the array index as the cursor position.
 
-For a more complex example, consider this Enumerator that wraps a third party API (Stripe) for paginated iteration and
+In addition to the remainder of this guide, we recommend you read the implementation of the other enumerators that come with the library (`CsvEnumerator`, `ActiveRecordEnumerator`) to gain a better understanding of building enumerators.
+
+## Enumerator with cursor
+
+For a more complex example, consider this `Enumerator` that wraps a third party API (Stripe) for paginated iteration and
 stores a string as the cursor position:
 
 ```ruby
@@ -58,6 +64,8 @@ class StripeListEnumerator
 end
 ```
 
+### Usage
+
 Here we leverage the Stripe cursor pagination where the cursor is an ID of a specific item in the collection. The job
 which uses such an `Enumerator` would then look like so:
 
@@ -90,12 +98,14 @@ end
 and you initiate the job with
 
 ```ruby
-LoadRefundsForChargeJob.perform_later(_charge_id = "chrg_345")
+LoadRefundsForChargeJob.perform_later(charge_id = "chrg_345")
 ```
 
-Sometimes you can ignore the cursor. Consider the following custom Enumerator that takes items from a Redis list, which
+## Cursorless enumerator
+
+Sometimes you can ignore the cursor. Consider the following custom `Enumerator` that takes items from a Redis list, which
 is essentially a queue. Even if this job doesn't need to persist a cursor in order to resume, it can still use
-Iteration's signal handling to finish `each_iteration` and gracefully terminate.
+`Iteration`'s signal handling to finish `each_iteration` and gracefully terminate.
 
 ```ruby
 class RedisPopListJob < ActiveJob::Base
@@ -115,7 +125,9 @@ class RedisPopListJob < ActiveJob::Base
 end
 ```
 
-We recommend that you read the implementation of the other enumerators that come with the library (`CsvEnumerator`, `ActiveRecordEnumerator`) to gain a better understanding of building Enumerator objects.
+## Caveats
+
+### Post-`yield` code
 
 Code that is written after the `yield` in a custom enumerator is not guaranteed to execute. In the case that a job is
 forced to exit ie `job_should_exit?` is true, then the job is re-enqueued during the yield and the rest of the code in

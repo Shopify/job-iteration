@@ -70,6 +70,20 @@ module JobIteration
         set_callback(:complete, :after, *filters, &blk)
       end
 
+      def interruption_adapter
+        if (global_interruption_adapter = JobIteration.interruption_adapter)
+          # TODO: deprecation warning: "you are relying on the default interruption adapter, which will be removed in
+          # the next major version" or something
+          return global_interruption_adapter
+        end
+
+        JobIteration::InterruptionAdapters.lookup(interruption_adapter_name)
+      end
+
+      def interruption_adapter_name
+        queue_adapter_name
+      end
+
       private
 
       def ban_perform_definition
@@ -84,6 +98,7 @@ module JobIteration
       self.times_interrupted = 0
       self.total_time = 0.0
       assert_implements_methods!
+      @interruption_adapter = self.class.interruption_adapter
     end
     ruby2_keywords(:initialize) if respond_to?(:ruby2_keywords, true)
 
@@ -114,6 +129,9 @@ module JobIteration
     end
 
     private
+
+    # @api private
+    attr_reader :interruption_adapter
 
     def enumerator_builder
       JobIteration.enumerator_builder.new(self)
@@ -273,7 +291,7 @@ module JobIteration
       max_job_runtime = job_iteration_max_job_runtime
       return true if max_job_runtime && start_time && (Time.now.utc - start_time) > max_job_runtime
 
-      JobIteration.interruption_adapter.call || (defined?(super) && super)
+      interruption_adapter.call || (defined?(super) && super)
     end
 
     def job_iteration_max_job_runtime

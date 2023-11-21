@@ -61,7 +61,12 @@ module JobIteration
   attr_accessor :default_retry_backoff
 
   # TODO: update docs
-  attr_accessor :interruption_adapter
+  attr_reader :interruption_adapter
+
+  def interruption_adapter=(adapter)
+    # TODO: Deprecation
+    @interruption_adapter = adapter
+  end
 
   # Set if you want to use your own enumerator builder instead of default EnumeratorBuilder.
   # @example

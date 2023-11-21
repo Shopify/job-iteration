@@ -1,8 +1,10 @@
 # frozen_string_literal: true
 
-# frozen_stirng_literal: true
-
-require "resque"
+begin
+  require "resque"
+rescue LoadError
+  return
+end
 
 module JobIteration
   module InterruptionAdapters
@@ -29,5 +31,7 @@ module JobIteration
         end
       end
     end
+
+    register(:resque, ResqueAdapter)
   end
 end

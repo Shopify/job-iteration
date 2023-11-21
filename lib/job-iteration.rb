@@ -12,6 +12,8 @@ module JobIteration
 
   INTEGRATIONS = [:resque, :sidekiq]
 
+  Deprecation = ActiveSupport::Deprecation.new("2.0", "JobIteration")
+
   extend self
 
   attr_writer :logger

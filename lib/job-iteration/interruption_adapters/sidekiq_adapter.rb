@@ -1,6 +1,10 @@
 # frozen_string_literal: true
 
-require "sidekiq"
+begin
+  require "sidekiq"
+rescue LoadError
+  return
+end
 
 module JobIteration
   module InterruptionAdapters
@@ -15,5 +19,7 @@ module JobIteration
         end
       end
     end
+
+    register(:sidekiq, SidekiqAdapter)
   end
 end

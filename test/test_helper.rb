@@ -81,6 +81,7 @@ Redis.current = Redis.new(url: redis_url, timeout: 1.0).tap(&:ping)
 Resque.redis = Redis.current
 
 Sidekiq.configure_client do |config|
+  config.logger = nil
   config.redis = { url: redis_url }
 end
 

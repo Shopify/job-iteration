@@ -5,6 +5,7 @@ require_relative "./job-iteration/version"
 require_relative "./job-iteration/enumerator_builder"
 require_relative "./job-iteration/iteration"
 require_relative "./job-iteration/log_subscriber"
+require_relative "./job-iteration/railtie"
 
 module JobIteration
   IntegrationLoadError = Class.new(StandardError)

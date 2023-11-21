@@ -67,25 +67,27 @@ Sidekiq.configure_client do |config|
   config.redis = { url: redis_url }
 end
 
-ActiveRecord::Schema.define do
-  create_table(:products, force: true) do |t|
-    t.string(:name)
-    t.timestamps
-  end
+ActiveRecord::Migration.suppress_messages do
+  ActiveRecord::Schema.define do
+    create_table(:products, force: true) do |t|
+      t.string(:name)
+      t.timestamps
+    end
 
-  create_table(:comments, force: true) do |t|
-    t.string(:content)
-    t.belongs_to(:product)
-  end
+    create_table(:comments, force: true) do |t|
+      t.string(:content)
+      t.belongs_to(:product)
+    end
 
-  create_table(:travel_routes, force: true, primary_key: [:origin, :destination]) do |t|
-    t.string(:destination)
-    t.string(:origin)
-  end
+    create_table(:travel_routes, force: true, primary_key: [:origin, :destination]) do |t|
+      t.string(:destination)
+      t.string(:origin)
+    end
 
-  create_table(:orders, force: true) do |t|
-    t.integer(:shop_id)
-    t.string(:name)
+    create_table(:orders, force: true) do |t|
+      t.integer(:shop_id)
+      t.string(:name)
+    end
   end
 end
 
@@ -107,6 +109,7 @@ module LoggingHelpers
 end
 
 JobIteration.logger = Logger.new(IO::NULL)
+ActiveJob::Base.logger = Logger.new(IO::NULL)
 
 module ActiveSupport
   class TestCase

@@ -19,27 +19,28 @@ require "mocha/minitest"
 GlobalID.app = "iteration"
 ActiveRecord::Base.include(GlobalID::Identification) # https://github.com/rails/globalid/blob/main/lib/global_id/railtie.rb
 
-module ActiveJob
-  module QueueAdapters
-    class IterationTestAdapter
-      attr_writer(:enqueued_jobs)
+# module ActiveJob
+#   module QueueAdapters
+#     class IterationTestAdapter
+#       attr_writer(:enqueued_jobs)
 
-      def enqueued_jobs
-        @enqueued_jobs ||= []
-      end
+#       def enqueued_jobs
+#         @enqueued_jobs ||= []
+#       end
 
-      def enqueue(job)
-        enqueued_jobs << job.serialize
-      end
+#       def enqueue(job)
+#         enqueued_jobs << job.serialize
+#       end
 
-      def enqueue_at(job, timestamp)
-        enqueued_jobs << job.serialize.merge("retry_at" => timestamp)
-      end
-    end
-  end
-end
+#       def enqueue_at(job, timestamp)
+#         enqueued_jobs << job.serialize.merge("retry_at" => timestamp)
+#       end
+#     end
+#   end
+# end
 
-ActiveJob::Base.queue_adapter = :iteration_test
+# ActiveJob::Base.queue_adapter = :iteration_test
+ActiveJob::Base.queue_adapter = :test
 
 class Product < ActiveRecord::Base
   has_many :comments
@@ -57,13 +58,11 @@ class Order < ActiveRecord::Base
   self.primary_key = [:shop_id, :id]
 end
 
-host = ENV["USING_DEV"] == "1" ? "job-iteration.railgun" : "localhost"
-
 connection_config = {
   adapter: "mysql2",
   database: "job_iteration_test",
   username: "root",
-  host: host,
+  host: ENV.fetch("MYSQL_HOST", "localhost"),
 }
 connection_config[:password] = "root" if ENV["CI"]
 
@@ -78,28 +77,31 @@ Redis.current = Redis.new(host: host, timeout: 1.0).tap(&:ping)
 Resque.redis = Redis.current
 
 Sidekiq.configure_client do |config|
+  config.logger = nil
   config.redis = { host: host }
 end
 
-ActiveRecord::Schema.define do
-  create_table(:products, force: true) do |t|
-    t.string(:name)
-    t.timestamps
-  end
+ActiveRecord::Migration.suppress_messages do
+  ActiveRecord::Schema.define do
+    create_table(:products, force: true) do |t|
+      t.string(:name)
+      t.timestamps
+    end
 
-  create_table(:comments, force: true) do |t|
-    t.string(:content)
-    t.belongs_to(:product)
-  end
+    create_table(:comments, force: true) do |t|
+      t.string(:content)
+      t.belongs_to(:product)
+    end
 
-  create_table(:travel_routes, force: true, primary_key: [:origin, :destination]) do |t|
-    t.string(:destination)
-    t.string(:origin)
-  end
+    create_table(:travel_routes, force: true, primary_key: [:origin, :destination]) do |t|
+      t.string(:destination)
+      t.string(:origin)
+    end
 
-  create_table(:orders, force: true) do |t|
-    t.integer(:shop_id)
-    t.string(:name)
+    create_table(:orders, force: true) do |t|
+      t.integer(:shop_id)
+      t.string(:name)
+    end
   end
 end
 
@@ -121,6 +123,7 @@ module LoggingHelpers
 end
 
 JobIteration.logger = Logger.new(IO::NULL)
+ActiveJob::Base.logger = Logger.new(IO::NULL)
 
 module ActiveSupport
   class TestCase

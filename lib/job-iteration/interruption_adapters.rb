@@ -17,14 +17,15 @@ module JobIteration
       #   JobIteration::InterruptionAdapters.lookup(:sidekiq)
       #   # => JobIteration::InterruptionAdapters::SidekiqAdapter
       def lookup(name)
-        registry.fetch(name.to_sym)
-      rescue KeyError => error
-       Deprecation.warn(<<~DEPRECATION_MESSAGE, caller_locations(1))
-         No interruption adapter is registered for #{name.inspect}; falling back to `NullAdapter`, which never interrupts.
-         See https://github.com/Shopify/job-iteration/blob/main/guides/???????? TBD
-         This will raise starting in version #{Deprecation.deprecation_horizon} of #{Deprecation.gem_name}!"
-       DEPRECATION_MESSAGE
-        NullAdapter
+        registry.fetch(name.to_sym) do
+          Deprecation.warn(<<~DEPRECATION_MESSAGE, caller_locations(1))
+            No interruption adapter is registered for #{name.inspect}; falling back to `NullAdapter`, which never interrupts.
+            See https://github.com/Shopify/job-iteration/blob/main/guides/???????? TBD
+            This will raise starting in version #{Deprecation.deprecation_horizon} of #{Deprecation.gem_name}!"
+          DEPRECATION_MESSAGE
+
+          NullAdapter
+        end
       end
 
       # Registers adapter for specified name.

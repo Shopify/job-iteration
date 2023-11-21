@@ -17,7 +17,13 @@ class ResqueIntegrationTest < ActiveSupport::TestCase
   def start_worker_and_wait
     pid = nil
     Dir.chdir("test/support/resque") do
-      pid = spawn(resque_env, "bundle exec rake resque:work")
+      pid = spawn(
+        resque_env,
+        "bundle exec rake resque:work",
+        in: "/dev/null",
+        out: "/dev/null",
+        err: "/dev/null",
+      )
     end
   ensure
     Process.wait(pid) if pid

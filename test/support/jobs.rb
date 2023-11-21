@@ -11,7 +11,7 @@ class IterationJob < ActiveJob::Base
     if omg == 0 || omg == 2
       Process.kill("TERM", Process.pid)
     end
-    sleep(1)
+    sleep(0.01)
   end
 end
 

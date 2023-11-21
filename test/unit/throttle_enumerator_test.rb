@@ -117,7 +117,7 @@ module JobIteration
           IterationThrottleJob.perform_now({})
 
           job = ActiveJob::Base.queue_adapter.enqueued_jobs.first
-          assert_equal(30.seconds.from_now.to_f, job.fetch("retry_at"))
+          assert_equal(30.seconds.from_now.to_f, job.fetch(:at))
         end
       end
     end

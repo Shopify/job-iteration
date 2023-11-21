@@ -16,30 +16,12 @@ require "active_record"
 require "pry"
 require "mocha/minitest"
 
+require_relative "support/active_job_5_2_queue_adapters_test_adapter_compatibility_extension"
+
 GlobalID.app = "iteration"
 ActiveRecord::Base.include(GlobalID::Identification) # https://github.com/rails/globalid/blob/main/lib/global_id/railtie.rb
 
-module ActiveJob
-  module QueueAdapters
-    class IterationTestAdapter
-      attr_writer(:enqueued_jobs)
-
-      def enqueued_jobs
-        @enqueued_jobs ||= []
-      end
-
-      def enqueue(job)
-        enqueued_jobs << job.serialize
-      end
-
-      def enqueue_at(job, timestamp)
-        enqueued_jobs << job.serialize.merge("retry_at" => timestamp)
-      end
-    end
-  end
-end
-
-ActiveJob::Base.queue_adapter = :iteration_test
+ActiveJob::Base.queue_adapter = :test
 
 class Product < ActiveRecord::Base
   has_many :comments

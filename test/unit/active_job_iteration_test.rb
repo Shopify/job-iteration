@@ -17,6 +17,8 @@ module JobIteration
       self.on_complete_called = 0
       cattr_accessor :on_shutdown_called, instance_accessor: false
       self.on_shutdown_called = 0
+      cattr_accessor :around_iterate_called, instance_accessor: false
+      self.around_iterate_called = 0
 
       on_start do
         self.class.on_start_called += 1
@@ -28,6 +30,11 @@ module JobIteration
 
       on_shutdown do
         self.class.on_shutdown_called += 1
+      end
+
+      around_iterate do |_, block|
+        self.class.around_iterate_called += 1
+        block.call
       end
     end
 
@@ -333,6 +340,7 @@ module JobIteration
         klass.on_start_called = 0
         klass.on_complete_called = 0
         klass.on_shutdown_called = 0
+        klass.around_iterate_called = 0
       end
       JobShouldExitJob.records_performed = []
       super
@@ -365,6 +373,7 @@ module JobIteration
       assert_equal(1, PrivateIterationJob.on_start_called)
       assert_equal(1, PrivateIterationJob.on_complete_called)
       assert_equal(1, PrivateIterationJob.on_shutdown_called)
+      assert_equal(3, PrivateIterationJob.around_iterate_called)
     end
 
     def test_failing_job

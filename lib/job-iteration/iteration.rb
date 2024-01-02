@@ -42,6 +42,7 @@ module JobIteration
 
     included do |_base|
       define_callbacks :start
+      define_callbacks :iterate
       define_callbacks :shutdown
       define_callbacks :complete
 
@@ -68,6 +69,10 @@ module JobIteration
 
       def on_complete(*filters, &blk)
         set_callback(:complete, :after, *filters, &blk)
+      end
+
+      def around_iterate(&blk)
+        set_callback(:iterate, :around, &blk)
       end
 
       private
@@ -173,7 +178,9 @@ module JobIteration
         tags = instrumentation_tags.merge(cursor_position: cursor_from_enumerator)
         ActiveSupport::Notifications.instrument("each_iteration.iteration", tags) do
           found_record = true
-          each_iteration(object_from_enumerator, *arguments)
+          run_callbacks(:iterate) do
+            each_iteration(object_from_enumerator, *arguments)
+          end
           self.cursor_position = cursor_from_enumerator
         end
 

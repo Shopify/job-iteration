@@ -21,6 +21,10 @@ jobs:
             gemfile: rails_7_0
           - ruby: "2.6"
             gemfile: rails_edge
+          - ruby: "2.7"
+            gemfile: rails_edge
+          - ruby: "3.0"
+            gemfile: rails_edge
           - ruby: "3.0"
             gemfile: rails_5_2
           - ruby: "3.1"

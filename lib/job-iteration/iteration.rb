@@ -18,6 +18,11 @@ module JobIteration
     # The time isn't reset if the job is interrupted.
     attr_accessor :total_time
 
+    # The total number of iterations that have be executed.
+    # The count isn't reset if the job is interrupted.
+    attr_accessor :total_iterations
+
+
     class CursorError < ArgumentError
       attr_reader :cursor
 
@@ -87,6 +92,7 @@ module JobIteration
       @job_iteration_retry_backoff = JobIteration.default_retry_backoff
       @needs_reenqueue = false
       self.times_interrupted = 0
+      self.total_iterations = 0
       self.total_time = 0.0
       assert_implements_methods!
     end
@@ -96,6 +102,7 @@ module JobIteration
       super.merge(
         "cursor_position" => cursor_position,
         "times_interrupted" => times_interrupted,
+        "total_iterations" => total_iterations,
         "total_time" => total_time,
       )
     end
@@ -104,6 +111,7 @@ module JobIteration
       super
       self.cursor_position = job_data["cursor_position"]
       self.times_interrupted = Integer(job_data["times_interrupted"] || 0)
+      self.total_iterations = Integer(job_data["total_iterations"] || 0)
       self.total_time = Float(job_data["total_time"] || 0.0)
     end
 
@@ -178,6 +186,7 @@ module JobIteration
         tags = instrumentation_tags.merge(cursor_position: cursor_from_enumerator)
         ActiveSupport::Notifications.instrument("each_iteration.iteration", tags) do
           found_record = true
+          self.total_iterations += 1
           run_callbacks(:iterate) do
             each_iteration(object_from_enumerator, *arguments)
           end

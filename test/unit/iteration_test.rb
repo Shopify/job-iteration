@@ -157,10 +157,13 @@ class JobIterationTest < IterationUnitTest
     include JobIteration::Iteration
     include ActiveSupport::Testing::TimeHelpers
     cattr_accessor :total_time_on_complete, instance_accessor: false
+    cattr_accessor :total_iterations_on_complete, instance_accessor: false
     self.total_time_on_complete = 0
+    self.total_iterations_on_complete = 0
 
     on_complete do
       self.class.total_time_on_complete = total_time
+      self.class.total_iterations_on_complete = total_iterations
     end
 
     def build_enumerator(cursor:)
@@ -441,6 +444,28 @@ class JobIterationTest < IterationUnitTest
       assert_raises(StandardError) { job.perform_now }
 
       assert_equal(10, job.total_time)
+    end
+  end
+
+  def test_total_iterations_is_updated_for_successful_jobs_with_interruptions
+    freeze_time do
+      push(SuccessfulJobWithInterruption)
+
+      work_one_job
+      job = ActiveJob::Base.deserialize(ActiveJob::Base.queue_adapter.enqueued_jobs.last)
+      assert_equal(1, job.total_iterations)
+
+      work_one_job
+      assert_equal(2, SuccessfulJobWithInterruption.total_iterations_on_complete)
+    end
+  end
+
+  def test_total_iterations_is_updated_for_failed_jobs
+    freeze_time do
+      job = FailingJob.new
+      assert_raises(StandardError) { job.perform_now }
+
+      assert_equal(1, job.total_iterations)
     end
   end
 

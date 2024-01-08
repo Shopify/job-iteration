@@ -151,6 +151,25 @@ class NestedIterationJob < ApplicationJob
 end
 ```
 
+
+```ruby
+class DeleteXyzJob < ApplicationJob
+  include JobIteration::Iteration
+
+  def build_enumerator(params)
+    enumerator_builder.while { query_model_xyz(params).exists? }
+  end
+
+  def each_iteration(count, params)
+    query_model_xyz(params).limit(1000).delete_all
+  end
+
+  def query_model_xyz(params)
+    Xyz.where(owner_id: params[:owner_id])
+  end
+end
+```
+
 Iteration hooks into Sidekiq and Resque out of the box to support graceful interruption. No extra configuration is required.
 
 ## Guides

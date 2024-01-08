@@ -74,6 +74,15 @@ module JobIteration
       )
     end
 
+    test_builder_method(:build_while_enumerator) do
+      count = 0
+      enum = enumerator_builder(wraps: 0).build_while_enumerator do
+        count < 3 ? (count += 1) : false
+      end
+
+      assert_equal [nil, nil, nil], enum.to_a
+    end
+
     # checks that all the non-alias methods were tested
     raise "methods not tested: #{methods.inspect}" unless methods.empty?
 

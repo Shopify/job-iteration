@@ -181,6 +181,29 @@ module JobIteration
       NestedEnumerator.new(enums, cursor: cursor).each
     end
 
+    # Builds Enumerator for while loop iteration.
+    #
+    # @yield Condition to be evaluated before each iteration, the iteration is allowed if a true value is returned.
+    #
+    # @example
+    #   def build_enumerator(params)
+    #     enumerator_builder.while { query_model_xyz(params).exists? }
+    #   end
+    #
+    #   def each_iteration(_, params)
+    #     query_model_xyz(params).limit(1000).delete_all
+    #   end
+    #
+    #   def query_model_xyz(params)
+    #     Xyz.where(owner_id: params[:owner_id])
+    #   end
+    #
+    def build_while_enumerator(&condition)
+      Enumerator.new do |yielder|
+        yielder << nil while condition.call
+      end
+    end
+
     alias_method :once, :build_once_enumerator
     alias_method :times, :build_times_enumerator
     alias_method :array, :build_array_enumerator
@@ -190,6 +213,7 @@ module JobIteration
     alias_method :throttle, :build_throttle_enumerator
     alias_method :csv, :build_csv_enumerator
     alias_method :nested, :build_nested_enumerator
+    alias_method :while, :build_while_enumerator
 
     private
 

@@ -23,9 +23,11 @@ SELECT  `products`.* FROM `products` WHERE (products.id > 2) ORDER BY products.i
 
 ## Exceptions inside `each_iteration`
 
-When an unrescued exception happens inside the `each_iteration` block, the job will stop and re-enqueue itself with the last successful cursor. This means that the iteration that failed will be retried with the same parameters and the cursor will only move if that iteration succeeds. This behaviour may be enough for intermittent errors, such as network connection failures, but if your execution is deterministic and you have an error, subsequent iterations will never run.
+Unrescued exceptions inside the `each_iteration` block are handled the same way as exceptions occuring in `perform` for a regular Active Job subclass, meaning you need to configure it to retry using [`retry_on`](https://api.rubyonrails.org/classes/ActiveJob/Exceptions/ClassMethods.html#method-i-retry_on) or manually call [`retry_job`](https://api.rubyonrails.org/classes/ActiveJob/Exceptions.html#method-i-retry_job). The job will re-enqueue itself with the last successful cursor, the iteration that failed will be retried with the same parameters and the cursor will only move if that iteration succeeds. This behaviour may be enough for intermittent errors, such as network connection failures, but if your execution is deterministic and you have an error, subsequent iterations will never run.
 
 In other words, if you are trying to process 100 records but the job consistently fails on the 61st, only the first 60 will be processed and the job will try to process the 61st record until retries are exhausted.
+
+If no retries are configured or retries are exhausted, Active Job 'bubbles up' the exception to the job backend. Retries by the backend (e.g. Sidekiq) are not supported, meaning that jobs retried by the job backend instead of Active Job will restart from the beginning.
 
 ## Signals
 

@@ -5,7 +5,6 @@
 require "resque/tasks"
 
 require "job-iteration"
-require "job-iteration/integrations/resque"
 require "active_job"
 require "i18n"
 

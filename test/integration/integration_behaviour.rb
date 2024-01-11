@@ -55,8 +55,8 @@ module IntegrationBehaviour
   private
 
   # Should return the symbol to use when configuring the adapter
-  #     ActiveJob::Base.queue_adapter = adapter
-  def adapter
+  #     ActiveJob::Base.queue_adapter = queue_adapter
+  def queue_adapter
     raise NotImplemented, "#{self.class.name} must implement #{__method__}"
   end
 

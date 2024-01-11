@@ -120,6 +120,10 @@ module JobIteration
 
     private
 
+    def interruption_adapter # @private
+      JobIteration.interruption_adapter || JobIteration::InterruptionAdapters.lookup(self.class.queue_adapter_name)
+    end
+
     def enumerator_builder
       JobIteration.enumerator_builder.new(self)
     end
@@ -280,7 +284,7 @@ module JobIteration
       max_job_runtime = job_iteration_max_job_runtime
       return true if max_job_runtime && start_time && (Time.now.utc - start_time) > max_job_runtime
 
-      JobIteration.interruption_adapter.call || (defined?(super) && super)
+      interruption_adapter.call || (defined?(super) && super)
     end
 
     def job_iteration_max_job_runtime

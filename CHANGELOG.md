@@ -4,6 +4,10 @@
 
 - [437](https://github.com/Shopify/job-iteration/pull/437) - Use minimum between per-class `job_iteration_max_job_runtime` and `JobIteration.max_job_runtime`, instead of enforcing only setting decreasing values.
   Because it is possible to change the global or parent values after setting the value on a class, it is not possible to truly enforce the decreasing value constraint. Instead, we now use the minimum between the global value and per-class value. This is considered a non-breaking change, as it should not break any **existing** code, it only removes the constraint on new classes.
+- [81](https://github.com/Shopify/job-iteration/pull/81) - Serialize cursors using `ActiveJob::Arguments` & deprecated unserializable cursors.
+  Cursor serialization has been dependent on the adapter's serialization method, which typically uses `JSON.dump` and `JSON.load`, meaning only JSON-serializable objects could be used as cursors. Using `ActiveJob::Arguments` to serialize cursors instead allows the use of any object that can be serialized using `ActiveJob::Arguments.serialize` and deserialized using `ActiveJob::Arguments.deserialize`, such as `Time` objects, which would previously be lossily serialized as strings.
+  This change is backwards compatible, by using a new job argument for the serialized cursor, but continuing to write to the old argument, ensuring that jobs can be processed regardless of if they are enqueued or dequeued with the old or new version of the gem.
+  In the event that a cursor is not serializable, the gem will fall back to the deprecated old behaviour. In Job Iteration 2.0, this fallback will be removed, and cursors will be required to be serializable, raising otherwise. To opt-in to this behaviour, set `JobIteration.enforce_serializable_cursors = true`. To support gradual migration, a per-class `job_iteration_enforce_serializable_cursors` option is also available, which overrides the global option for that class.
 
 ### Bug fixes
 

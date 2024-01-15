@@ -15,11 +15,12 @@ class IterationJob < ActiveJob::Base
   end
 end
 
-class TimeCursorJob < ActiveJob::Base
+class UnserializableCursorJob < ActiveJob::Base
   include JobIteration::Iteration
+  UnserializableCursor = Class.new
 
   def build_enumerator(cursor:)
-    return [["item", Time.now]].to_enum if cursor.nil?
+    return [["item", UnserializableCursor.new]].to_enum if cursor.nil?
 
     raise "This should never run; cursor is unserializable!"
   end

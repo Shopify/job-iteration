@@ -36,17 +36,12 @@ module IntegrationBehaviour
 
     test "unserializable corruption is prevented" do
       skip_until_version("2.0.0")
-      # Cursors are serialized as JSON, but not all objects are serializable.
-      #     time   = Time.at(0).utc   # => 1970-01-01 00:00:00 UTC
-      #     json   = JSON.dump(time)  # => "\"1970-01-01 00:00:00 UTC\""
-      #     string = JSON.parse(json) # => "1970-01-01 00:00:00 UTC"
-      # We serialized a Time, but it was deserialized as a String.
-      TimeCursorJob.perform_later
+      UnserializableCursorJob.perform_later
       TerminateJob.perform_later
       start_worker_and_wait
 
       assert_equal(
-        JobIteration::Iteration::CursorError.name,
+        ActiveJob::SerializationError.name,
         failed_job_error_class_name,
       )
     end

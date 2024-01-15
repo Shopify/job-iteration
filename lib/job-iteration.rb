@@ -5,11 +5,14 @@ require_relative "./job-iteration/version"
 require_relative "./job-iteration/enumerator_builder"
 require_relative "./job-iteration/iteration"
 require_relative "./job-iteration/log_subscriber"
+require_relative "./job-iteration/railtie"
 
 module JobIteration
   IntegrationLoadError = Class.new(StandardError)
 
   INTEGRATIONS = [:resque, :sidekiq]
+
+  Deprecation = ActiveSupport::Deprecation.new("2.0", "JobIteration")
 
   extend self
 
@@ -56,6 +59,24 @@ module JobIteration
   # This value will be ignored when an interruption is raised by a throttle enumerator,
   # where the throttle backoff value will take precedence over this setting.
   attr_accessor :default_retry_backoff
+
+  # Set this to `true` to enforce that cursors be composed of objects capable
+  # of built-in (de)serialization by Active Job.
+  #
+  #    JobIteration.enforce_serializable_cursors = true
+  #
+  # For more granular control, this can also be configured per job class, and
+  # is inherited by child classes.
+  #
+  #     class MyJob < ActiveJob::Base
+  #       include JobIteration::Iteration
+  #       self.job_iteration_enforce_serializable_cursors = false
+  #       # ...
+  #     end
+  #
+  # Note that non-enforcement is deprecated and enforcement will be mandatory
+  # in version 2.0, at which point this config will go away.
+  attr_accessor :enforce_serializable_cursors
 
   # Used internally for hooking into job processing frameworks like Sidekiq and Resque.
   attr_accessor :interruption_adapter

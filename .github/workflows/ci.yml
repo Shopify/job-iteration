@@ -14,28 +14,40 @@ jobs:
           - 6379:6379
     strategy:
       matrix:
-        ruby: ["2.6", "2.7", "3.0", "3.1", "3.2"]
-        gemfile: [rails_5_2, rails_6_0, rails_6_1, rails_7_0, rails_edge]
+        ruby: ["2.6", "2.7", "3.0", "3.1", "3.2", "3.3"]
+        gemfile: [rails_5_2, rails_6_0, rails_6_1, rails_7_0, rails_7_1, rails_edge]
         exclude:
           - ruby: "2.6"
             gemfile: rails_7_0
           - ruby: "2.6"
+            gemfile: rails_7_1
+          - ruby: "2.6"
             gemfile: rails_edge
+          - ruby: "2.7"
+            gemfile: rails_7_1
           - ruby: "2.7"
             gemfile: rails_edge
           - ruby: "3.0"
-            gemfile: rails_edge
+            gemfile: rails_5_2
           - ruby: "3.0"
-            gemfile: rails_5_2
+            gemfile: rails_7_1
+          - ruby: "3.0"
+            gemfile: rails_edge
           - ruby: "3.1"
-            gemfile: rails_5_2
-          - ruby: "3.2"
             gemfile: rails_5_2
           - ruby: "3.1"
             gemfile: rails_6_0
           - ruby: "3.2"
+            gemfile: rails_5_2
+          - ruby: "3.2"
             gemfile: rails_6_0
           - ruby: "3.2"
+            gemfile: rails_6_1
+          - ruby: "3.3"
+            gemfile: rails_5_2
+          - ruby: "3.3"
+            gemfile: rails_6_0
+          - ruby: "3.3"
             gemfile: rails_6_1
 
         include:
@@ -70,7 +82,7 @@ jobs:
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: "3.2"
+          ruby-version: "3.3"
           bundler-cache: true
       - name: Rubocop
         run: bundle exec rubocop

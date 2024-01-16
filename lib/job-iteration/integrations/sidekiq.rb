@@ -4,11 +4,21 @@ require "sidekiq"
 
 module JobIteration
   module Integrations # @private
-    JobIteration.interruption_adapter = -> do
-      if defined?(Sidekiq::CLI) && Sidekiq::CLI.instance
-        Sidekiq::CLI.instance.launcher.stopping?
-      else
-        false
+    module Sidekiq
+      class << self
+        attr_accessor :stopping
+
+        def call
+          stopping
+        end
+      end
+    end
+
+    JobIteration.interruption_adapter = JobIteration::Integrations::Sidekiq
+
+    ::Sidekiq.configure_server do |config|
+      config.on(:quiet) do
+        JobIteration::Integrations::Sidekiq.stopping = true
       end
     end
   end

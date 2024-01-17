@@ -11,10 +11,8 @@ require "i18n"
 
 require_relative "../jobs"
 
-redis_host = ENV.fetch("REDIS_HOST") { "localhost" }
-redis_port = ENV.fetch("REDIS_PORT") { 6379 }
-
-Resque.redis = "#{redis_host}:#{redis_port}"
+redis_url = ENV.fetch("REDIS_URL") { "redis://localhost:6379/0" }
+Resque.redis = redis_url
 
 I18n.available_locales = [:en]
 ActiveJob::Base.queue_adapter = :resque

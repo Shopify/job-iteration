@@ -8,11 +8,10 @@ require "i18n"
 
 require_relative "../jobs"
 
-redis_host = ENV.fetch("REDIS_HOST") { "localhost" }
-redis_port = ENV.fetch("REDIS_PORT") { 6379 }
+redis_url = ENV.fetch("REDIS_URL") { "redis://localhost:6379/0" }
 
 Sidekiq.configure_server do |config|
-  config.redis = { host: redis_host, port: redis_port }
+  config.redis = { url: redis_url }
 end
 
 I18n.available_locales = [:en]

@@ -71,23 +71,17 @@ connection_config[:password] = "root" if ENV["CI"]
 
 ActiveRecord::Base.establish_connection(connection_config)
 
-redis_host = ENV.fetch("REDIS_HOST") { "localhost" }
-redis_port = ENV.fetch("REDIS_PORT") { 6379 }
+redis_url = ENV.fetch("REDIS_URL") { "redis://localhost:6379/0" }
 
 Redis.singleton_class.class_eval do
   attr_accessor :current
 end
 
-Redis.current = Redis.new(
-  host: redis_host,
-  port: redis_port,
-  timeout: 1.0,
-).tap(&:ping)
-
+Redis.current = Redis.new(url: redis_url, timeout: 1.0).tap(&:ping)
 Resque.redis = Redis.current
 
 Sidekiq.configure_client do |config|
-  config.redis = { host: redis_host, port: redis_port }
+  config.redis = { url: redis_url }
 end
 
 ActiveRecord::Schema.define do

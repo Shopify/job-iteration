@@ -57,28 +57,37 @@ class Order < ActiveRecord::Base
   self.primary_key = [:shop_id, :id]
 end
 
-host = ENV["USING_DEV"] == "1" ? "job-iteration.railgun" : "localhost"
+mysql_host = ENV.fetch("MYSQL_HOST") { "localhost" }
+mysql_port = ENV.fetch("MYSQL_PORT") { 3306 }
 
 connection_config = {
   adapter: "mysql2",
   database: "job_iteration_test",
   username: "root",
-  host: host,
+  host: mysql_host,
+  port: mysql_port,
 }
 connection_config[:password] = "root" if ENV["CI"]
 
 ActiveRecord::Base.establish_connection(connection_config)
 
+redis_host = ENV.fetch("REDIS_HOST") { "localhost" }
+redis_port = ENV.fetch("REDIS_PORT") { 6379 }
+
 Redis.singleton_class.class_eval do
   attr_accessor :current
 end
 
-Redis.current = Redis.new(host: host, timeout: 1.0).tap(&:ping)
+Redis.current = Redis.new(
+  host: redis_host,
+  port: redis_port,
+  timeout: 1.0,
+).tap(&:ping)
 
 Resque.redis = Redis.current
 
 Sidekiq.configure_client do |config|
-  config.redis = { host: host }
+  config.redis = { host: redis_host, port: redis_port }
 end
 
 ActiveRecord::Schema.define do

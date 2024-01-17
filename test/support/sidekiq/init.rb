@@ -8,14 +8,11 @@ require "i18n"
 
 require_relative "../jobs"
 
-redis_host = if ENV["USING_DEV"] == "1"
-  "job-iteration.railgun"
-else
-  "localhost"
-end
+redis_host = ENV.fetch("REDIS_HOST") { "localhost" }
+redis_port = ENV.fetch("REDIS_PORT") { 6379 }
 
 Sidekiq.configure_server do |config|
-  config.redis = { host: redis_host }
+  config.redis = { host: redis_host, port: redis_port }
 end
 
 I18n.available_locales = [:en]

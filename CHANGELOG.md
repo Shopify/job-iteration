@@ -4,6 +4,7 @@
 
 - [437](https://github.com/Shopify/job-iteration/pull/437) - Use minimum between per-class `job_iteration_max_job_runtime` and `JobIteration.max_job_runtime`, instead of enforcing only setting decreasing values.
   Because it is possible to change the global or parent values after setting the value on a class, it is not possible to truly enforce the decreasing value constraint. Instead, we now use the minimum between the global value and per-class value. This is considered a non-breaking change, as it should not break any **existing** code, it only removes the constraint on new classes.
+- [443](https://github.com/Shopify/job-iteration/pull/443) - Use Sidekiq `:quit` callback to detect graceful shutdown. This makes job-iteration compatible with Sidekiq run in embedded mode.
 
 ### Bug fixes
 

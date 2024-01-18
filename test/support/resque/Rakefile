@@ -11,12 +11,7 @@ require "i18n"
 
 require_relative "../jobs"
 
-redis_url = if ENV["USING_DEV"] == "1"
-  "job-iteration.railgun:6379"
-else
-  "localhost:6379"
-end
-
+redis_url = ENV.fetch("REDIS_URL") { "redis://localhost:6379/0" }
 Resque.redis = redis_url
 
 I18n.available_locales = [:en]

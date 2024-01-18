@@ -3,17 +3,16 @@
 name: job-iteration
 
 up:
-  - homebrew:
-    - mysql-client:
-        or:        [mysql@5.7]
-  - ruby:
-      version: 2.7.6
-  - isogun
+  - packages:
+      - mysql_client
+  - ruby: 2.7.6
   - bundler
+  - mysql
+  - redis
   - custom:
       name: Create Job Iteration database
-      meet: mysql -uroot -h job-iteration.railgun -e "CREATE DATABASE job_iteration_test"
-      met?: mysql -uroot -h job-iteration.railgun job_iteration_test -e "SELECT 1" &> /dev/null
+      meet: mysql -uroot -h $MYSQL_HOST -P $MYSQL_PORT -e "CREATE DATABASE job_iteration_test"
+      met?: mysql -uroot -h $MYSQL_HOST -P $MYSQL_PORT job_iteration_test -e "SELECT 1" &> /dev/null
 
 commands:
   test:

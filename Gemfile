@@ -33,6 +33,7 @@ gem "mocha"
 gem "rubocop-shopify", require: false
 gem "yard"
 gem "rake"
+gem "csv" # required for Ruby 3.4+
 
 # for unit testing optional sorbet support
 gem "sorbet-runtime"

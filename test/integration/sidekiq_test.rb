@@ -16,7 +16,12 @@ class SidekiqIntegrationTest < ActiveSupport::TestCase
   end
 
   def start_worker_and_wait
-    pid = spawn("bundle exec sidekiq -r ./test/support/sidekiq/init.rb -c 1")
+    pid = spawn(
+      "bundle exec sidekiq -r ./test/support/sidekiq/init.rb -c 1",
+      in: "/dev/null",
+      out: "/dev/null",
+      err: "/dev/null",
+    )
   ensure
     Process.wait(pid)
   end

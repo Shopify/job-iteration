@@ -11,6 +11,7 @@ require_relative "../jobs"
 redis_url = ENV.fetch("REDIS_URL") { "redis://localhost:6379/0" }
 
 Sidekiq.configure_server do |config|
+  config.logger = nil
   config.redis = { url: redis_url }
 end
 

@@ -50,33 +50,33 @@ module IntegrationBehaviour
         failed_job_error_class_name,
       )
     end
+  end
 
-    private
+  private
 
-    # Should return the symbol to use when configuring the adapter
-    #     ActiveJob::Base.queue_adapter = adapter
-    def adapter
-      raise NotImplemented, "#{self.class.name} must implement #{__method__}"
-    end
+  # Should return the symbol to use when configuring the adapter
+  #     ActiveJob::Base.queue_adapter = adapter
+  def adapter
+    raise NotImplemented, "#{self.class.name} must implement #{__method__}"
+  end
 
-    # Should start the job worker process and allow it to work the queue
-    def start_worker_and_wait
-      raise NotImplemented, "#{self.class.name} must implement #{__method__}"
-    end
+  # Should start the job worker process and allow it to work the queue
+  def start_worker_and_wait
+    raise NotImplemented, "#{self.class.name} must implement #{__method__}"
+  end
 
-    # Should return the number of jobs currently enqueued for processing
-    def queue_size
-      raise NotImplemented, "#{self.class.name} must implement #{__method__}"
-    end
+  # Should return the number of jobs currently enqueued for processing
+  def queue_size
+    raise NotImplemented, "#{self.class.name} must implement #{__method__}"
+  end
 
-    # Should return the hash of job arguments belonging to the most recently enqueued job
-    def job_args
-      raise NotImplemented, "#{self.class.name} must implement #{__method__}"
-    end
+  # Should return the hash of job arguments belonging to the most recently enqueued job
+  def job_args
+    raise NotImplemented, "#{self.class.name} must implement #{__method__}"
+  end
 
-    # Should return a String matching the name of the error class of the most recently failed job
-    def failed_job_error_class_name
-      raise NotImplemented, "#{self.class.name} must implement #{__method__}"
-    end
+  # Should return a String matching the name of the error class of the most recently failed job
+  def failed_job_error_class_name
+    raise NotImplemented, "#{self.class.name} must implement #{__method__}"
   end
 end

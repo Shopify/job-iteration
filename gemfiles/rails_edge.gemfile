@@ -1,5 +1,0 @@
-# frozen_string_literal: true
-
-@rails_gems_requirements = { github: "rails/rails", branch: "main" }
-
-eval_gemfile "../Gemfile"

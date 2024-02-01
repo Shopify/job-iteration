@@ -69,9 +69,6 @@ jobs:
           mysql -uroot -h localhost -proot -e "CREATE DATABASE job_iteration_test;"
       - name: Ruby tests
         run: bundle exec rake test
-        env:
-          REDIS_HOST: localhost
-          REDIS_PORT: ${{ job.services.redis.ports[6379] }}
 
   lint:
     runs-on: ubuntu-latest

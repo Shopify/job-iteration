@@ -64,7 +64,7 @@ module JobIteration
       end
     end
 
-    def next_batch(batch_size)
+    def next_batch(batch_size, database_role: nil)
       return if @reached_end
 
       relation = @base_relation.limit(batch_size)
@@ -74,7 +74,13 @@ module JobIteration
       end
 
       records = relation.uncached do
-        relation.to_a
+        if database_role.present?
+          ActiveRecord::Base.connected_to(role: database_role) do
+            relation.to_a
+          end
+        else
+          relation.to_a
+        end
       end
 
       update_from_record(records.last) unless records.empty?

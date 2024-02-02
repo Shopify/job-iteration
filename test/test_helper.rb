@@ -106,6 +106,16 @@ module LoggingHelpers
       JobIteration.logger = old_logger
     end
   end
+
+  def logging_queries(&block)
+    regular_logger = ActiveRecord::Base.logger
+    logger = Logger.new($stdout)
+    logger.formatter = ->(_severity, _datetime, _progname, msg) { msg.strip + "\n" }
+    ActiveRecord::Base.logger = logger
+    yield
+  ensure
+    ActiveRecord::Base.logger = regular_logger
+  end
 end
 
 JobIteration.logger = Logger.new(IO::NULL)

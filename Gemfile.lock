@@ -39,6 +39,8 @@ GEM
     language_server-protocol (3.17.0.3)
     method_source (1.0.0)
     minitest (5.19.0)
+    minitest-focus (1.4.0)
+      minitest (>= 4, < 6)
     mocha (2.1.0)
       ruby2_keywords (>= 0.0.5)
     mono_logger (1.1.2)
@@ -114,6 +116,7 @@ DEPENDENCIES
   globalid
   i18n
   job-iteration!
+  minitest-focus (~> 1.4)
   mocha
   mysql2!
   pry

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "test_helper"
+require "minitest/focus"
 
 module JobIteration
   class ActiveRecordEnumeratorTest < IterationUnitTest
@@ -91,6 +92,26 @@ module JobIteration
 
       cursor = [shops.last.created_at.strftime(SQL_TIME_FORMAT), shops.last.id]
       assert_equal([shops, cursor], enum.first)
+    end
+
+    focus
+    test "cursor can resume on multiple columns on different tables" do
+      expected_cursor_positions = Product.joins(:comments).order("products.id, comments.id").pluck("products.id", "comments.id")
+      assert_equal [[1, 1], [2, 2], [2, 3], [3, 4], [3, 5], [3, 6]], expected_cursor_positions
+
+      logging_queries do
+        enumerator = build_enumerator(relation: Product.joins(:comments), columns: ["products.id", "comments.id"]).batches
+        previous_cursor = nil
+        actual_cursor_positions = []
+
+        while (_records, cursor = enumerator.next)
+          raise "Cursor got stuck" if cursor == previous_cursor
+          enumerator = build_enumerator(relation: Product.joins(:comments), columns: ["products.id", "comments.id"], cursor: cursor).batches
+          previous_cursor = cursor
+        end
+
+        assert_equal expected_cursor_positions, actual_cursor_positions
+      end
     end
 
     test "#size returns the number of items in the relation" do

@@ -3,8 +3,6 @@ inherit_gem:
 
 AllCops:
   TargetRubyVersion: 2.6
-  Exclude:
-    - "vendor/bundle/**/*"
 Lint/SuppressedException:
   Exclude:
     - lib/job-iteration.rb

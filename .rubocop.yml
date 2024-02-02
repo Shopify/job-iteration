@@ -1,8 +1,14 @@
 inherit_gem:
   rubocop-shopify: rubocop.yml
 
+inherit_mode:
+  merge:
+    - Include
+
 AllCops:
   TargetRubyVersion: 2.6
+  Include:
+    - '**/*.gemfile'
 Lint/SuppressedException:
   Exclude:
     - lib/job-iteration.rb

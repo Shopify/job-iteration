@@ -3,15 +3,12 @@
 require "active_job"
 require_relative "./job-iteration/version"
 require_relative "./job-iteration/enumerator_builder"
+require_relative "./job-iteration/interruption_adapters"
 require_relative "./job-iteration/iteration"
 require_relative "./job-iteration/log_subscriber"
 require_relative "./job-iteration/railtie"
 
 module JobIteration
-  IntegrationLoadError = Class.new(StandardError)
-
-  INTEGRATIONS = [:resque, :sidekiq]
-
   Deprecation = ActiveSupport::Deprecation.new("2.0", "JobIteration")
 
   extend self
@@ -60,10 +57,21 @@ module JobIteration
   # where the throttle backoff value will take precedence over this setting.
   attr_accessor :default_retry_backoff
 
-  # Used internally for hooking into job processing frameworks like Sidekiq and Resque.
-  attr_accessor :interruption_adapter
+  attr_reader :interruption_adapter
 
-  self.interruption_adapter = -> { false }
+  # Overrides interruption checks based on queue adapter.
+  # @deprecated - Use JobIteration::InterruptionAdapters.register(:foo, callable) instead.
+  def interruption_adapter=(adapter)
+    Deprecation.warn("Setting JobIteration.interruption_adapter is deprecated. "\
+      "Use JobIteration::InterruptionAdapters.register(:foo, callable) instead "\
+      "to register the callable (a proc, method, or other object responding to #call) "\
+      "as the interruption adapter for queue adapter :foo.")
+    @interruption_adapter = adapter
+  end
+
+  def register_interruption_adapter(adapter_name, adapter)
+    InterruptionAdapters.register(adapter_name, adapter)
+  end
 
   # Set if you want to use your own enumerator builder instead of default EnumeratorBuilder.
   # @example
@@ -76,29 +84,4 @@ module JobIteration
   attr_accessor :enumerator_builder
 
   self.enumerator_builder = JobIteration::EnumeratorBuilder
-
-  def load_integrations
-    loaded = nil
-    INTEGRATIONS.each do |integration|
-      load_integration(integration)
-      if loaded
-        raise IntegrationLoadError,
-          "#{loaded} integration has already been loaded, but #{integration} is also available. " \
-            "Iteration will only work with one integration."
-      end
-      loaded = integration
-    rescue LoadError
-    end
-  end
-
-  def load_integration(integration)
-    unless INTEGRATIONS.include?(integration)
-      raise IntegrationLoadError,
-        "#{integration} integration is not supported. Available integrations: #{INTEGRATIONS.join(", ")}"
-    end
-
-    require_relative "./job-iteration/integrations/#{integration}"
-  end
 end
-
-JobIteration.load_integrations unless ENV["ITERATION_DISABLE_AUTOCONFIGURE"]

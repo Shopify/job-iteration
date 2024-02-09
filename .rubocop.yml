@@ -12,9 +12,6 @@ AllCops:
 Lint/SuppressedException:
   Exclude:
     - lib/job-iteration.rb
-Style/GlobalVars:
-  Exclude:
-    - lib/job-iteration/integrations/resque.rb
 Naming/FileName:
   Exclude:
     - lib/job-iteration.rb

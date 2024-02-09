@@ -3,8 +3,6 @@
 $LOAD_PATH.unshift(File.expand_path("../../lib", __FILE__))
 require "minitest/autorun"
 
-ENV["ITERATION_DISABLE_AUTOCONFIGURE"] = "true"
-
 require "job-iteration"
 require "job-iteration/test_helper"
 

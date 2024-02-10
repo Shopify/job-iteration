@@ -11,13 +11,7 @@ module JobIteration
       @relation = relation
       @batch_size = batch_size
       @columns = if columns
-        Array(columns).map do |column|
-          if column.is_a?(Arel::Attributes::Attribute)
-            column
-          else
-            relation.arel_table[column.to_sym]
-          end
-        end
+        Array(columns).map { |col| relation.arel_table[col.to_sym] }
       else
         Array(relation.primary_key).map { |pk| relation.arel_table[pk.to_sym] }
       end

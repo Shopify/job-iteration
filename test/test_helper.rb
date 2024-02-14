@@ -108,6 +108,40 @@ module LoggingHelpers
   end
 end
 
+module ActiveRecordHelpers
+  def assert_sql(*patterns_to_match, &block)
+    captured_queries = []
+    assert_nothing_raised do
+      ActiveSupport::Notifications.subscribed(
+        ->(_name, _start_time, _end_time, _subscriber_id, payload) { captured_queries << payload[:sql] },
+        "sql.active_record",
+        &block
+      )
+    end
+
+    failed_patterns = []
+    patterns_to_match.each do |pattern|
+      failed_check = captured_queries.none? do |sql|
+        case pattern
+        when Regexp
+          sql.match?(pattern)
+        when String
+          sql == pattern
+        else
+          raise ArgumentError, "#assert_sql encountered an unknown matcher #{pattern.inspect}"
+        end
+      end
+      failed_patterns << pattern if failed_check
+    end
+    queries = captured_queries.empty? ? "" : "\nQueries:\n  #{captured_queries.join("\n  ")}"
+    assert_predicate(
+      failed_patterns,
+      :empty?,
+      "Query pattern(s) #{failed_patterns.map(&:inspect).join(", ")} not found.#{queries}",
+    )
+  end
+end
+
 JobIteration.logger = Logger.new(IO::NULL)
 ActiveJob::Base.logger = Logger.new(IO::NULL)
 

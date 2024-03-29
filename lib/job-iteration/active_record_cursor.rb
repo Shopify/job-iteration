@@ -22,7 +22,7 @@ module JobIteration
       @columns = columns
       self.position = Array.wrap(position)
       raise ArgumentError, "Must specify at least one column" if columns.empty?
-      if relation.joins_values.present? && !@columns.all? { |column| column.to_s.include?(".") }
+      if relation.joins_values.present? && !@columns.all? { |column| column.is_a?(Arel::Attributes::Attribute) || column.to_s.include?(".") }
         raise ArgumentError, "You need to specify fully-qualified columns if you join a table"
       end
 

@@ -5,7 +5,7 @@ name: job-iteration
 up:
   - packages:
       - mysql_client
-  - ruby: 2.7.6
+  - ruby
   - bundler
   - mysql
   - redis

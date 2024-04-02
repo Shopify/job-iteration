@@ -55,9 +55,6 @@ module JobIteration
       unless enumerable.is_a?(Array)
         raise ArgumentError, "enumerable must be an Array"
       end
-      if enumerable.any? { |i| defined?(ActiveRecord) && i.is_a?(ActiveRecord::Base) }
-        raise ArgumentError, "array cannot contain ActiveRecord objects"
-      end
 
       drop =
         if cursor.nil?

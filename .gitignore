@@ -6,7 +6,6 @@
 /pkg/
 /spec/reports/
 /tmp/
-.ruby-version
 .rubocop-http---shopify-github-io-ruby-style-guide-rubocop-yml
 gemfiles/*.lock
 dump.rdb

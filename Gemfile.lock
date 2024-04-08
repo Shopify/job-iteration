@@ -53,7 +53,7 @@ GEM
     racc (1.7.3)
     rack (3.0.9.1)
     rainbow (3.1.1)
-    rake (13.1.0)
+    rake (13.2.1)
     redis (5.1.0)
       redis-client (>= 0.17.0)
     redis-client (0.19.1)

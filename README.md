@@ -185,7 +185,7 @@ There a few configuration assumptions that are required for Iteration to work wi
 
 **What happens when my job is interrupted?** A checkpoint will be persisted to Redis after the current `each_iteration`, and the job will be re-enqueued. Once it's popped off the queue, the worker will work off from the next iteration.
 
-**What happens with retries?** An interruption of a job does not count as a retry. If an exception occurs, the job will retry or be discarded as normal using Active Job configuration for the job. If the job retries, it processes the iteration that originally failed and progress will continue from there on if succesful.
+**What happens with retries?** An interruption of a job does not count as a retry. If an exception occurs, the job will retry or be discarded as normal using Active Job configuration for the job. If the job retries, it processes the iteration that originally failed and progress will continue from there on if successful.
 
 **What happens if my iteration takes a long time?** We recommend that a single `each_iteration` should take no longer than 30 seconds. In the future, this may raise an exception.
 

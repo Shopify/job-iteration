@@ -29,7 +29,7 @@ module JobIteration
         raise JobIteration::ActiveRecordCursor::ConditionNotSupportedError
       end
 
-      @base_relation = relation.reorder(@columns.join(","))
+      @base_relation = relation.reorder(*@columns)
     end
 
     def each

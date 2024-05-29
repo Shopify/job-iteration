@@ -4,8 +4,6 @@ require "test_helper"
 
 module JobIteration
   class ActiveRecordEnumeratorTest < IterationUnitTest
-    include ActiveRecordHelpers
-
     SQL_TIME_FORMAT = "%Y-%m-%d %H:%M:%S.%N"
     test "#records yields every record with their cursor position" do
       enum = build_enumerator.records
@@ -132,13 +130,6 @@ module JobIteration
         enum.records.each { |record, _cursor| order_names << record.name }
 
         assert_equal(["Red hat", "Blue jeans", "Yellow socks"], order_names)
-      end
-    end
-
-    test "enumerator paginates using integer conditionals for primary key when no columns are defined" do
-      enum = build_enumerator(relation: Product.all, batch_size: 1).records
-      assert_sql(/`products`\.`id` > 1/) do
-        enum.take(2)
       end
     end
 

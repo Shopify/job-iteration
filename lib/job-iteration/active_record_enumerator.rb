@@ -11,9 +11,9 @@ module JobIteration
       @relation = relation
       @batch_size = batch_size
       @columns = if columns
-        Array(columns).map { |col| relation.arel_table[col.to_sym] }
+        Array(columns)
       else
-        Array(relation.primary_key).map { |pk| relation.arel_table[pk.to_sym] }
+        Array(relation.primary_key).map { |pk| "#{relation.table_name}.#{pk}" }
       end
       @cursor = cursor
     end
@@ -45,7 +45,7 @@ module JobIteration
 
     def cursor_value(record)
       positions = @columns.map do |column|
-        attribute_name = column.name.to_sym
+        attribute_name = column.to_s.split(".").last
         column_value(record, attribute_name)
       end
       return positions.first if positions.size == 1
@@ -58,8 +58,8 @@ module JobIteration
     end
 
     def column_value(record, attribute)
-      value = record.read_attribute(attribute)
-      case record.class.columns_hash.fetch(attribute.to_s).type
+      value = record.read_attribute(attribute.to_sym)
+      case record.class.columns_hash.fetch(attribute).type
       when :datetime
         value.strftime(SQL_DATETIME_WITH_NSEC)
       else

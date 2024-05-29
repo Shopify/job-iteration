@@ -1,6 +1,9 @@
 ### Main (unreleased)
 Nil
 
+## v1.5.1 (May 29,2024)
+- [483](https://github.com/Shopify/job-iteration/pull/483) Reverts [#456 Use Arel instead of String for AR Enumerator conditionals](https://github.com/Shopify/job-iteration/pull/456)
+
 ## v1.5.0 (May 29, 2024)
 ### Changes
 
@@ -17,6 +20,9 @@ Nil
 when generating position for cursor based on `:id` column (Rails 7.1 and above, where composite
 primary models are now supported). This ensures we grab the value of the id column, rather than a
 potentially composite primary key value.
+- [456](https://github.com/Shopify/job-iteration/pull/431) - Use Arel to generate SQL that's type compatible for the
+  cursor pagination conditionals in ActiveRecord cursor. Previously, the cursor would coerce numeric ids to a string value 
+  (e.g.: `... AND id > '1'`)
 
 ## v1.4.1 (Sep 5, 2023)
 

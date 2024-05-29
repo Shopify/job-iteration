@@ -1,5 +1,8 @@
 ### Main (unreleased)
 
+Nil
+## v1.4.2 (Aug 23, 2023)
+
 ### Changes
 
 - [437](https://github.com/Shopify/job-iteration/pull/437) - Use minimum between per-class `job_iteration_max_job_runtime` and `JobIteration.max_job_runtime`, instead of enforcing only setting decreasing values.

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "./active_record_cursor"
+require_relative "active_record_cursor"
 module JobIteration
   # Builds Enumerator based on ActiveRecord Relation. Supports enumerating on rows and batches.
   # @see EnumeratorBuilder

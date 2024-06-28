@@ -43,7 +43,7 @@ module JobIteration
       File
         .read(".ruby-version")
         .strip
-        .then { |ruby_version| Gem::Version.new(ruby_version) }
+        .then { |ruby_version| ignoring_patch(Gem::Version.new(ruby_version)) }
     end
 
     def required_ruby_version
@@ -52,7 +52,12 @@ module JobIteration
         .fetch("job-iteration")
         .required_ruby_version
         .to_s[/(?<=>= )\d+\.\d+/]
-        .then { |ruby_version| Gem::Version.new(ruby_version) }
+        .then { |ruby_version| ignoring_patch(Gem::Version.new(ruby_version)) }
+    end
+
+    # Our CI matrix only specfies major and minor versions of Ruby
+    def ignoring_patch(version)
+      Gem::Version.new(version.segments[0, 2].join("."))
     end
   end
 end

@@ -14,7 +14,7 @@ module JobIteration
     # The time when the job starts running. If the job is interrupted and runs again, the value is updated.
     attr_accessor :start_time
 
-    # The total time the job has been running, including multiple iterations.
+    # The total time (in seconds) the job has been running, including multiple iterations.
     # The time isn't reset if the job is interrupted.
     attr_accessor :total_time
 

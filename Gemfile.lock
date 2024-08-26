@@ -72,7 +72,7 @@ GEM
       rack (>= 3.0.0)
     rainbow (3.1.1)
     rake (13.2.1)
-    redis (5.2.0)
+    redis (5.3.0)
       redis-client (>= 0.22.0)
     redis-client (0.22.2)
       connection_pool

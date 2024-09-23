@@ -14,7 +14,7 @@ class InterruptionAdaptersTest < ActiveSupport::TestCase
     RUBY
     _stdout, stderr, status = run_ruby(ruby)
 
-    assert_predicate(status, :success?)
+    assert_predicate(status, :success?, "Errors: #{stderr}")
     refute_match(/No interruption adapter is registered for :resque/, stderr)
   end
 
@@ -28,7 +28,7 @@ class InterruptionAdaptersTest < ActiveSupport::TestCase
     RUBY
     _stdout, stderr, status = run_ruby(ruby)
 
-    assert_predicate(status, :success?)
+    assert_predicate(status, :success?, "Errors: #{stderr}")
     assert_match(/No interruption adapter is registered for :sidekiq/, stderr)
   end
 
@@ -36,15 +36,17 @@ class InterruptionAdaptersTest < ActiveSupport::TestCase
     ruby = <<~RUBY
       require 'bundler/setup'
       require 'job-iteration'
-      # The adapter for GoodJob cannot be easily tested at the moment.
-      addapters_to_test = JobIteration::InterruptionAdapters::BUNDLED_ADAPTERS - [:good_job]
-      addapters_to_test.each do |name|
+
+      adapters_to_exclude = [:good_job, :solid_queue] # These require a Rails app to be loaded
+      adapters_to_test = JobIteration::InterruptionAdapters::BUNDLED_ADAPTERS - adapters_to_exclude
+
+      adapters_to_test.each do |name|
         JobIteration::InterruptionAdapters.lookup(name)
       end
     RUBY
     _stdout, stderr, status = run_ruby(ruby)
 
-    assert_predicate(status, :success?)
+    assert_predicate(status, :success?, "Errors: #{stderr}")
     refute_match(/No interruption adapter is registered for/, stderr)
   end
 

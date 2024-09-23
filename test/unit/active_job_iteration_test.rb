@@ -608,32 +608,6 @@ module JobIteration
       assert_equal([params, params], ParamsIterationJob.records_performed)
     end
 
-    def test_emits_metric_when_interrupted
-      skip("statsd is coming")
-      iterate_exact_times(2.times)
-
-      push(ActiveRecordIterationJob)
-
-      assert_statsd_increment("background_queue.iteration.interrupted") do
-        work_one_job
-      end
-    end
-
-    def test_emits_metric_when_resumed
-      skip("statsd is coming")
-      iterate_exact_times(2.times)
-
-      push(ActiveRecordIterationJob)
-
-      assert_no_statsd_calls("background_queue.iteration.resumed") do
-        work_one_job
-      end
-
-      assert_statsd_increment("background_queue.iteration.resumed") do
-        work_one_job
-      end
-    end
-
     def test_log_completion_data
       push(ParamsIterationJob, times: 3)
 

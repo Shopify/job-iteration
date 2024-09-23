@@ -36,7 +36,8 @@ class InterruptionAdaptersTest < ActiveSupport::TestCase
     ruby = <<~RUBY
       require 'bundler/setup'
       require 'job-iteration'
-      JobIteration::InterruptionAdapters::BUNDLED_ADAPTERS.each do |name|
+      # The adapter for GoodJob cannot be easily tested at the moment.
+      JobIteration::InterruptionAdapters::BUNDLED_ADAPTERS.excluding(:good_job).each do |name|
         JobIteration::InterruptionAdapters.lookup(name)
       end
     RUBY

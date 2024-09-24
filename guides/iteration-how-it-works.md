@@ -29,6 +29,10 @@ In other words, if you are trying to process 100 records but the job consistentl
 
 If no retries are configured or retries are exhausted, Active Job 'bubbles up' the exception to the job backend. Retries by the backend (e.g. Sidekiq) are not supported, meaning that jobs retried by the job backend instead of Active Job will restart from the beginning.
 
+## Stopping a job
+
+Because jobs typically retry when exceptions are thrown, there is a special mechanism to fully stop a job that still has iterations remaining. To do this, you can `throw(:abort)`. This is then caught by job-iteration and signals that the job should complete now, regardless of its iteration state.
+
 ## Signals
 
 It's critical to know [UNIX signals](https://www.tutorialspoint.com/unix/unix-signals-traps.htm) in order to understand how interruption works. There are two main signals that Sidekiq and Resque use: `SIGTERM` and `SIGKILL`. `SIGTERM` is the graceful termination signal which means that the process should exit _soon_, not immediately. For Iteration, it means that we have time to wait for the last iteration to finish and to push job back to the queue with the last cursor position.

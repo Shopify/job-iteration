@@ -1,6 +1,7 @@
 ### Main (unreleased)
 
 - [464](https://github.com/Shopify/job-iteration/pull/464) - Add interruption adapter for [GoodJob](https://github.com/bensheldon/good_job).
+- [505](https://github.com/Shopify/job-iteration/pull/505) - Add interruption adapter for [Solid Queue](https://github.com/rails/solid_queue).
 
 ## v1.5.1 (May 29,2024)
 - [483](https://github.com/Shopify/job-iteration/pull/483) - Reverts [#456 Use Arel instead of String for AR Enumerator conditionals](https://github.com/Shopify/job-iteration/pull/456)

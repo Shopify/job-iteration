@@ -1,5 +1,11 @@
 ### Main (unreleased)
 
+Nil
+
+## v1.6.0 (Sep 24, 2024)
+
+### Features
+
 - [464](https://github.com/Shopify/job-iteration/pull/464) - Add interruption adapter for [GoodJob](https://github.com/bensheldon/good_job).
 - [505](https://github.com/Shopify/job-iteration/pull/505) - Add interruption adapter for [Solid Queue](https://github.com/rails/solid_queue).
 

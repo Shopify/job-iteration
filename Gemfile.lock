@@ -8,7 +8,7 @@ GIT
 PATH
   remote: .
   specs:
-    job-iteration (1.5.1)
+    job-iteration (1.6.0)
       activejob (>= 5.2)
 
 GEM

@@ -60,6 +60,10 @@ module JobIteration
       enumerator_builder(wraps: 0).build_csv_enumerator(CSV.new("test"), cursor: nil)
     end
 
+    test_builder_method(:build_csv_enumerator_on_batches) do
+      enumerator_builder(wraps: 0).build_csv_enumerator_on_batches(CSV.new("test"), cursor: nil)
+    end
+
     test_builder_method(:build_nested_enumerator) do
       enumerator_builder(wraps: 0).build_nested_enumerator(
         [
@@ -79,7 +83,7 @@ module JobIteration
 
     test "#build_csv_enumerator uses the CsvEnumerator class" do
       csv = CSV.open(
-        ["test", "support", "sample_csv_with_headers.csv"].join("/"),
+        sample_csv_with_headers,
         converters: :integer,
         headers: true,
       )
@@ -89,6 +93,24 @@ module JobIteration
       csv_rows = open_csv.map(&:fields)
       enum.each_with_index do |element_and_cursor, index|
         assert_equal [csv_rows[index], index], [element_and_cursor[0].fields, element_and_cursor[1]]
+      end
+    end
+
+    test "#build_csv_enumerator_on_batches uses the CsvEnumerator class with batches" do
+      csv = CSV.open(
+        sample_csv_with_headers,
+        converters: :integer,
+        headers: true,
+      )
+      builder = EnumeratorBuilder.new(mock, wrapper: mock)
+
+      enum = builder.build_csv_enumerator_on_batches(csv, cursor: nil, batch_size: 2)
+      csv_rows = open_csv.to_a
+      enum.each_with_index do |batch_and_cursor, index|
+        batch, cursor = batch_and_cursor
+        expected_batch = csv_rows[index * 2, 2]
+        assert_equal expected_batch, batch
+        assert_equal index, cursor
       end
     end
 

@@ -16,8 +16,7 @@ module JobIteration
     # `enumerator_builder` is _always_ the type that is returned from
     # `build_enumerator`. This prevents people from implementing custom
     # Enumerators without wrapping them in
-    # `enumerator_builder.wrap(custom_enum)`. We don't do this yet for backwards
-    # compatibility with raw calls to EnumeratorBuilder. Think of these wrappers
+    # `enumerator_builder.wrap(custom_enum)`. Think of these wrappers
     # the way you should a middleware.
     class Wrapper < Enumerator
       class << self
@@ -131,21 +130,24 @@ module JobIteration
       enum
     end
 
-    def build_throttle_enumerator(enum, throttle_on:, backoff:)
-      JobIteration::ThrottleEnumerator.new(
-        enum,
+    def build_throttle_enumerator(enumerable, throttle_on:, backoff:)
+      enum = JobIteration::ThrottleEnumerator.new(
+        enumerable,
         @job,
         throttle_on: throttle_on,
         backoff: backoff,
       ).to_enum
+      wrap(self, enum)
     end
 
     def build_csv_enumerator(enumerable, cursor:)
-      CsvEnumerator.new(enumerable).rows(cursor: cursor)
+      enum = CsvEnumerator.new(enumerable).rows(cursor: cursor)
+      wrap(self, enum)
     end
 
     def build_csv_enumerator_on_batches(enumerable, cursor:, batch_size: 100)
-      CsvEnumerator.new(enumerable).batches(cursor: cursor, batch_size: batch_size)
+      enum = CsvEnumerator.new(enumerable).batches(cursor: cursor, batch_size: batch_size)
+      wrap(self, enum)
     end
 
     # Builds Enumerator for nested iteration.
@@ -179,7 +181,8 @@ module JobIteration
     #   end
     #
     def build_nested_enumerator(enums, cursor:)
-      NestedEnumerator.new(enums, cursor: cursor).each
+      enum = NestedEnumerator.new(enums, cursor: cursor).each
+      wrap(self, enum)
     end
 
     alias_method :once, :build_once_enumerator

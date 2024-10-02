@@ -78,12 +78,14 @@ class LoadRefundsForChargeJob < ActiveJob::Base
   # Use an exponential back-off strategy when Stripe's API returns errors.
 
   def build_enumerator(charge_id, cursor:)
-    StripeListEnumerator.new(
-      Stripe::Refund,
-      params: { charge: charge_id}, # "charge_id" will be a prefixed Stripe ID such as "chrg_123"
-      options: { api_key: "sk_test_123", stripe_version: "2018-01-18" },
-      cursor: cursor
-    ).to_enumerator
+    enumerator_builder.wrap(
+      StripeListEnumerator.new(
+        Stripe::Refund,
+        params: { charge: charge_id}, # "charge_id" will be a prefixed Stripe ID such as "chrg_123"
+        options: { api_key: "sk_test_123", stripe_version: "2018-01-18" },
+        cursor: cursor
+      ).to_enumerator
+    )
   end
 
   # Note that in this case `each_iteration` will only receive one positional argument per iteration.
@@ -114,9 +116,11 @@ class RedisPopListJob < ActiveJob::Base
   # @see https://redis.io/commands/lpop/
   def build_enumerator(*)
     @redis = Redis.new
-    Enumerator.new do |yielder|
-      yielder.yield @redis.lpop(key), nil
-    end
+    enumerator_builder.wrap(
+      Enumerator.new do |yielder|
+        yielder.yield @redis.lpop(key), nil
+      end
+    )
   end
 
   def each_iteration(item_from_redis)

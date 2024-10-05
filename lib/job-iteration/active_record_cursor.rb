@@ -18,23 +18,16 @@ module JobIteration
       end
     end
 
-    def initialize(relation, columns = nil, position = nil)
-      @columns = if columns
-        Array(columns)
-      else
-        Array(relation.primary_key).map { |pk| "#{relation.table_name}.#{pk}" }
-      end
+    def initialize(relation, columns, position = nil)
+      @columns = columns
       self.position = Array.wrap(position)
       raise ArgumentError, "Must specify at least one column" if columns.empty?
-      if relation.joins_values.present? && !@columns.all? { |column| column.to_s.include?(".") }
-        raise ArgumentError, "You need to specify fully-qualified columns if you join a table"
-      end
 
       if relation.arel.orders.present? || relation.arel.taken.present?
         raise ConditionNotSupportedError
       end
 
-      @base_relation = relation.reorder(@columns.join(","))
+      @base_relation = relation.reorder(*@columns)
       @reached_end = false
     end
 
@@ -54,17 +47,15 @@ module JobIteration
 
     def update_from_record(record)
       self.position = @columns.map do |column|
-        method = column.to_s.split(".").last
-
-        if ActiveRecord.version >= Gem::Version.new("7.1.0.alpha") && method == "id"
+        if ActiveRecord.version >= Gem::Version.new("7.1.0.alpha") && column.name == "id"
           record.id_value
         else
-          record.send(method.to_sym)
+          record.send(column.name)
         end
       end
     end
 
-    def next_batch(batch_size)
+    def next_batch(batch_size, database_role: nil)
       return if @reached_end
 
       relation = @base_relation.limit(batch_size)
@@ -74,7 +65,13 @@ module JobIteration
       end
 
       records = relation.uncached do
-        relation.to_a
+        if database_role.present?
+          ActiveRecord::Base.connected_to(role: database_role) do
+            relation.to_a
+          end
+        else
+          relation.to_a
+        end
       end
 
       update_from_record(records.last) unless records.empty?
@@ -89,14 +86,14 @@ module JobIteration
       i = @position.size - 1
       column = @columns[i]
       conditions = if @columns.size == @position.size
-        "#{column} > ?"
+        column.gt(@position[i])
       else
-        "#{column} >= ?"
+        column.gteq(@position[i])
       end
       while i > 0
         i -= 1
         column = @columns[i]
-        conditions = "#{column} > ? OR (#{column} = ? AND (#{conditions}))"
+        conditions = column.gt(@position[i]).or(column.eq(@position[i]).and(conditions))
       end
       ret = @position.reduce([conditions]) { |params, value| params << value << value }
       ret.pop

@@ -7,13 +7,20 @@ module JobIteration
   class ActiveRecordEnumerator
     SQL_DATETIME_WITH_NSEC = "%Y-%m-%d %H:%M:%S.%N"
 
-    def initialize(relation, columns: nil, batch_size: 100, cursor: nil)
+    def initialize(relation, columns: nil, batch_size: 100, cursor: nil, database_role: nil)
       @relation = relation
       @batch_size = batch_size
+      @database_role = database_role
       @columns = if columns
-        Array(columns)
+        Array(columns).map do |column|
+          if column.is_a?(Arel::Attributes::Attribute)
+            column
+          else
+            relation.arel_table[column.to_sym]
+          end
+        end
       else
-        Array(relation.primary_key).map { |pk| "#{relation.table_name}.#{pk}" }
+        Array(relation.primary_key).map { |pk| relation.arel_table[pk.to_sym] }
       end
       @cursor = cursor
     end
@@ -31,7 +38,7 @@ module JobIteration
     def batches
       cursor = finder_cursor
       Enumerator.new(method(:size)) do |yielder|
-        while (records = cursor.next_batch(@batch_size))
+        while (records = cursor.next_batch(@batch_size, database_role: @database_role))
           yielder.yield(records, cursor_value(records.last)) if records.any?
         end
       end
@@ -45,7 +52,7 @@ module JobIteration
 
     def cursor_value(record)
       positions = @columns.map do |column|
-        attribute_name = column.to_s.split(".").last
+        attribute_name = column.name.to_sym
         column_value(record, attribute_name)
       end
       return positions.first if positions.size == 1
@@ -58,8 +65,8 @@ module JobIteration
     end
 
     def column_value(record, attribute)
-      value = record.read_attribute(attribute.to_sym)
-      case record.class.columns_hash.fetch(attribute).type
+      value = record.read_attribute(attribute)
+      case record.class.columns_hash.fetch(attribute.to_s).type
       when :datetime
         value.strftime(SQL_DATETIME_WITH_NSEC)
       else

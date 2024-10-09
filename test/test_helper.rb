@@ -45,7 +45,7 @@ connection_config = {
   database: "job_iteration_test",
   username: "root",
   host: mysql_host,
-  port: mysql_port
+  port: mysql_port,
 }
 connection_config[:password] = "root" if ENV["CI"]
 

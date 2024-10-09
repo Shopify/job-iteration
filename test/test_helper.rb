@@ -18,7 +18,6 @@ require_relative "support/active_job_5_2_queue_adapters_test_adapter_compatibili
 
 GlobalID.app = "iteration"
 ActiveRecord::Base.include(GlobalID::Identification) # https://github.com/rails/globalid/blob/main/lib/global_id/railtie.rb
-ActiveRecord.default_timezone = :local
 
 ActiveJob::Base.queue_adapter = :test
 

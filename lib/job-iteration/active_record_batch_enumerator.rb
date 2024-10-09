@@ -114,7 +114,7 @@ module JobIteration
     end
 
     def column_value(value)
-      value.is_a?(Time) ? value.strftime(SQL_DATETIME_WITH_NSEC) : value
+      value.is_a?(Time) ? value.utc.strftime(SQL_DATETIME_WITH_NSEC) : value
     end
   end
 end

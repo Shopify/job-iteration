@@ -72,7 +72,7 @@ module JobIteration
       enum = build_enumerator(columns: [:updated_at])
       products = Product.order(:updated_at).take(2)
 
-      expected_product_cursor = products.last.updated_at.strftime(SQL_TIME_FORMAT)
+      expected_product_cursor = products.last.updated_at.utc.strftime(SQL_TIME_FORMAT)
       assert_equal([products, expected_product_cursor], enum.first)
     end
 
@@ -80,7 +80,7 @@ module JobIteration
       enum = build_enumerator(columns: [:updated_at, :id])
       products = Product.order(:updated_at, :id).take(2)
 
-      expected_product_cursor = [products.last.updated_at.strftime(SQL_TIME_FORMAT), products.last.id]
+      expected_product_cursor = [products.last.updated_at.utc.strftime(SQL_TIME_FORMAT), products.last.id]
       assert_equal([products, expected_product_cursor], enum.first)
     end
 
@@ -90,6 +90,14 @@ module JobIteration
         enum.first
       end
       assert_match(/\A\s?`products`.`updated_at`, `products`.`id`\z/, queries.first[/SELECT (.*) FROM/, 1])
+    end
+
+    test "columns use UTC during serialization if they are Time" do
+      enum = build_enumerator(columns: [:updated_at])
+      products = Product.order(:updated_at).take(2)
+
+      expected_product_cursor = products.last.updated_at.utc.strftime(SQL_TIME_FORMAT)
+      assert_equal([products, expected_product_cursor], enum.first)
     end
 
     test "cursor can be used to resume" do
@@ -104,13 +112,13 @@ module JobIteration
       enum = build_enumerator(columns: [:created_at, :id])
       products = Product.order(:created_at, :id).take(2)
 
-      cursor = [products.last.created_at.strftime(SQL_TIME_FORMAT), products.last.id]
+      cursor = [products.last.created_at.utc.strftime(SQL_TIME_FORMAT), products.last.id]
       assert_equal([products, cursor], enum.first)
 
       enum = build_enumerator(columns: [:created_at, :id], cursor: cursor)
       products = Product.order(:created_at, :id).offset(2).take(2)
 
-      cursor = [products.last.created_at.strftime(SQL_TIME_FORMAT), products.last.id]
+      cursor = [products.last.created_at.utc.strftime(SQL_TIME_FORMAT), products.last.id]
       assert_equal([products, cursor], enum.first)
     end
 

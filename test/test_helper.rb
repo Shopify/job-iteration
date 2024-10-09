@@ -18,6 +18,7 @@ require_relative "support/active_job_5_2_queue_adapters_test_adapter_compatibili
 
 GlobalID.app = "iteration"
 ActiveRecord::Base.include(GlobalID::Identification) # https://github.com/rails/globalid/blob/main/lib/global_id/railtie.rb
+ActiveRecord.default_timezone = :local
 
 ActiveJob::Base.queue_adapter = :test
 
@@ -45,7 +46,7 @@ connection_config = {
   database: "job_iteration_test",
   username: "root",
   host: mysql_host,
-  port: mysql_port,
+  port: mysql_port
 }
 connection_config[:password] = "root" if ENV["CI"]
 

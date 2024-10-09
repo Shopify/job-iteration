@@ -61,7 +61,7 @@ module JobIteration
       value = record.read_attribute(attribute.to_sym)
       case record.class.columns_hash.fetch(attribute).type
       when :datetime
-        value.strftime(SQL_DATETIME_WITH_NSEC)
+        value.utc.strftime(SQL_DATETIME_WITH_NSEC)
       else
         value
       end

@@ -1,6 +1,7 @@
 ### Main (unreleased)
 
 - Added CSV batching functionality to EnumeratorBuilder with `build_csv_enumerator_on_batches` method and `csv_on_batches` alias.
+- [513](https://github.com/Shopify/job-iteration/pull/513) Deprecate returning enumerators from `build_enumerator` that are not wrapped with `enumerator_builder.wrap`. The built-in enumerator builders now always wrap.
 
 ## v1.6.0 (Sep 24, 2024)
 

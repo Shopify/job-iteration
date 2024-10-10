@@ -108,6 +108,15 @@ module JobIteration
       assert_equal([products, products.last.id], enum.first)
     end
 
+    test "using custom timezone results in a cursor with the correct offset" do
+      custom_timezone = "Eastern Time (US & Canada)"
+      enum = build_enumerator(columns: [:created_at, :id], timezone: custom_timezone)
+      shops = Product.order(:created_at, :id).take(2)
+
+      cursor = [shops.last.created_at.in_time_zone(custom_timezone).strftime(SQL_TIME_FORMAT), shops.last.id]
+      assert_equal([shops, cursor], enum.first)
+    end
+
     test "cursor can be used to resume on multiple columns" do
       enum = build_enumerator(columns: [:created_at, :id])
       products = Product.order(:created_at, :id).take(2)
@@ -141,10 +150,11 @@ module JobIteration
 
     private
 
-    def build_enumerator(relation: Product.all, batch_size: 2, columns: nil, cursor: nil)
+    def build_enumerator(relation: Product.all, batch_size: 2, timezone: nil, columns: nil, cursor: nil)
       JobIteration::ActiveRecordBatchEnumerator.new(
         relation,
         batch_size: batch_size,
+        timezone: timezone,
         columns: columns,
         cursor: cursor,
       )

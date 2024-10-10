@@ -219,7 +219,14 @@ module JobIteration
     end
 
     def assert_enumerator!(enum)
-      return if enum.is_a?(Enumerator)
+      if enum.is_a?(Enumerator)
+        unless enum.is_a?(JobIteration.enumerator_builder::Wrapper)
+          JobIteration::Deprecation.warn("Returning an unwrapped enumerator from build_enumerator is deprecated. " \
+            "Wrap the enumerator using enumerator_builder.wrap(my_enumerator) instead.")
+        end
+
+        return
+      end
 
       raise ArgumentError, <<~EOS
         #build_enumerator is expected to return Enumerator object, but returned #{enum.class}.

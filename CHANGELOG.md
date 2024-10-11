@@ -1,7 +1,13 @@
 ### Main (unreleased)
 
-- Added CSV batching functionality to EnumeratorBuilder with `build_csv_enumerator_on_batches` method and `csv_on_batches` alias.
-- Added support for custom timezones on ActiveRecordEnumerator and ActiveRecordBatchEnumerator. This allows for using cursors with datetime columns where ActiveRecord.default_timezone is set to :local and ActiveRecord is not using the same timezone as the database.
+Nil
+
+## v1.7.0 (Oct 11, 2024)
+
+### Features
+
+- [509](https://github.com/Shopify/job-iteration/pull/509) - Added CSV batching functionality to `EnumeratorBuilder` with `build_csv_enumerator_on_batches` method and `csv_on_batches` alias.
+- [512](https://github.com/Shopify/job-iteration/pull/512) - Added support for custom timezones on `ActiveRecordEnumerator` and `ActiveRecordBatchEnumerator`. This allows for using cursors with datetime columns where `ActiveRecord.default_timezone` is set to `:local` and Active Record is not using the same timezone as the database.
 
 ## v1.6.0 (Sep 24, 2024)
 
@@ -11,9 +17,13 @@
 - [505](https://github.com/Shopify/job-iteration/pull/505) - Add interruption adapter for [Solid Queue](https://github.com/rails/solid_queue).
 
 ## v1.5.1 (May 29,2024)
+
+### Bug fixes
+
 - [483](https://github.com/Shopify/job-iteration/pull/483) - Reverts [#456 Use Arel instead of String for AR Enumerator conditionals](https://github.com/Shopify/job-iteration/pull/456)
 
 ## v1.5.0 (May 29, 2024)
+
 ### Changes
 
 - [437](https://github.com/Shopify/job-iteration/pull/437) - Use minimum between per-class `job_iteration_max_job_runtime` and `JobIteration.max_job_runtime`, instead of enforcing only setting decreasing values.

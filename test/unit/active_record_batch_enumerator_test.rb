@@ -72,7 +72,7 @@ module JobIteration
       enum = build_enumerator(columns: [:updated_at])
       products = Product.order(:updated_at).take(2)
 
-      expected_product_cursor = products.last.updated_at.strftime(SQL_TIME_FORMAT)
+      expected_product_cursor = products.last.updated_at.utc.strftime(SQL_TIME_FORMAT)
       assert_equal([products, expected_product_cursor], enum.first)
     end
 
@@ -80,7 +80,7 @@ module JobIteration
       enum = build_enumerator(columns: [:updated_at, :id])
       products = Product.order(:updated_at, :id).take(2)
 
-      expected_product_cursor = [products.last.updated_at.strftime(SQL_TIME_FORMAT), products.last.id]
+      expected_product_cursor = [products.last.updated_at.utc.strftime(SQL_TIME_FORMAT), products.last.id]
       assert_equal([products, expected_product_cursor], enum.first)
     end
 
@@ -92,6 +92,14 @@ module JobIteration
       assert_match(/\A\s?`products`.`updated_at`, `products`.`id`\z/, queries.first[/SELECT (.*) FROM/, 1])
     end
 
+    test "columns use UTC during serialization if they are Time" do
+      enum = build_enumerator(columns: [:updated_at])
+      products = Product.order(:updated_at).take(2)
+
+      expected_product_cursor = products.last.updated_at.utc.strftime(SQL_TIME_FORMAT)
+      assert_equal([products, expected_product_cursor], enum.first)
+    end
+
     test "cursor can be used to resume" do
       products = Product.order(:id).take(3)
 
@@ -100,17 +108,26 @@ module JobIteration
       assert_equal([products, products.last.id], enum.first)
     end
 
+    test "using custom timezone results in a cursor with the correct offset" do
+      custom_timezone = "Eastern Time (US & Canada)"
+      enum = build_enumerator(columns: [:created_at, :id], timezone: custom_timezone)
+      shops = Product.order(:created_at, :id).take(2)
+
+      cursor = [shops.last.created_at.in_time_zone(custom_timezone).strftime(SQL_TIME_FORMAT), shops.last.id]
+      assert_equal([shops, cursor], enum.first)
+    end
+
     test "cursor can be used to resume on multiple columns" do
       enum = build_enumerator(columns: [:created_at, :id])
       products = Product.order(:created_at, :id).take(2)
 
-      cursor = [products.last.created_at.strftime(SQL_TIME_FORMAT), products.last.id]
+      cursor = [products.last.created_at.utc.strftime(SQL_TIME_FORMAT), products.last.id]
       assert_equal([products, cursor], enum.first)
 
       enum = build_enumerator(columns: [:created_at, :id], cursor: cursor)
       products = Product.order(:created_at, :id).offset(2).take(2)
 
-      cursor = [products.last.created_at.strftime(SQL_TIME_FORMAT), products.last.id]
+      cursor = [products.last.created_at.utc.strftime(SQL_TIME_FORMAT), products.last.id]
       assert_equal([products, cursor], enum.first)
     end
 
@@ -133,10 +150,11 @@ module JobIteration
 
     private
 
-    def build_enumerator(relation: Product.all, batch_size: 2, columns: nil, cursor: nil)
+    def build_enumerator(relation: Product.all, batch_size: 2, timezone: nil, columns: nil, cursor: nil)
       JobIteration::ActiveRecordBatchEnumerator.new(
         relation,
         batch_size: batch_size,
+        timezone: timezone,
         columns: columns,
         cursor: cursor,
       )

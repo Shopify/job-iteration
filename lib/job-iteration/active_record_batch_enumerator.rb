@@ -8,8 +8,9 @@ module JobIteration
 
     SQL_DATETIME_WITH_NSEC = "%Y-%m-%d %H:%M:%S.%N"
 
-    def initialize(relation, columns: nil, batch_size: 100, cursor: nil)
+    def initialize(relation, columns: nil, batch_size: 100, timezone: nil, cursor: nil)
       @batch_size = batch_size
+      @timezone = timezone
       @primary_key = "#{relation.table_name}.#{relation.primary_key}"
       @columns = Array(columns&.map(&:to_s) || @primary_key)
       @primary_key_index = @columns.index(@primary_key) || @columns.index(relation.primary_key)
@@ -114,7 +115,10 @@ module JobIteration
     end
 
     def column_value(value)
-      value.is_a?(Time) ? value.strftime(SQL_DATETIME_WITH_NSEC) : value
+      return value unless value.is_a?(Time)
+
+      value = value.in_time_zone(@timezone) unless @timezone.nil?
+      value.strftime(SQL_DATETIME_WITH_NSEC)
     end
   end
 end

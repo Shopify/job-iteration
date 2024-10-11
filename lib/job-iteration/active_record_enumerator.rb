@@ -7,9 +7,10 @@ module JobIteration
   class ActiveRecordEnumerator
     SQL_DATETIME_WITH_NSEC = "%Y-%m-%d %H:%M:%S.%N"
 
-    def initialize(relation, columns: nil, batch_size: 100, cursor: nil)
+    def initialize(relation, columns: nil, batch_size: 100, timezone: nil, cursor: nil)
       @relation = relation
       @batch_size = batch_size
+      @timezone = timezone
       @columns = if columns
         Array(columns)
       else
@@ -61,6 +62,7 @@ module JobIteration
       value = record.read_attribute(attribute.to_sym)
       case record.class.columns_hash.fetch(attribute).type
       when :datetime
+        value = value.in_time_zone(@timezone) unless @timezone.nil?
         value.strftime(SQL_DATETIME_WITH_NSEC)
       else
         value

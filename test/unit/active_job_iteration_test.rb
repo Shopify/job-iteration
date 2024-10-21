@@ -329,6 +329,15 @@ module JobIteration
       end
     end
 
+    class UnwrapppedCustomEnumerator < SingleIterationJob
+      def build_enumerator(cursor:)
+        [1, 2, 3].each
+      end
+
+      def each_iteration(*)
+      end
+    end
+
     class CustomEnumBuilder
       def initialize(*)
       end
@@ -693,6 +702,14 @@ module JobIteration
       assert_instance_of(CustomEnumBuilder, builder_instance)
     ensure
       JobIteration.enumerator_builder = original_builder
+    end
+
+    def test_unwrapped_enumerator_deprecation_warning
+      push(UnwrapppedCustomEnumerator)
+
+      assert_deprecated("Returning an unwrapped enumerator from build_enumerator", JobIteration::Deprecation) do
+        work_one_job
+      end
     end
 
     def test_respects_job_should_exit_from_parent_class

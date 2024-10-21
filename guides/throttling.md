@@ -38,6 +38,28 @@ def build_enumerator(_params, cursor:)
 end
 ```
 
+If you want to apply throttling on all jobs, you can subclass your own EnumeratorBuilder and override the default
+enumerator builder. The builder always wraps the returned enumerators from `build_enumerator`
+
+```ruby
+class MyOwnBuilder < JobIteration::EnumeratorBuilder
+  class Wrapper < Enumerator
+    class << self
+      def wrap(_builder, enum)
+        ThrottleEnumerator.new(
+          enum,
+          nil,
+          throttle_on: -> { DatabaseStatus.unhealthy? },
+          backoff: 30.seconds
+        )
+      end
+    end
+  end
+end
+
+JobIteration.enumerator_builder = MyOwnBuilder
+```
+
 Note that it's up to you to implement `DatabaseStatus.unhealthy?` that works for your database choice. At Shopify, a helper like `DatabaseStatus` checks the following MySQL metrics:
 
 * Replication lag across all regions

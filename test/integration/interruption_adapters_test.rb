@@ -37,7 +37,7 @@ class InterruptionAdaptersTest < ActiveSupport::TestCase
       require 'bundler/setup'
       require 'job-iteration'
 
-      adapters_to_exclude = [:good_job, :solid_queue] # These require a Rails app to be loaded
+      adapters_to_exclude = [:good_job, :solid_queue, :sqs] # These require a Rails app to be loaded
       adapters_to_test = JobIteration::InterruptionAdapters::BUNDLED_ADAPTERS - adapters_to_exclude
 
       adapters_to_test.each do |name|

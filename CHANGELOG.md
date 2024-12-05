@@ -2,6 +2,7 @@
 
 - [340](https://github.com/Shopify/job-iteration/pull/340) Add `cursor.iteration` instrumentation for the query to fetch the next batch of records for the Active Record cursor.
 - [513](https://github.com/Shopify/job-iteration/pull/513) Deprecate returning enumerators from `build_enumerator` that are not wrapped with `enumerator_builder.wrap`. The built-in enumerator builders now always wrap.
+- [523](https://github.com/Shopify/job-iteration/pull/523) Add interruption adapter for [aws-activejob-sqs](https://github.com/aws/aws-activejob-sqs-ruby).
 
 ## v1.7.0 (Oct 11, 2024)
 

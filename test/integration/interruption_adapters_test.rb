@@ -9,6 +9,7 @@ class InterruptionAdaptersTest < ActiveSupport::TestCase
       require 'bundler/setup'
       # Remove sidekiq, only resque will be left
       $LOAD_PATH.delete_if { |p| p =~ /sidekiq/ }
+      require 'logger'
       require 'job-iteration'
       JobIteration::InterruptionAdapters.lookup(:resque)
     RUBY
@@ -23,6 +24,7 @@ class InterruptionAdaptersTest < ActiveSupport::TestCase
       require 'bundler/setup'
       # Remove sidekiq, only resque will be left
       $LOAD_PATH.delete_if { |p| p =~ /sidekiq/ }
+      require 'logger'
       require 'job-iteration'
       JobIteration::InterruptionAdapters.lookup(:sidekiq)
     RUBY
@@ -35,6 +37,7 @@ class InterruptionAdaptersTest < ActiveSupport::TestCase
   test "loads all available interruption adapters" do
     ruby = <<~RUBY
       require 'bundler/setup'
+      require 'logger'
       require 'job-iteration'
 
       adapters_to_exclude = [:good_job, :solid_queue, :sqs] # These require a Rails app to be loaded

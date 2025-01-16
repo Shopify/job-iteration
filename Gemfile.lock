@@ -47,6 +47,7 @@ GEM
       concurrent-ruby (~> 1.0)
     json (2.7.2)
     language_server-protocol (3.17.0.3)
+    logger (1.6.5)
     method_source (1.1.0)
     minitest (5.24.0)
     mocha (2.7.1)
@@ -118,6 +119,7 @@ DEPENDENCIES
   globalid
   i18n
   job-iteration!
+  logger
   mocha
   mysql2!
   pry

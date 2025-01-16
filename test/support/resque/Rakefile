@@ -4,8 +4,8 @@
 # $LOAD_PATH.unshift File.dirname(__FILE__) unless $LOAD_PATH.include?(File.dirname(__FILE__))
 require "resque/tasks"
 
+require "logger"
 require "job-iteration"
-require "active_job"
 require "i18n"
 
 require_relative "../jobs"

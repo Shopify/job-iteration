@@ -3,13 +3,13 @@
 $LOAD_PATH.unshift(File.expand_path("../../lib", __FILE__))
 require "minitest/autorun"
 
+require "logger"
 require "job-iteration"
 require "job-iteration/test_helper"
 
 require "globalid"
 require "sidekiq"
 require "resque"
-require "active_job"
 require "active_record"
 require "pry"
 require "mocha/minitest"

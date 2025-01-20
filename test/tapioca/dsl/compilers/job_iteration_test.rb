@@ -5,6 +5,7 @@ require "test_helper"
 require "tapioca/internal"
 # JobIteration compiler requires Tapioca 0.13.0+
 return if Gem::Version.new(Tapioca::VERSION) < Gem::Version.new("0.13.0")
+
 require "tapioca/helpers/test/dsl_compiler"
 require "tapioca/dsl/compilers/job_iteration"
 

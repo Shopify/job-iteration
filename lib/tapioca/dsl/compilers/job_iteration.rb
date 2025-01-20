@@ -18,8 +18,25 @@ module Tapioca
           root.create_path(constant) do |job|
             method = constant.instance_method(:build_enumerator)
             constant_name = name_of(constant)
-            expanded_parameters = compile_method_parameters_to_rbi(method).reject do |typed_param|
+            signature = signature_of(method)
+
+            parameters = compile_method_parameters_to_rbi(method).reject do |typed_param|
               typed_param.param.name == "cursor"
+            end
+
+            if signature
+              fixed_hash_args = signature.arg_types.select { |arg_type| T::Types::FixedHash === arg_type[1] }.to_h
+              expanded_parameters = parameters.flat_map do |typed_param|
+                if (hash_type = fixed_hash_args[typed_param.param.name.to_sym])
+                  hash_type.types.map do |key, value|
+                    create_kw_param(key.to_s, type: value.to_s)
+                  end
+                else
+                  typed_param
+                end
+              end
+            else
+              expanded_parameters = parameters
             end
 
             job.create_method(
@@ -62,47 +79,6 @@ module Tapioca
             )]
           else
             parameters
-          end
-        end
-
-        def compile_method_parameters_to_rbi(method_def)
-          signature = signature_of(method_def)
-          method_def = signature.nil? ? method_def : signature.method
-          method_types = parameters_types_from_signature(method_def, signature)
-
-          parameters = T.let(method_def.parameters, T::Array[[Symbol, T.nilable(Symbol)]])
-
-          parameters.each_with_index.flat_map do |(type, name), index|
-            fallback_arg_name = "_arg#{index}"
-
-            name = name ? name.to_s : fallback_arg_name
-            name = fallback_arg_name unless valid_parameter_name?(name)
-            method_type = T.must(method_types[index])
-
-            case type
-            when :req
-              if signature && (type_value = signature.arg_types[index][1]) && type_value.is_a?(T::Types::FixedHash)
-                type_value.types.map do |key, value|
-                  create_kw_param(key.to_s, type: value.to_s)
-                end
-              else
-                create_param(name, type: method_type)
-              end
-            when :opt
-              create_opt_param(name, type: method_type, default: "T.unsafe(nil)")
-            when :rest
-              create_rest_param(name, type: method_type)
-            when :keyreq
-              create_kw_param(name, type: method_type)
-            when :key
-              create_kw_opt_param(name, type: method_type, default: "T.unsafe(nil)")
-            when :keyrest
-              create_kw_rest_param(name, type: method_type)
-            when :block
-              create_block_param(name, type: method_type)
-            else
-              raise "Unknown type `#{type}`."
-            end
           end
         end
 

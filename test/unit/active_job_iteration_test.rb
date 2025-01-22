@@ -615,6 +615,12 @@ module JobIteration
       assert_equal([params, params], ParamsIterationJob.records_performed)
     end
 
+    def test_passes_kwargs_to_jobs_without_kwargs_in_build_enumerator
+      ParamsIterationJob.perform_later(times: 3)
+      work_one_job
+      assert_equal([{ times: 3 }, { times: 3 }, { times: 3 }], ParamsIterationJob.records_performed)
+    end
+
     def test_passes_kwargs_to_each_iteration
       KwargsIterationJob.perform_later(times: 3)
       work_one_job

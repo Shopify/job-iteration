@@ -133,7 +133,15 @@ module JobIteration
 
       enumerator = nil
       ActiveSupport::Notifications.instrument("build_enumerator.iteration", instrumentation_tags) do
-        enumerator = build_enumerator(*args, **kwargs, cursor: cursor_position)
+        enumerator = if has_only_required_kwargs?(method_parameters(:build_enumerator))
+          if kwargs.empty?
+            build_enumerator(*args, cursor: cursor_position)
+          else
+            build_enumerator(*args, kwargs, cursor: cursor_position)
+          end
+        else
+          build_enumerator(*args, **kwargs, cursor: cursor_position)
+        end
       end
 
       unless enumerator
@@ -334,6 +342,11 @@ module JobIteration
         return true if [:keyreq, :key].include?(parameter_type)
       end
       false
+    end
+
+    def has_only_required_kwargs?(parameters)
+      # puts "parameters: #{parameters.inspect}"
+      !parameters.any? { |parameter_type, parameter_name| parameter_type != :req && parameter_name != :cursor }
     end
 
     SIMPLE_SERIALIZABLE_CLASSES = [String, Integer, Float, NilClass, TrueClass, FalseClass].freeze

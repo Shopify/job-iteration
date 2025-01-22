@@ -39,12 +39,12 @@ module JobIteration
     end
 
     class MultiArgumentIterationJob < SimpleIterationJob
-      def build_enumerator(_one_arg, _another_arg, cursor:)
+      def build_enumerator(_one_arg, _another_arg, keyword_arg:, cursor:)
         enumerator_builder.build_times_enumerator(2, cursor: cursor)
       end
 
-      def each_iteration(item, one_arg, another_arg)
-        self.class.records_performed << [item, one_arg, another_arg]
+      def each_iteration(item, one_arg, another_arg, keyword_arg:)
+        self.class.records_performed << [item, one_arg, another_arg, keyword_arg]
       end
     end
 
@@ -55,6 +55,16 @@ module JobIteration
 
       def each_iteration(_record, params)
         self.class.records_performed << params
+      end
+    end
+
+    class KwargsIterationJob < SimpleIterationJob
+      def build_enumerator(times:, cursor:)
+        enumerator_builder.build_times_enumerator(times, cursor: cursor)
+      end
+
+      def each_iteration(_record, times:)
+        self.class.records_performed << { times: times }
       end
     end
 
@@ -575,25 +585,25 @@ module JobIteration
     end
 
     def test_supports_multiple_job_arguments_and_global_id
-      MultiArgumentIterationJob.perform_later(Product.first, nil)
+      MultiArgumentIterationJob.perform_later(Product.first, nil, keyword_arg: "d")
 
       work_one_job
 
       expected = [
-        [0, Product.first, nil],
-        [1, Product.first, nil],
+        [0, Product.first, nil, "d"],
+        [1, Product.first, nil, "d"],
       ]
       assert_equal(expected, MultiArgumentIterationJob.records_performed)
     end
 
     def test_supports_multiple_job_arguments
-      MultiArgumentIterationJob.perform_later(2, ["a", "b", "c"])
+      MultiArgumentIterationJob.perform_later(2, ["a", "b", "c"], keyword_arg: "d")
 
       work_one_job
 
       expected = [
-        [0, 2, ["a", "b", "c"]],
-        [1, 2, ["a", "b", "c"]],
+        [0, 2, ["a", "b", "c"], "d"],
+        [1, 2, ["a", "b", "c"], "d"],
       ]
       assert_equal(expected, MultiArgumentIterationJob.records_performed)
     end
@@ -603,6 +613,12 @@ module JobIteration
       push(ParamsIterationJob, params)
       work_one_job
       assert_equal([params, params], ParamsIterationJob.records_performed)
+    end
+
+    def test_passes_kwargs_to_each_iteration
+      KwargsIterationJob.perform_later(times: 3)
+      work_one_job
+      assert_equal([{ times: 3 }, { times: 3 }, { times: 3 }], KwargsIterationJob.records_performed)
     end
 
     def test_passes_params_to_each_iteration_without_extra_information_on_interruption

@@ -107,8 +107,8 @@ module JobIteration
       self.total_time = Float(job_data["total_time"] || 0.0)
     end
 
-    def perform(*params) # @private
-      interruptible_perform(*params)
+    def perform(*args, **kwargs) # @private
+      interruptible_perform(*args, **kwargs)
 
       nil
     end
@@ -128,12 +128,12 @@ module JobIteration
       JobIteration.enumerator_builder.new(self)
     end
 
-    def interruptible_perform(*arguments)
+    def interruptible_perform(*args, **kwargs)
       self.start_time = Time.now.utc
 
       enumerator = nil
       ActiveSupport::Notifications.instrument("build_enumerator.iteration", instrumentation_tags) do
-        enumerator = build_enumerator(*arguments, cursor: cursor_position)
+        enumerator = build_enumerator(*args, **kwargs, cursor: cursor_position)
       end
 
       unless enumerator
@@ -153,7 +153,7 @@ module JobIteration
       end
 
       completed = catch(:abort) do
-        iterate_with_enumerator(enumerator, arguments)
+        iterate_with_enumerator(enumerator, args, kwargs)
       end
 
       run_callbacks(:shutdown)
@@ -170,8 +170,9 @@ module JobIteration
       end
     end
 
-    def iterate_with_enumerator(enumerator, arguments)
-      arguments = arguments.dup.freeze
+    def iterate_with_enumerator(enumerator, args, kwargs)
+      args = args.dup.freeze
+      kwargs = kwargs.dup.freeze
       found_record = false
       @needs_reenqueue = false
 
@@ -183,7 +184,7 @@ module JobIteration
         ActiveSupport::Notifications.instrument("each_iteration.iteration", tags) do
           found_record = true
           run_callbacks(:iterate) do
-            each_iteration(object_from_enumerator, *arguments)
+            each_iteration(object_from_enumerator, *args, **kwargs)
           end
           self.cursor_position = cursor_from_enumerator
         end

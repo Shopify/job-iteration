@@ -78,7 +78,7 @@ module Tapioca
                 def perform_later(user_id); end
             <% end %>
 
-                sig { params(user_id: T.untyped).void }
+                sig { params(user_id: T.untyped).returns(T.any(NilClass, Exception)) }
                 def perform_now(user_id); end
               end
             end
@@ -113,7 +113,7 @@ module Tapioca
                 def perform_later(user_id:, profile_id:); end
             <% end %>
 
-                sig { params(user_id: T.untyped, profile_id: T.untyped).void }
+                sig { params(user_id: T.untyped, profile_id: T.untyped).returns(T.any(NilClass, Exception)) }
                 def perform_now(user_id:, profile_id:); end
               end
             end
@@ -150,7 +150,7 @@ module Tapioca
                 def perform_later(user_id); end
             <% end %>
 
-                sig { params(user_id: ::Integer).void }
+                sig { params(user_id: ::Integer).returns(T.any(NilClass, Exception)) }
                 def perform_now(user_id); end
               end
             end
@@ -187,7 +187,7 @@ module Tapioca
                 def perform_later(user_id:, profile_id:); end
             <% end %>
 
-                sig { params(user_id: ::Integer, profile_id: ::Integer).void }
+                sig { params(user_id: ::Integer, profile_id: ::Integer).returns(T.any(NilClass, Exception)) }
                 def perform_now(user_id:, profile_id:); end
               end
             end
@@ -224,7 +224,7 @@ module Tapioca
                 def perform_later(user_id, name); end
             <% end %>
 
-                sig { params(user_id: ::Integer, name: ::String).void }
+                sig { params(user_id: ::Integer, name: ::String).returns(T.any(NilClass, Exception)) }
                 def perform_now(user_id, name); end
               end
             end
@@ -263,7 +263,7 @@ module Tapioca
                 def perform_later(user_id:, name:); end
             <% end %>
 
-                sig { params(user_id: ::Integer, name: ::String).void }
+                sig { params(user_id: ::Integer, name: ::String).returns(T.any(NilClass, Exception)) }
                 def perform_now(user_id:, name:); end
               end
             end
@@ -308,7 +308,7 @@ module Tapioca
                 def perform_later(shop_id:, resource_types:, locale:, metadata:); end
             <% end %>
 
-                sig { params(shop_id: ::Integer, resource_types: T::Array[::ResourceType], locale: ::Locale, metadata: T.nilable(::String)).void }
+                sig { params(shop_id: ::Integer, resource_types: T::Array[::ResourceType], locale: ::Locale, metadata: T.nilable(::String)).returns(T.any(NilClass, Exception)) }
                 def perform_now(shop_id:, resource_types:, locale:, metadata:); end
               end
             end
@@ -356,7 +356,7 @@ module Tapioca
                 def perform_later(shop_ids:, profile_ids:, extension_ids:, foo:, bar:); end
             <% end %>
 
-                sig { params(shop_ids: T.any(::Integer, T::Array[::Integer]), profile_ids: T.any(::Integer, T::Array[::Integer]), extension_ids: T.any(::Integer, T::Array[::Integer]), foo: ::Symbol, bar: ::String).void }
+                sig { params(shop_ids: T.any(::Integer, T::Array[::Integer]), profile_ids: T.any(::Integer, T::Array[::Integer]), extension_ids: T.any(::Integer, T::Array[::Integer]), foo: ::Symbol, bar: ::String).returns(T.any(NilClass, Exception)) }
                 def perform_now(shop_ids:, profile_ids:, extension_ids:, foo:, bar:); end
               end
             end

@@ -49,7 +49,7 @@ module Tapioca
             job.create_method(
               "perform_now",
               parameters: expanded_parameters,
-              return_type: "void",
+              return_type: "T.any(NilClass, Exception)",
               class_method: true,
             )
 

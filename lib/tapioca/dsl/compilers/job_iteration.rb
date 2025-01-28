@@ -10,6 +10,15 @@ module Tapioca
         extend T::Sig
 
         ConstantType = type_member { { fixed: T.class_of(::JobIteration::Iteration) } }
+        PARAM_TYPES_IN_ORDER = [
+          RBI::Param,
+          RBI::OptParam,
+          RBI::RestParam,
+          RBI::KwParam,
+          RBI::KwOptParam,
+          RBI::KwRestParam,
+          RBI::BlockParam,
+        ].freeze
 
         sig { override.void }
         def decorate
@@ -29,7 +38,11 @@ module Tapioca
               expanded_parameters = parameters.flat_map do |typed_param|
                 if (hash_type = fixed_hash_args[typed_param.param.name.to_sym])
                   hash_type.types.map do |key, value|
-                    create_kw_param(key.to_s, type: value.to_s)
+                    if value.name.start_with?("T.nilable")
+                      create_kw_opt_param(key.to_s, type: value.to_s, default: "nil")
+                    else
+                      create_kw_param(key.to_s, type: value.to_s)
+                    end
                   end
                 else
                   typed_param
@@ -38,6 +51,9 @@ module Tapioca
             else
               expanded_parameters = parameters
             end
+
+            # Sorbet expects optional keyword arguments to be after required keyword arguments.
+            expanded_parameters.sort_by! { |typed_param| PARAM_TYPES_IN_ORDER.index(typed_param.param.class) }
 
             job.create_method(
               "perform_later",

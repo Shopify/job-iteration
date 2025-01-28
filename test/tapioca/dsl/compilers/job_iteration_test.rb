@@ -271,6 +271,45 @@ module Tapioca
           assert_equal(expected, rbi_for(:NotifyJob))
         end
 
+        def test_generates_nil_default_value_for_nilable_parameters
+          add_ruby_file("job.rb", <<~RUBY)
+            class NotifyJob < ActiveJob::Base
+              include JobIteration::Iteration
+
+              Params = T.type_alias { { user_id: T.nilable(Integer), name: String } }
+
+              extend T::Sig
+              sig { params(params: Params, cursor: T.untyped).returns(T::Array[T.untyped]) }
+              def build_enumerator(params, cursor:)
+                # ...
+              end
+            end
+          RUBY
+
+          expected = template(<<~RBI)
+            # typed: strong
+
+            class NotifyJob
+              sig { params(name: ::String, user_id: T.nilable(::Integer)).void }
+              def perform(name:, user_id: nil); end
+
+              class << self
+            <% if rails_version(">= 7.0") %>
+                sig { params(name: ::String, user_id: T.nilable(::Integer), block: T.nilable(T.proc.params(job: NotifyJob).void)).returns(T.any(NotifyJob, FalseClass)) }
+                def perform_later(name:, user_id: nil, &block); end
+            <% else %>
+                sig { params(name: ::String, user_id: T.nilable(::Integer)).returns(T.any(NotifyJob, FalseClass)) }
+                def perform_later(name:, user_id: nil); end
+            <% end %>
+
+                sig { params(name: ::String, user_id: T.nilable(::Integer)).returns(T.any(NilClass, Exception)) }
+                def perform_now(name:, user_id: nil); end
+              end
+            end
+          RBI
+          assert_equal(expected, rbi_for(:NotifyJob))
+        end
+
         def test_generates_correct_rbi_file_for_job_with_build_enumerator_method_with_nested_hash_parameter
           add_ruby_file("job.rb", <<~RUBY)
             class ResourceType; end
@@ -297,19 +336,19 @@ module Tapioca
 
             class NotifyJob
               sig { params(shop_id: ::Integer, resource_types: T::Array[::ResourceType], locale: ::Locale, metadata: T.nilable(::String)).void }
-              def perform(shop_id:, resource_types:, locale:, metadata:); end
+              def perform(shop_id:, resource_types:, locale:, metadata: nil); end
 
               class << self
             <% if rails_version(">= 7.0") %>
                 sig { params(shop_id: ::Integer, resource_types: T::Array[::ResourceType], locale: ::Locale, metadata: T.nilable(::String), block: T.nilable(T.proc.params(job: NotifyJob).void)).returns(T.any(NotifyJob, FalseClass)) }
-                def perform_later(shop_id:, resource_types:, locale:, metadata:, &block); end
+                def perform_later(shop_id:, resource_types:, locale:, metadata: nil, &block); end
             <% else %>
                 sig { params(shop_id: ::Integer, resource_types: T::Array[::ResourceType], locale: ::Locale, metadata: T.nilable(::String)).returns(T.any(NotifyJob, FalseClass)) }
-                def perform_later(shop_id:, resource_types:, locale:, metadata:); end
+                def perform_later(shop_id:, resource_types:, locale:, metadata: nil); end
             <% end %>
 
                 sig { params(shop_id: ::Integer, resource_types: T::Array[::ResourceType], locale: ::Locale, metadata: T.nilable(::String)).returns(T.any(NilClass, Exception)) }
-                def perform_now(shop_id:, resource_types:, locale:, metadata:); end
+                def perform_now(shop_id:, resource_types:, locale:, metadata: nil); end
               end
             end
           RBI

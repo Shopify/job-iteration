@@ -12,6 +12,12 @@ nil
 
 nil
 
+## v1.9.0 (Feb 3, 2024)
+
+### Features
+
+- [533](https://github.com/Shopify/job-iteration/pull/533) Added a custom compiler for [Tapioca](https://github.com/Shopify/tapioca) that generates Sorbet types for `MyJob.perform_later` if `MyJob` includes `JobIteration::Iteration` and has defined a type for `build_enumerator`.
+
 ## v1.8.0 (Dec 10, 2024)
 
 ### Changes

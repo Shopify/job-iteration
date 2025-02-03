@@ -11,7 +11,7 @@ module JobIteration
   class EnumeratorBuilder
     extend Forwardable
 
-    # These wrappers ensure we have a custom type that we can assert on in
+    # Test... These wrappers ensure we have a custom type that we can assert on in
     # Iteration. It's useful that the `wrapper` passed to EnumeratorBuilder in
     # `enumerator_builder` is _always_ the type that is returned from
     # `build_enumerator`. This prevents people from implementing custom

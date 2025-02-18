@@ -3,6 +3,7 @@
 require "test_helper"
 
 require "sidekiq/api"
+require "sidekiq/rails"
 require_relative "../support/jobs"
 require_relative "integration_behaviour"
 

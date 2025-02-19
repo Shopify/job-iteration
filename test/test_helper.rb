@@ -14,8 +14,6 @@ require "active_record"
 require "pry"
 require "mocha/minitest"
 
-require_relative "support/active_job_5_2_queue_adapters_test_adapter_compatibility_extension"
-
 GlobalID.app = "iteration"
 ActiveRecord::Base.include(GlobalID::Identification) # https://github.com/rails/globalid/blob/main/lib/global_id/railtie.rb
 

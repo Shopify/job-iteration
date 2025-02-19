@@ -33,7 +33,8 @@ jobs:
             rails: "6.1"
           - ruby: "3.4"
             rails: "6.1"
-
+          - ruby: "3.4"
+            rails: "7.0"
         include:
           - ruby: head
             rails: "edge"

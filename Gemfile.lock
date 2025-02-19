@@ -14,6 +14,22 @@ PATH
 GEM
   remote: https://rubygems.org/
   specs:
+    actionpack (8.0.1)
+      actionview (= 8.0.1)
+      activesupport (= 8.0.1)
+      nokogiri (>= 1.8.5)
+      rack (>= 2.2.4)
+      rack-session (>= 1.0.1)
+      rack-test (>= 0.6.3)
+      rails-dom-testing (~> 2.2)
+      rails-html-sanitizer (~> 1.6)
+      useragent (~> 0.16)
+    actionview (8.0.1)
+      activesupport (= 8.0.1)
+      builder (~> 3.1)
+      erubi (~> 1.11)
+      rails-dom-testing (~> 2.2)
+      rails-html-sanitizer (~> 1.6)
     activejob (8.0.1)
       activesupport (= 8.0.1)
       globalid (>= 0.3.6)
@@ -40,19 +56,30 @@ GEM
     base64 (0.2.0)
     benchmark (0.4.0)
     bigdecimal (3.1.9)
+    builder (3.3.0)
     coderay (1.1.3)
     concurrent-ruby (1.3.5)
     connection_pool (2.5.0)
+    crass (1.0.6)
     csv (3.3.2)
+    date (3.4.1)
     drb (2.2.1)
     erubi (1.13.1)
     globalid (1.2.1)
       activesupport (>= 6.1)
     i18n (1.14.7)
       concurrent-ruby (~> 1.0)
+    io-console (0.8.0)
+    irb (1.15.1)
+      pp (>= 0.6.0)
+      rdoc (>= 4.0.0)
+      reline (>= 0.4.2)
     json (2.9.1)
     language_server-protocol (3.17.0.4)
     logger (1.6.5)
+    loofah (2.24.0)
+      crass (~> 1.0.2)
+      nokogiri (>= 1.12.0)
     method_source (1.1.0)
     minitest (5.25.4)
     mocha (2.7.1)
@@ -62,14 +89,26 @@ GEM
     mustermann (3.0.3)
       ruby2_keywords (~> 0.0.1)
     netrc (0.11.0)
+    nokogiri (1.18.2-arm64-darwin)
+      racc (~> 1.4)
+    nokogiri (1.18.2-x86_64-darwin)
+      racc (~> 1.4)
+    nokogiri (1.18.2-x86_64-linux-gnu)
+      racc (~> 1.4)
     parallel (1.26.3)
     parser (3.3.7.0)
       ast (~> 2.4.1)
       racc
+    pp (0.6.2)
+      prettyprint
+    prettyprint (0.2.0)
     prism (1.3.0)
     pry (0.15.2)
       coderay (~> 1.1)
       method_source (~> 1.0)
+    psych (5.2.3)
+      date
+      stringio
     racc (1.8.1)
     rack (3.1.8)
     rack-protection (4.1.1)
@@ -79,11 +118,32 @@ GEM
     rack-session (2.1.0)
       base64 (>= 0.1.0)
       rack (>= 3.0.0)
+    rack-test (2.2.0)
+      rack (>= 1.3)
+    rackup (2.2.1)
+      rack (>= 3)
+    rails-dom-testing (2.2.0)
+      activesupport (>= 5.0.0)
+      minitest
+      nokogiri (>= 1.6)
+    rails-html-sanitizer (1.6.2)
+      loofah (~> 2.21)
+      nokogiri (>= 1.15.7, != 1.16.7, != 1.16.6, != 1.16.5, != 1.16.4, != 1.16.3, != 1.16.2, != 1.16.1, != 1.16.0.rc1, != 1.16.0)
+    railties (8.0.1)
+      actionpack (= 8.0.1)
+      activesupport (= 8.0.1)
+      irb (~> 1.13)
+      rackup (>= 1.0.0)
+      rake (>= 12.2)
+      thor (~> 1.0, >= 1.2.2)
+      zeitwerk (~> 2.6)
     rainbow (3.1.1)
     rake (13.2.1)
     rbi (0.2.4)
       prism (~> 1.0)
       sorbet-runtime (>= 0.5.9204)
+    rdoc (6.12.0)
+      psych (>= 4.0.0)
     redis (5.3.0)
       redis-client (>= 0.22.0)
     redis-client (0.23.2)
@@ -91,6 +151,8 @@ GEM
     redis-namespace (1.11.0)
       redis (>= 4)
     regexp_parser (2.10.0)
+    reline (0.6.0)
+      io-console (~> 0.5)
     resque (2.7.0)
       mono_logger (~> 1)
       multi_json (~> 1.0)
@@ -113,7 +175,7 @@ GEM
     ruby-progressbar (1.13.0)
     ruby2_keywords (0.0.5)
     securerandom (0.4.1)
-    sidekiq (7.3.8)
+    sidekiq (7.3.9)
       base64
       connection_pool (>= 2.3.0)
       logger
@@ -140,6 +202,7 @@ GEM
       rbi (>= 0.2.3)
       sorbet-static-and-runtime (>= 0.5.10187)
       thor (>= 0.19.2)
+    stringio (3.1.3)
     tapioca (0.16.8)
       benchmark
       bundler (>= 2.2.25)
@@ -159,10 +222,12 @@ GEM
       unicode-emoji (~> 4.0, >= 4.0.4)
     unicode-emoji (4.0.4)
     uri (1.0.2)
+    useragent (0.16.11)
     yard (0.9.37)
     yard-sorbet (0.9.0)
       sorbet-runtime
       yard
+    zeitwerk (2.7.2)
 
 PLATFORMS
   arm64-darwin
@@ -179,6 +244,7 @@ DEPENDENCIES
   mocha
   mysql2!
   pry
+  railties
   rake
   redis
   resque

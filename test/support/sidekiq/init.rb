@@ -4,6 +4,7 @@ require "job-iteration"
 
 require "active_job"
 require "i18n"
+require "sidekiq/rails"
 
 require_relative "../jobs"
 

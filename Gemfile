@@ -16,10 +16,12 @@ if defined?(@rails_gems_requirements) && @rails_gems_requirements
   [
     "activejob",
     "activerecord",
+    "railties",
   ].each { |name| gem name, @rails_gems_requirements }
 else
   # gem "activejob" # Set in gemspec
   gem "activerecord"
+  gem "railties"
 end
 
 gem "mysql2", github: "brianmario/mysql2"

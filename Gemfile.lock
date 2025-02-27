@@ -63,6 +63,8 @@ GEM
     crass (1.0.6)
     csv (3.3.2)
     date (3.4.1)
+    delayed_job (4.1.13)
+      activesupport (>= 3.0, < 9.0)
     drb (2.2.1)
     erubi (1.13.1)
     globalid (1.2.1)
@@ -239,6 +241,7 @@ PLATFORMS
 DEPENDENCIES
   activerecord
   csv
+  delayed_job
   globalid
   i18n
   job-iteration!

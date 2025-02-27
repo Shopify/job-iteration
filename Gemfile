@@ -10,6 +10,7 @@ gemspec
 # for integration testing
 gem "sidekiq"
 gem "resque"
+gem "delayed_job"
 
 if defined?(@rails_gems_requirements) && @rails_gems_requirements
   # We avoid the `gem "..."` syntax here so Dependabot doesn't try to update these gems.

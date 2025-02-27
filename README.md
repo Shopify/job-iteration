@@ -151,7 +151,25 @@ class NestedIterationJob < ApplicationJob
 end
 ```
 
-Iteration hooks into Sidekiq and Resque out of the box to support graceful interruption. No extra configuration is required.
+Iteration hooks into most popular queue adapters out of the box to support graceful interruption. No extra configuration is required.
+
+## Supported dependencies
+
+Job-iteration currently supports the following queue adapters (in order of implementation):
+
+- [Resque](https://github.com/resque/resque)
+- [Sidekiq](https://github.com/sidekiq/sidekiq/)
+- [GoodJob](https://github.com/bensheldon/good_job)
+- [Solid Queue](https://github.com/rails/solid_queue).
+- [Amazon SQS](https://github.com/aws/aws-activejob-sqs-ruby)
+- [Delayed::Job](https://github.com/collectiveidea/delayed_job)
+
+It supports the following platforms:
+
+- Ruby 3.0 and later
+- Rails 6.1 and later
+
+Support for older platforms that have reached end of life may occasionally be dropped if maintaining backwards compatibility is cumbersome.
 
 ## Guides
 

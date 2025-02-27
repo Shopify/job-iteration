@@ -10,7 +10,7 @@ nil
 
 ### Features
 
-nil
+- [547](https://github.com/Shopify/job-iteration/pull/547) Add interruption adapter for [DelayedJob](https://github.com/collectiveidea/delayed_job).
 
 ### Bug fixes
 

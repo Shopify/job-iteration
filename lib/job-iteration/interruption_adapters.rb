@@ -4,7 +4,7 @@ require_relative "interruption_adapters/null_adapter"
 
 module JobIteration
   module InterruptionAdapters
-    BUNDLED_ADAPTERS = [:good_job, :resque, :sidekiq, :solid_queue, :sqs].freeze # @api private
+    BUNDLED_ADAPTERS = [:delayed_job, :good_job, :resque, :sidekiq, :solid_queue, :sqs].freeze # @api private
 
     class << self
       # Returns adapter for specified name.

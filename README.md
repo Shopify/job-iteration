@@ -160,7 +160,7 @@ Job-iteration currently supports the following queue adapters (in order of imple
 - [Resque](https://github.com/resque/resque)
 - [Sidekiq](https://github.com/sidekiq/sidekiq/)
 - [GoodJob](https://github.com/bensheldon/good_job)
-- [Solid Queue](https://github.com/rails/solid_queue).
+- [Solid Queue](https://github.com/rails/solid_queue)
 - [Amazon SQS](https://github.com/aws/aws-activejob-sqs-ruby)
 - [Delayed::Job](https://github.com/collectiveidea/delayed_job)
 

@@ -55,10 +55,18 @@ module Tapioca
             # Sorbet expects optional keyword arguments to be after required keyword arguments.
             expanded_parameters.sort_by! { |typed_param| PARAM_TYPES_IN_ORDER.index(typed_param.param.class) }
 
+            number_of_generic_type_members = Tapioca::Runtime::GenericTypeRegistry.lookup_type_variables(constant)&.size
+
+            returned_job_class = if number_of_generic_type_members&.nonzero?
+              "#{constant_name}[#{number_of_generic_type_members.times.map { "T.untyped" }.join(", ")}]"
+            else
+              constant_name
+            end
+
             job.create_method(
               "perform_later",
-              parameters: perform_later_parameters(expanded_parameters, constant_name),
-              return_type: "T.any(#{constant_name}, FalseClass)",
+              parameters: perform_later_parameters(expanded_parameters, returned_job_class),
+              return_type: "T.any(#{returned_job_class}, FalseClass)",
               class_method: true,
             )
 
@@ -83,15 +91,15 @@ module Tapioca
         sig do
           params(
             parameters: T::Array[RBI::TypedParam],
-            constant_name: T.nilable(String),
+            returned_job_class: String,
           ).returns(T::Array[RBI::TypedParam])
         end
-        def perform_later_parameters(parameters, constant_name)
+        def perform_later_parameters(parameters, returned_job_class)
           if ::Gem::Requirement.new(">= 7.0").satisfied_by?(::ActiveJob.gem_version)
             parameters.reject! { |typed_param| RBI::BlockParam === typed_param.param }
             parameters + [create_block_param(
               "block",
-              type: "T.nilable(T.proc.params(job: #{constant_name}).void)",
+              type: "T.nilable(T.proc.params(job: #{returned_job_class}).void)",
             )]
           else
             parameters

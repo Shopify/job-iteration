@@ -402,6 +402,87 @@ module Tapioca
           RBI
           assert_equal(expected, rbi_for(:NotifyJob))
         end
+
+        def test_generates_correct_rbi_file_for_generic_jobs_with_one_generic_variable
+          add_ruby_file("job.rb", <<~RUBY)
+            class GenericJob < ActiveJob::Base
+              include JobIteration::Iteration
+              extend T::Sig
+              extend T::Generic
+
+              Elem = type_member
+
+              sig { params(val: Elem, cursor: T.untyped).returns(T::Array[T.untyped]) }
+              def build_enumerator(val:, cursor:)
+                # ...
+              end
+            end
+          RUBY
+
+          expected = template(<<~RBI)
+            # typed: strong
+
+            class GenericJob
+              sig { params(val: Elem).void }
+              def perform(val:); end
+
+              class << self
+            <% if rails_version(">= 7.0") %>
+                sig { params(val: Elem, block: T.nilable(T.proc.params(job: GenericJob[T.untyped]).void)).returns(T.any(GenericJob[T.untyped], FalseClass)) }
+                def perform_later(val:, &block); end
+            <% else %>
+                sig { params(val: Elem).returns(T.any(GenericJob[T.untyped], FalseClass)) }
+                def perform_later(val:); end
+            <% end %>
+
+                sig { params(val: Elem).returns(T.any(NilClass, Exception)) }
+                def perform_now(val:); end
+              end
+            end
+          RBI
+          assert_equal(expected, rbi_for(:GenericJob))
+        end
+
+        def test_generates_correct_rbi_file_for_generic_jobs_with_multiple_generic_variables
+          add_ruby_file("job.rb", <<~RUBY)
+            class GenericJob < ActiveJob::Base
+              include JobIteration::Iteration
+              extend T::Sig
+              extend T::Generic
+
+              Elem = type_member
+              SomeValue = type_member
+
+              sig { params(val: Elem, some_value: SomeValue, cursor: T.untyped).returns(T::Array[T.untyped]) }
+              def build_enumerator(val:, some_value:, cursor:)
+                # ...
+              end
+            end
+          RUBY
+
+          expected = template(<<~RBI)
+            # typed: strong
+
+            class GenericJob
+              sig { params(val: Elem, some_value: SomeValue).void }
+              def perform(val:, some_value:); end
+
+              class << self
+            <% if rails_version(">= 7.0") %>
+                sig { params(val: Elem, some_value: SomeValue, block: T.nilable(T.proc.params(job: GenericJob[T.untyped, T.untyped]).void)).returns(T.any(GenericJob[T.untyped, T.untyped], FalseClass)) }
+                def perform_later(val:, some_value:, &block); end
+            <% else %>
+                sig { params(val: Elem, some_value: SomeValue).returns(T.any(GenericJob[T.untyped, T.untyped], FalseClass)) }
+                def perform_later(val:, some_value:); end
+            <% end %>
+
+                sig { params(val: Elem, some_value: SomeValue).returns(T.any(NilClass, Exception)) }
+                def perform_now(val:, some_value:); end
+              end
+            end
+          RBI
+          assert_equal(expected, rbi_for(:GenericJob))
+        end
       end
     end
   end

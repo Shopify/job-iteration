@@ -2,7 +2,7 @@
 
 ### Breaking Changes
 
-- [544](https://github.com/Shopify/job-iteration/pull/544) - Drop support for Ruby 2.6 and 2.7, and Rails 5.2 and 6.0. The minimum supported Ruby version is now 3.0, and the minimum supported Rails version is 6.1.
+nil
 
 ### Changes
 
@@ -10,13 +10,24 @@ nil
 
 ### Features
 
-- [547](https://github.com/Shopify/job-iteration/pull/547) Add interruption adapter for [DelayedJob](https://github.com/collectiveidea/delayed_job).
+nil
 
 ### Bug fixes
 
 nil
 
-## v1.9.0 (Feb 3, 2024)
+## v1.10.0 (Mar 20, 2025)
+
+### Breaking Changes
+
+- [544](https://github.com/Shopify/job-iteration/pull/544) - Drop support for Ruby 2.6 and 2.7, and Rails 5.2 and 6.0. The minimum supported Ruby version is now 3.0, and the minimum supported Rails version is 6.1.
+
+### Features
+
+- [547](https://github.com/Shopify/job-iteration/pull/547) Add interruption adapter for [DelayedJob](https://github.com/collectiveidea/delayed_job).
+- [556](https://github.com/Shopify/job-iteration/pull/556) Add support for generic job classes in the Tapioca Sorbet compiler.
+
+## v1.9.0 (Feb 3, 2025)
 
 ### Features
 

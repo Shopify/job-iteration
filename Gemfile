@@ -8,7 +8,7 @@ git_source(:github) { |repo_name| "https://github.com/#{repo_name}" }
 gemspec
 
 # for integration testing
-gem "sidekiq"
+gem "sidekiq", "< 8.0.2"
 gem "resque"
 gem "delayed_job"
 

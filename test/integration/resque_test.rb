@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "test_helper"
+require "open3"
 
 require_relative "../support/jobs"
 require_relative "integration_behaviour"
@@ -15,18 +16,15 @@ class ResqueIntegrationTest < ActiveSupport::TestCase
   end
 
   def start_worker_and_wait
-    pid = nil
     Dir.chdir("test/support/resque") do
-      pid = spawn(
+      _stdout, stderr, status = Open3.capture3(
         resque_env,
         "bundle exec rake resque:work",
-        in: "/dev/null",
-        out: "/dev/null",
-        err: "/dev/null",
       )
+
+      assert_empty(stderr, "Resque worker failed with:\n#{stderr}")
+      assert_equal(status.exitstatus, 0)
     end
-  ensure
-    Process.wait(pid) if pid
   end
 
   def resque_env

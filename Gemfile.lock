@@ -91,6 +91,7 @@ GEM
     multi_json (1.15.0)
     mustermann (3.0.3)
       ruby2_keywords (~> 0.0.1)
+    mutex_m (0.3.0)
     netrc (0.11.0)
     nokogiri (1.18.8-arm64-darwin)
       racc (~> 1.4)
@@ -253,6 +254,7 @@ DEPENDENCIES
   job-iteration!
   logger
   mocha
+  mutex_m
   mysql2!
   pry
   railties

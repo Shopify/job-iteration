@@ -186,7 +186,7 @@ GEM
     ruby-progressbar (1.13.0)
     ruby2_keywords (0.0.5)
     securerandom (0.4.1)
-    sidekiq (8.0.1)
+    sidekiq (8.0.4)
       connection_pool (>= 2.5.0)
       json (>= 2.9.0)
       logger (>= 1.6.2)
@@ -263,7 +263,7 @@ DEPENDENCIES
   redis
   resque
   rubocop-shopify
-  sidekiq (< 8.0.2)
+  sidekiq
   sorbet-runtime
   tapioca
   yard

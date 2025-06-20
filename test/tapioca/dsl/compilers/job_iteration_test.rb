@@ -86,6 +86,41 @@ module Tapioca
           assert_equal(expected, rbi_for(:NotifyJob))
         end
 
+        def test_generates_correct_rbi_file_for_job_with_optional_parameter
+          add_ruby_file("job.rb", <<~RUBY)
+            class NotifyJob < ActiveJob::Base
+              include JobIteration::Iteration
+
+              def build_enumerator(user_id, foo_id = nil, cursor:)
+                # ...
+              end
+            end
+          RUBY
+
+          expected = template(<<~RBI)
+            # typed: strong
+
+            class NotifyJob
+              sig { params(user_id: T.untyped, foo_id: T.untyped).void }
+              def perform(user_id, foo_id = T.unsafe(nil)); end
+
+              class << self
+            <% if rails_version(">= 7.0") %>
+                sig { params(user_id: T.untyped, foo_id: T.untyped, block: T.nilable(T.proc.params(job: NotifyJob).void)).returns(T.any(NotifyJob, FalseClass)) }
+                def perform_later(user_id, foo_id = T.unsafe(nil), &block); end
+            <% else %>
+                sig { params(user_id: T.untyped, foo_id: T.untyped).returns(T.any(NotifyJob, FalseClass)) }
+                def perform_later(user_id, foo_id = T.unsafe(nil)); end
+            <% end %>
+
+                sig { params(user_id: T.untyped, foo_id: T.untyped).returns(T.any(NilClass, Exception)) }
+                def perform_now(user_id, foo_id = T.unsafe(nil)); end
+              end
+            end
+          RBI
+          assert_equal(expected, rbi_for(:NotifyJob))
+        end
+
         def test_generates_correct_rbi_file_for_job_with_build_enumerator_method_with_keyword_parameter
           add_ruby_file("job.rb", <<~RUBY)
             class NotifyJob < ActiveJob::Base
@@ -115,6 +150,41 @@ module Tapioca
 
                 sig { params(user_id: T.untyped, profile_id: T.untyped).returns(T.any(NilClass, Exception)) }
                 def perform_now(user_id:, profile_id:); end
+              end
+            end
+          RBI
+          assert_equal(expected, rbi_for(:NotifyJob))
+        end
+
+        def test_generates_correct_rbi_file_for_job_with_build_enumerator_method_with_optional_keyword_parameter
+          add_ruby_file("job.rb", <<~RUBY)
+            class NotifyJob < ActiveJob::Base
+              include JobIteration::Iteration
+
+              def build_enumerator(user_id:, profile_id: nil, cursor:)
+                # ...
+              end
+            end
+          RUBY
+
+          expected = template(<<~RBI)
+            # typed: strong
+
+            class NotifyJob
+              sig { params(user_id: T.untyped, profile_id: T.untyped).void }
+              def perform(user_id:, profile_id: T.unsafe(nil)); end
+
+              class << self
+            <% if rails_version(">= 7.0") %>
+                sig { params(user_id: T.untyped, profile_id: T.untyped, block: T.nilable(T.proc.params(job: NotifyJob).void)).returns(T.any(NotifyJob, FalseClass)) }
+                def perform_later(user_id:, profile_id: T.unsafe(nil), &block); end
+            <% else %>
+                sig { params(user_id: T.untyped, profile_id: T.untyped).returns(T.any(NotifyJob, FalseClass)) }
+                def perform_later(user_id:, profile_id: T.unsafe(nil)); end
+            <% end %>
+
+                sig { params(user_id: T.untyped, profile_id: T.untyped).returns(T.any(NilClass, Exception)) }
+                def perform_now(user_id:, profile_id: T.unsafe(nil)); end
               end
             end
           RBI
@@ -158,6 +228,43 @@ module Tapioca
           assert_equal(expected, rbi_for(:NotifyJob))
         end
 
+        def test_generates_correct_rbi_file_for_job_with_optional_parameter_and_signature
+          add_ruby_file("job.rb", <<~RUBY)
+            class NotifyJob < ActiveJob::Base
+              include JobIteration::Iteration
+
+              extend T::Sig
+              sig { params(user_id: Integer, foo_id: T.nilable(String), cursor: T.untyped).returns(T::Array[T.untyped]) }
+              def build_enumerator(user_id, foo_id = nil, cursor:)
+                # ...
+              end
+            end
+          RUBY
+
+          expected = template(<<~RBI)
+            # typed: strong
+
+            class NotifyJob
+              sig { params(user_id: ::Integer, foo_id: T.nilable(::String)).void }
+              def perform(user_id, foo_id = T.unsafe(nil)); end
+
+              class << self
+            <% if rails_version(">= 7.0") %>
+                sig { params(user_id: ::Integer, foo_id: T.nilable(::String), block: T.nilable(T.proc.params(job: NotifyJob).void)).returns(T.any(NotifyJob, FalseClass)) }
+                def perform_later(user_id, foo_id = T.unsafe(nil), &block); end
+            <% else %>
+                sig { params(user_id: ::Integer, foo_id: T.nilable(::String)).returns(T.any(NotifyJob, FalseClass)) }
+                def perform_later(user_id, foo_id = T.unsafe(nil)); end
+            <% end %>
+
+                sig { params(user_id: ::Integer, foo_id: T.nilable(::String)).returns(T.any(NilClass, Exception)) }
+                def perform_now(user_id, foo_id = T.unsafe(nil)); end
+              end
+            end
+          RBI
+          assert_equal(expected, rbi_for(:NotifyJob))
+        end
+
         def test_generates_correct_rbi_file_for_job_with_build_enumerator_method_signature_with_keyword_parameter
           add_ruby_file("job.rb", <<~RUBY)
             class NotifyJob < ActiveJob::Base
@@ -189,6 +296,43 @@ module Tapioca
 
                 sig { params(user_id: ::Integer, profile_id: ::Integer).returns(T.any(NilClass, Exception)) }
                 def perform_now(user_id:, profile_id:); end
+              end
+            end
+          RBI
+          assert_equal(expected, rbi_for(:NotifyJob))
+        end
+
+        def test_generates_correct_rbi_file_for_job_with_build_enumerator_method_with_optional_keyword_parameter_and_signature
+          add_ruby_file("job.rb", <<~RUBY)
+            class NotifyJob < ActiveJob::Base
+              include JobIteration::Iteration
+
+              extend T::Sig
+              sig { params(user_id: Integer, cursor: T.untyped, profile_id: T.nilable(Integer)).returns(T::Array[T.untyped]) }
+              def build_enumerator(user_id:, cursor:, profile_id: nil)
+                # ...
+              end
+            end
+          RUBY
+
+          expected = template(<<~RBI)
+            # typed: strong
+
+            class NotifyJob
+              sig { params(user_id: ::Integer, profile_id: T.nilable(::Integer)).void }
+              def perform(user_id:, profile_id: T.unsafe(nil)); end
+
+              class << self
+            <% if rails_version(">= 7.0") %>
+                sig { params(user_id: ::Integer, profile_id: T.nilable(::Integer), block: T.nilable(T.proc.params(job: NotifyJob).void)).returns(T.any(NotifyJob, FalseClass)) }
+                def perform_later(user_id:, profile_id: T.unsafe(nil), &block); end
+            <% else %>
+                sig { params(user_id: ::Integer, profile_id: T.nilable(::Integer)).returns(T.any(NotifyJob, FalseClass)) }
+                def perform_later(user_id:, profile_id: T.unsafe(nil)); end
+            <% end %>
+
+                sig { params(user_id: ::Integer, profile_id: T.nilable(::Integer)).returns(T.any(NilClass, Exception)) }
+                def perform_now(user_id:, profile_id: T.unsafe(nil)); end
               end
             end
           RBI

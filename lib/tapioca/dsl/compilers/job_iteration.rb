@@ -8,6 +8,7 @@ module Tapioca
     module Compilers
       class JobIteration < Compiler
         extend T::Sig
+        extend T::Generic
 
         ConstantType = type_member { { fixed: T.class_of(::JobIteration::Iteration) } }
         PARAM_TYPES_IN_ORDER = [

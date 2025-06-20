@@ -12,7 +12,7 @@ module Tapioca
 
         ConstantType = type_member { { fixed: T.class_of(::JobIteration::Iteration) } }
         PARAM_TYPES_IN_ORDER = [
-          RBI::Param,
+          RBI::ReqParam,
           RBI::OptParam,
           RBI::RestParam,
           RBI::KwParam,

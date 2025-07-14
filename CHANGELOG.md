@@ -16,6 +16,18 @@ nil
 
 nil
 
+## v1.11.0 (Jul 14, 2025)
+
+### Security fixes
+
+- [595](https://github.com/Shopify/job-iteration/pull/595) [CVE-2025-53623] Fixes a security issue in the `CSVEnumerator` where the filename was directly interpolated into a bash command.
+
+### Bug fixes
+
+- [590](https://github.com/Shopify/job-iteration/pull/590) Fix a compatibilty issue between the Sorbet DSL compiler and the latest Tapioca.
+- [593](https://github.com/Shopify/job-iteration/pull/593) Properly support required and optional positional arguments in the Sorbet DSL compiler.
+- [594](https://github.com/Shopify/job-iteration/pull/594) Clean up the size calculation in the `CSVEnumerator`.
+
 ## v1.10.0 (Mar 20, 2025)
 
 ### Breaking Changes

@@ -43,7 +43,10 @@ module JobIteration
         .each_slice(batch_size)
         .with_index
         .drop(count_of_processed_rows(cursor))
-        .to_enum { (count_of_rows_in_file.to_f / batch_size).ceil }
+        .to_enum do
+          num_rows = count_of_rows_in_file
+          num_rows.nil? ? nil : (num_rows.to_f / batch_size).ceil
+        end
     end
 
     private

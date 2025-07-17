@@ -79,6 +79,7 @@ class LoadRefundsForChargeJob < ActiveJob::Base
 
   def build_enumerator(charge_id, cursor:)
     enumerator_builder.wrap(
+      self,
       StripeListEnumerator.new(
         Stripe::Refund,
         params: { charge: charge_id}, # "charge_id" will be a prefixed Stripe ID such as "chrg_123"
@@ -117,6 +118,7 @@ class RedisPopListJob < ActiveJob::Base
   def build_enumerator(*)
     @redis = Redis.new
     enumerator_builder.wrap(
+      self,
       Enumerator.new do |yielder|
         yielder.yield @redis.lpop(key), nil
       end

@@ -50,7 +50,7 @@ jobs:
       - name: Check out code
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Set up Ruby ${{ matrix.ruby }}
-        uses: ruby/setup-ruby@65937904bcddfb93f8130882d9afa8597c45f3b5 # v1.249.0
+        uses: ruby/setup-ruby@2a7b30092b0caf9c046252510f9273b4875f3db9 # v1.254.0
         with:
           ruby-version: ${{ matrix.ruby }}
           bundler-cache: true
@@ -68,7 +68,7 @@ jobs:
       - name: Check out code
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Set up Ruby
-        uses: ruby/setup-ruby@65937904bcddfb93f8130882d9afa8597c45f3b5 # v1.249.0
+        uses: ruby/setup-ruby@2a7b30092b0caf9c046252510f9273b4875f3db9 # v1.254.0
         with:
           bundler-cache: true
       - name: Rubocop

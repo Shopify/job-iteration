@@ -19,8 +19,7 @@ module JobIteration
     end
 
     test_builder_method(:wrap) do
-      builder = enumerator_builder
-      builder.wrap(builder, nil)
+      enumerator_builder.wrap(nil)
     end
 
     test_builder_method(:build_once_enumerator) do

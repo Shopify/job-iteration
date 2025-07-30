@@ -35,18 +35,20 @@ module JobIteration
       @wrapper = wrapper
     end
 
-    def_delegator :@wrapper, :wrap
+    def wrap(enum)
+      @wrapper.wrap(self, enum)
+    end
 
     # Builds Enumerator objects that iterates once.
     def build_once_enumerator(cursor:)
-      wrap(self, build_times_enumerator(1, cursor: cursor))
+      wrap(build_times_enumerator(1, cursor: cursor))
     end
 
     # Builds Enumerator objects that iterates N times and yields number starting from zero.
     def build_times_enumerator(number, cursor:)
       raise ArgumentError, "First argument must be an Integer" unless number.is_a?(Integer)
 
-      wrap(self, build_array_enumerator(number.times.to_a, cursor: cursor))
+      wrap(build_array_enumerator(number.times.to_a, cursor: cursor))
     end
 
     # Builds Enumerator object from a given array, using +cursor+ as an offset.
@@ -62,7 +64,7 @@ module JobIteration
           cursor + 1
         end
 
-      wrap(self, enumerable.each_with_index.drop(drop).to_enum { enumerable.size - drop })
+      wrap(enumerable.each_with_index.drop(drop).to_enum { enumerable.size - drop })
     end
 
     # Builds Enumerator from Active Record Relation. Each Enumerator tick moves the cursor one row forward.
@@ -100,7 +102,7 @@ module JobIteration
         cursor: cursor,
         **args,
       ).records
-      wrap(self, enum)
+      wrap(enum)
     end
 
     # Builds Enumerator from Active Record Relation and enumerates on batches of records.
@@ -115,7 +117,7 @@ module JobIteration
         cursor: cursor,
         **args,
       ).batches
-      wrap(self, enum)
+      wrap(enum)
     end
 
     # Builds Enumerator from Active Record Relation and enumerates on batches, yielding Active Record Relations.
@@ -126,7 +128,7 @@ module JobIteration
         cursor: cursor,
         **args,
       ).each
-      enum = wrap(self, enum) if wrap
+      enum = self.wrap(enum) if wrap
       enum
     end
 
@@ -137,17 +139,17 @@ module JobIteration
         throttle_on: throttle_on,
         backoff: backoff,
       ).to_enum
-      wrap(self, enum)
+      wrap(enum)
     end
 
     def build_csv_enumerator(enumerable, cursor:)
       enum = CsvEnumerator.new(enumerable).rows(cursor: cursor)
-      wrap(self, enum)
+      wrap(enum)
     end
 
     def build_csv_enumerator_on_batches(enumerable, cursor:, batch_size: 100)
       enum = CsvEnumerator.new(enumerable).batches(cursor: cursor, batch_size: batch_size)
-      wrap(self, enum)
+      wrap(enum)
     end
 
     # Builds Enumerator for nested iteration.
@@ -182,7 +184,7 @@ module JobIteration
     #
     def build_nested_enumerator(enums, cursor:)
       enum = NestedEnumerator.new(enums, cursor: cursor).each
-      wrap(self, enum)
+      wrap(enum)
     end
 
     alias_method :once, :build_once_enumerator

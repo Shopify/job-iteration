@@ -18,6 +18,26 @@ module JobIteration
       assert_equal("cursor should have one object per enum", error.message)
     end
 
+    test "raises when first level returns non-enumerable" do
+      error = assert_raises(NestedEnumerator::InvalidNestedEnumeratorError) do
+        build_enumerator(outer: ->(_) { nil }).each_with_index {}
+      end
+      assert_equal(
+        "Expected an Enumerator object, but returned NilClass at index 0",
+        error.message,
+      )
+    end
+
+    test "raises when inner level returns non-enumerable" do
+      error = assert_raises(NestedEnumerator::InvalidNestedEnumeratorError) do
+        build_enumerator(inner: ->(_, _) { nil }).each_with_index {}
+      end
+      assert_equal(
+        "Expected an Enumerator object, but returned NilClass at index 1",
+        error.message,
+      )
+    end
+
     test "yields enumerator when called without a block" do
       enum = build_enumerator
       assert enum.is_a?(Enumerator)

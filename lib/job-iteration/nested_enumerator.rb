@@ -3,6 +3,8 @@
 module JobIteration
   # @private
   class NestedEnumerator
+    class InvalidNestedEnumeratorError < StandardError; end
+
     def initialize(enums, cursor: nil)
       unless enums.all?(Proc)
         raise ArgumentError, "enums must contain only procs/lambdas"
@@ -26,6 +28,10 @@ module JobIteration
 
     def iterate(current_objects, index, &block)
       enumerator = @enums[index].call(*current_objects, @cursors[index])
+      unless enumerator.is_a?(Enumerator)
+        raise InvalidNestedEnumeratorError,
+          "Expected an Enumerator object, but returned #{enumerator.class} at index #{index}"
+      end
 
       enumerator.each do |object_from_enumerator, cursor_from_enumerator|
         if index == @cursors.size - 1

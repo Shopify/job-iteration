@@ -27,4 +27,5 @@ Gem::Specification.new do |spec|
   spec.metadata["allowed_push_host"] = "https://rubygems.org"
 
   spec.add_dependency("activejob", ">= 6.1")
+  spec.add_dependency("opentelemetry-api")
 end

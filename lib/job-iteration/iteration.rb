@@ -4,6 +4,8 @@ require "active_support/all"
 
 module JobIteration
   module Iteration
+    Tracer = OpenTelemetry::Trace.tracer_provider.tracer("job-iteration", JobIteration::VERSION)
+
     extend ActiveSupport::Concern
 
     attr_accessor(
@@ -183,7 +185,9 @@ module JobIteration
         ActiveSupport::Notifications.instrument("each_iteration.iteration", tags) do
           found_record = true
           run_callbacks(:iterate) do
-            each_iteration(object_from_enumerator, *arguments)
+            Tracer.in_span("each_iteration", attributes: tags) do
+              each_iteration(object_from_enumerator, *arguments)
+            end
           end
           self.cursor_position = cursor_from_enumerator
         end

@@ -220,15 +220,15 @@ GEM
       sorbet-static-and-runtime (>= 0.5.10187)
       thor (>= 0.19.2)
     stringio (3.1.7)
-    tapioca (0.17.7)
+    tapioca (0.17.9)
       benchmark
       bundler (>= 2.2.25)
       netrc (>= 0.11.0)
       parallel (>= 1.21.0)
-      rbi (>= 0.3.1)
+      rbi (>= 0.3.7)
       require-hooks (>= 0.2.2)
       sorbet-static-and-runtime (>= 0.5.11087)
-      spoom (>= 1.7.0)
+      spoom (>= 1.7.9)
       thor (>= 1.2.0)
       yard-sorbet
     thor (1.4.0)
@@ -272,7 +272,7 @@ DEPENDENCIES
   rubocop-shopify
   sidekiq
   sorbet-runtime
-  tapioca (= 0.17.7)
+  tapioca (= 0.17.9)
   yard
 
 BUNDLED WITH

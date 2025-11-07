@@ -41,6 +41,6 @@ gem "mutex_m" # Required for Ruby 3.4+
 
 # for unit testing optional sorbet support
 gem "sorbet-runtime"
-gem "tapioca", "= 0.17.7"
+gem "tapioca", "= 0.17.9"
 
 gem "logger"

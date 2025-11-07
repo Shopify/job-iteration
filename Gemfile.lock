@@ -272,7 +272,7 @@ DEPENDENCIES
   rubocop-shopify
   sidekiq
   sorbet-runtime
-  tapioca (= 0.17.9)
+  tapioca
   yard
 
 BUNDLED WITH

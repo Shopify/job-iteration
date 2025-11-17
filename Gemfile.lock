@@ -89,7 +89,7 @@ GEM
       nokogiri (>= 1.12.0)
     method_source (1.1.0)
     minitest (5.25.5)
-    mocha (2.7.1)
+    mocha (2.8.2)
       ruby2_keywords (>= 0.0.5)
     mono_logger (1.1.2)
     multi_json (1.17.0)

@@ -150,6 +150,7 @@ class IterationUnitTest < ActiveSupport::TestCase
     ActiveRecord::Base.connection.truncate(TravelRoute.table_name)
     ActiveRecord::Base.connection.truncate(Product.table_name)
     ActiveRecord::Base.connection.truncate(Comment.table_name)
+    ActiveRecord::Base.connection.truncate(Order.table_name)
   end
 
   def with_global_default_retry_backoff(backoff)

@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "active_record_batch_enumerator/column_manager"
+
 module JobIteration
   # Builds Batch Enumerator based on ActiveRecord Relation.
   # @see EnumeratorBuilder
@@ -11,26 +13,15 @@ module JobIteration
     def initialize(relation, columns: nil, batch_size: 100, timezone: nil, cursor: nil)
       @batch_size = batch_size
       @timezone = timezone
-      @primary_key = "#{relation.table_name}.#{relation.primary_key}"
-      @columns = Array(columns&.map(&:to_s) || @primary_key)
-      @primary_key_index = @columns.index(@primary_key) || @columns.index(relation.primary_key)
-      @pluck_columns = if @primary_key_index
-        @columns
-      else
-        @columns.dup << @primary_key
-      end
+      @column_mgr = ColumnManager.new(relation: relation, columns: columns)
       @cursor = Array.wrap(cursor)
       @initial_cursor = @cursor
-      raise ArgumentError, "Must specify at least one column" if @columns.empty?
-      if relation.joins_values.present? && !@columns.all? { |column| column.to_s.include?(".") }
-        raise ArgumentError, "You need to specify fully-qualified columns if you join a table"
-      end
 
       if relation.arel.orders.present? || relation.arel.taken.present?
         raise JobIteration::ActiveRecordCursor::ConditionNotSupportedError
       end
 
-      @base_relation = relation.reorder(@columns.join(","))
+      @base_relation = relation.reorder(@column_mgr.columns.join(","))
     end
 
     def each
@@ -53,7 +44,7 @@ module JobIteration
         relation = relation.where(*conditions)
       end
 
-      cursor_values, ids = relation.uncached do
+      cursor_values, pkey_ids = relation.uncached do
         pluck_columns(relation)
       end
 
@@ -62,25 +53,24 @@ module JobIteration
         @cursor = @initial_cursor
         return
       end
+
       # The primary key was plucked, but original cursor did not include it, so we should remove it
-      cursor.pop unless @primary_key_index
-      @cursor = Array.wrap(cursor)
+      @cursor = @column_mgr.remove_missing_pkey_values(cursor)
 
       # Yields relations by selecting the primary keys of records in the batch.
       # Post.where(published: nil) results in an enumerator of relations like:
       # Post.where(published: nil, ids: batch_of_ids)
-      @base_relation.where(@primary_key => ids)
+      @base_relation.where(@column_mgr.primary_key => pkey_ids)
     end
 
     def pluck_columns(relation)
-      if @pluck_columns.size == 1 # only the primary key
-        column_values = relation.pluck(*@pluck_columns)
-        return [column_values, column_values]
-      end
+      column_values = relation.pluck(*@column_mgr.pluck_columns)
 
-      column_values = relation.pluck(*@pluck_columns)
-      primary_key_index = @primary_key_index || -1
-      primary_key_values = column_values.map { |values| values[primary_key_index] }
+      # Pluck behaves differently when only one column is given. By using zip,
+      # we make the output consistent (at the cost of more object allocation).
+      column_values = column_values.zip if @column_mgr.pluck_columns.size == 1
+
+      primary_key_values = @column_mgr.pkey_values(column_values)
 
       serialize_column_values!(column_values)
       [column_values, primary_key_values]
@@ -94,15 +84,15 @@ module JobIteration
 
     def conditions
       column_index = @cursor.size - 1
-      column = @columns[column_index]
-      where_clause = if @columns.size == @cursor.size
+      column = @column_mgr.columns[column_index]
+      where_clause = if @column_mgr.columns.size == @cursor.size
         "#{column} > ?"
       else
         "#{column} >= ?"
       end
       while column_index > 0
         column_index -= 1
-        column = @columns[column_index]
+        column = @column_mgr.columns[column_index]
         where_clause = "#{column} > ? OR (#{column} = ? AND (#{where_clause}))"
       end
       ret = @cursor.reduce([where_clause]) { |params, value| params << value << value }

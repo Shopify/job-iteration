@@ -6,17 +6,6 @@ module JobIteration
   class ActiveRecordBatchEnumeratorTest < IterationUnitTest
     SQL_TIME_FORMAT = "%Y-%m-%d %H:%M:%S.%N"
 
-    # Some of these tests do query tracking. If they run before we've loaded
-    # the schema for the Order model (i.e. if it's the first test in the entire
-    # suite to run that makes a query with `Order`), then ActiveRecord will
-    # make a call to load the schema while our test is running by executing:
-    #
-    #   SHOW FULL FIELDS FROM `orders`
-    #
-    # .. which will interfere with the query tracking! By ensuring that the
-    # schema is loaded before the tests run, we avoid this issue.
-    setup { Order.load_schema }
-
     test "#each yields batches as relation with the last record's cursor position" do
       enum = build_enumerator
       product_batches = Product.order(:id).take(4).in_groups_of(2).map { |product| [product, product.last.id] }
@@ -258,9 +247,16 @@ module JobIteration
       )
     end
 
+    # Captures queries made against the database. Automatically filters out
+    # queries that populate model schemas, since those are just ActiveRecord
+    # doing its thing.
     def track_queries(&block)
       queries = []
-      query_cb = ->(*, payload) { queries << payload[:sql] }
+      query_cb = ->(*, payload) {
+        return if /SHOW FULL FIELDS FROM `\w+`/.match?(payload[:sql])
+
+        queries << payload[:sql]
+      }
       ActiveSupport::Notifications.subscribed(query_cb, "sql.active_record", &block)
       queries
     end

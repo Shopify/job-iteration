@@ -5,6 +5,18 @@ require "test_helper"
 module JobIteration
   class ActiveRecordBatchEnumeratorTest < IterationUnitTest
     SQL_TIME_FORMAT = "%Y-%m-%d %H:%M:%S.%N"
+
+    # Some of these tests do query tracking. If they run before we've loaded
+    # the schema for the Order model (i.e. if it's the first test in the entire
+    # suite to run that makes a query with `Order`), then ActiveRecord will
+    # make a call to load the schema while our test is running by executing:
+    #
+    #   SHOW FULL FIELDS FROM `orders`
+    #
+    # .. which will interfere with the query tracking! By ensuring that the
+    # schema is loaded before the tests run, we avoid this issue.
+    setup { Order.load_schema }
+
     test "#each yields batches as relation with the last record's cursor position" do
       enum = build_enumerator
       product_batches = Product.order(:id).take(4).in_groups_of(2).map { |product| [product, product.last.id] }
@@ -149,6 +161,7 @@ module JobIteration
     end
 
     test "(composite primary key) #each yields batches as relation with the last record's cursor position" do
+      skip_until_active_record_version("7.1")
       seed_orders!
 
       enum = build_enumerator(relation: Order.all)
@@ -162,6 +175,7 @@ module JobIteration
     end
 
     test "(composite primary key) columns without a primary key column yields cursors without the unspecified value" do
+      skip_until_active_record_version("7.1")
       seed_orders!
 
       enum = build_enumerator(relation: Order.all, columns: [:name, :shop_id])
@@ -172,6 +186,7 @@ module JobIteration
     end
 
     test "(composite primary key) cursor can be used to resume on multiple columns" do
+      skip_until_active_record_version("7.1")
       seed_orders!
 
       enum = build_enumerator(relation: Order.all, columns: [:name, :id])
@@ -188,6 +203,8 @@ module JobIteration
     end
 
     test "(composite primary key) columns missing primary key column still queries for primary key values" do
+      skip_until_active_record_version("7.1")
+
       queries = track_queries do
         enum = build_enumerator(relation: Order.all, columns: [:name])
         enum.first
@@ -196,6 +213,8 @@ module JobIteration
     end
 
     test "(composite primary key) columns with only one primary key column still queries for all primary key values" do
+      skip_until_active_record_version("7.1")
+
       queries = track_queries do
         enum = build_enumerator(relation: Order.all, columns: ["orders.id", :name])
         enum.first
@@ -204,6 +223,8 @@ module JobIteration
     end
 
     test "(composite primary key) columns configured with primary key only queries primary key columns once" do
+      skip_until_active_record_version("7.1")
+
       queries = track_queries do
         enum = build_enumerator(relation: Order.all, columns: [:name, :id, "orders.shop_id"])
         enum.first
@@ -212,6 +233,7 @@ module JobIteration
     end
 
     test "(composite primary key) one query performed per batch, plus an additional one for the empty cursor" do
+      skip_until_active_record_version("7.1")
       seed_orders!
 
       enum = build_enumerator(relation: Order.all)

@@ -102,7 +102,7 @@ module JobIteration
       # Figure out which primary key columns are already included in `columns`
       # and track their position in the array.
       #
-      # @param column [Array<String>] - list of columns
+      # @param columns [Array<String>] - list of columns
       #
       # @return [Hash<String:Integer,nil>]
       #   A hash containing all of the fully qualified primary key columns as
@@ -119,7 +119,7 @@ module JobIteration
 
       # Takes a set of primary key columns and adds them to `columns`.
       #
-      # @effect - mutates `columns`
+      # @note - mutates `columns`
       #
       # @param missing_columns [Array<String>] - set of missing pkey columns
       # @param columns [Array<String>] - set of columns to pluck

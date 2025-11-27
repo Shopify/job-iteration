@@ -57,10 +57,26 @@ module JobIteration
       # The primary key was plucked, but original cursor did not include it, so we should remove it
       @cursor = @column_mgr.remove_missing_pkey_values(cursor)
 
-      # Yields relations by selecting the primary keys of records in the batch.
-      # Post.where(published: nil) results in an enumerator of relations like:
-      # Post.where(published: nil, ids: batch_of_ids)
-      @base_relation.where(@column_mgr.primary_key => pkey_ids)
+      filter_relation_with_primary_key(pkey_ids)
+    end
+
+    # Yields relations by selecting the primary keys of records in the batch.
+    # Post.where(published: nil) results in an enumerator of relations like:
+    # Post.where(published: nil, ids: batch_of_ids)
+    def filter_relation_with_primary_key(primary_key_values)
+      pkey = @column_mgr.primary_key
+      pkey_values = primary_key_values
+
+      # If the primary key is only composed of a single column, simplify the
+      # query. This keeps us compatible with Rails prior to 7.1 where composite
+      # primary keys were introduced along with the syntax that allows you to
+      # query for multi-column values.
+      if pkey.size <= 1
+        pkey = pkey.first
+        pkey_values = pkey_values.map(&:first)
+      end
+
+      @base_relation.where(pkey => pkey_values)
     end
 
     def pluck_columns(relation)

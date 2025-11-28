@@ -5,6 +5,7 @@ require "test_helper"
 module JobIteration
   class ActiveRecordBatchEnumeratorTest < IterationUnitTest
     SQL_TIME_FORMAT = "%Y-%m-%d %H:%M:%S.%N"
+
     test "#each yields batches as relation with the last record's cursor position" do
       enum = build_enumerator
       product_batches = Product.order(:id).take(4).in_groups_of(2).map { |product| [product, product.last.id] }
@@ -148,6 +149,92 @@ module JobIteration
       end
     end
 
+    test "(composite primary key) #each yields batches as relation with the last record's cursor position" do
+      skip_until_active_record_version("7.1")
+      seed_orders!
+
+      enum = build_enumerator(relation: Order.all)
+      order_batches = Order.order(:id).take(4).in_groups_of(2).map { |order| [order, order.last.id] }
+
+      enum.first(2).each_with_index do |(batch, cursor), index|
+        assert batch.is_a?(ActiveRecord::Relation)
+        assert_equal order_batches[index].first, batch
+        assert_equal order_batches[index].last, cursor
+      end
+    end
+
+    test "(composite primary key) columns without a primary key column yields cursors without the unspecified value" do
+      skip_until_active_record_version("7.1")
+      seed_orders!
+
+      enum = build_enumerator(relation: Order.all, columns: [:name, :shop_id])
+      orders = Order.order(:name, :shop_id).take(2)
+
+      cursor = [orders.last.name, orders.last.shop_id]
+      assert_equal([orders, cursor], enum.first)
+    end
+
+    test "(composite primary key) cursor can be used to resume on multiple columns" do
+      skip_until_active_record_version("7.1")
+      seed_orders!
+
+      enum = build_enumerator(relation: Order.all, columns: [:name, :id])
+      orders = Order.order(:name, :id).take(2)
+
+      cursor = [orders.last.name, orders.last.id_value]
+      assert_equal([orders, cursor], enum.first)
+
+      enum = build_enumerator(relation: Order.all, columns: [:name, :id], cursor: cursor)
+      orders = Order.order(:name, :id).offset(2).take(2)
+
+      cursor = [orders.last.name, orders.last.id_value]
+      assert_equal([orders, cursor], enum.first)
+    end
+
+    test "(composite primary key) columns missing primary key column still queries for primary key values" do
+      skip_until_active_record_version("7.1")
+
+      queries = track_queries do
+        enum = build_enumerator(relation: Order.all, columns: [:name])
+        enum.first
+      end
+      assert_match(/\A\s?`orders`.`name`, `orders`.`shop_id`, `orders`.`id`\z/, queries.first[/SELECT (.*) FROM/, 1])
+    end
+
+    test "(composite primary key) columns with only one primary key column still queries for all primary key values" do
+      skip_until_active_record_version("7.1")
+
+      queries = track_queries do
+        enum = build_enumerator(relation: Order.all, columns: ["orders.id", :name])
+        enum.first
+      end
+      assert_match(/\A\s?`orders`.`id`, `orders`.`name`, `orders`.`shop_id`\z/, queries.first[/SELECT (.*) FROM/, 1])
+    end
+
+    test "(composite primary key) columns configured with primary key only queries primary key columns once" do
+      skip_until_active_record_version("7.1")
+
+      queries = track_queries do
+        enum = build_enumerator(relation: Order.all, columns: [:name, :id, "orders.shop_id"])
+        enum.first
+      end
+      assert_match(/\A\s?`orders`.`name`, `orders`.`id`, `orders`.`shop_id`\z/, queries.first[/SELECT (.*) FROM/, 1])
+    end
+
+    test "(composite primary key) one query performed per batch, plus an additional one for the empty cursor" do
+      skip_until_active_record_version("7.1")
+      seed_orders!
+
+      enum = build_enumerator(relation: Order.all)
+      num_batches = 0
+      queries = track_queries do
+        enum.each { num_batches += 1 }
+      end
+
+      expected_num_queries = num_batches + 1
+      assert_equal expected_num_queries, queries.size
+    end
+
     private
 
     def build_enumerator(relation: Product.all, batch_size: 2, timezone: nil, columns: nil, cursor: nil)
@@ -160,11 +247,25 @@ module JobIteration
       )
     end
 
+    # Captures queries made against the database. Automatically filters out
+    # queries that populate model schemas, since those are just ActiveRecord
+    # doing its thing.
     def track_queries(&block)
       queries = []
-      query_cb = ->(*, payload) { queries << payload[:sql] }
+      query_cb = ->(*, payload) {
+        return if /SHOW FULL FIELDS FROM `\w+`/.match?(payload[:sql])
+
+        queries << payload[:sql]
+      }
       ActiveSupport::Notifications.subscribed(query_cb, "sql.active_record", &block)
       queries
+    end
+
+    def seed_orders!
+      Order.create!(shop_id: 1, name: "T-shirt")
+      Order.create!(shop_id: 1, name: "Jeans")
+      Order.create!(shop_id: 2, name: "Ballcap")
+      Order.create!(shop_id: 3, name: "Jacket")
     end
   end
 end

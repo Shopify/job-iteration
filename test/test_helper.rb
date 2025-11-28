@@ -116,6 +116,12 @@ module ActiveSupport
     def skip_until_version(version)
       skip("Deferred until version #{version}") if Gem::Version.new(JobIteration::VERSION) < Gem::Version.new(version)
     end
+
+    def skip_until_active_record_version(version)
+      return if ActiveRecord.version >= Gem::Version.new(version)
+
+      skip("Deferred until ActiveRecord version #{version}")
+    end
   end
 end
 
@@ -150,6 +156,7 @@ class IterationUnitTest < ActiveSupport::TestCase
     ActiveRecord::Base.connection.truncate(TravelRoute.table_name)
     ActiveRecord::Base.connection.truncate(Product.table_name)
     ActiveRecord::Base.connection.truncate(Comment.table_name)
+    ActiveRecord::Base.connection.truncate(Order.table_name)
   end
 
   def with_global_default_retry_backoff(backoff)

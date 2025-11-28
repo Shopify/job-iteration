@@ -54,7 +54,6 @@ module JobIteration
         return
       end
 
-      # The primary key was plucked, but original cursor did not include it, so we should remove it
       @cursor = @column_mgr.remove_missing_pkey_values(cursor)
 
       filter_relation_with_primary_key(pkey_ids)

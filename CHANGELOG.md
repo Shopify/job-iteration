@@ -10,7 +10,7 @@ nil
 
 ### Features
 
-nil
+- [650](https://github.com/Shopify/job-iteration/pull/650) Add support for batch enumeration over models with composite primary keys.
 
 ### Bug fixes
 

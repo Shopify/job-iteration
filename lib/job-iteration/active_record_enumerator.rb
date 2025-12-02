@@ -70,6 +70,8 @@ module JobIteration
       when :datetime
         value = value.in_time_zone(@timezone) unless @timezone.nil?
         value.strftime(SQL_DATETIME_WITH_NSEC)
+      when :date
+        value.iso8601
       else
         value
       end

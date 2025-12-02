@@ -35,6 +35,9 @@ class Order < ActiveRecord::Base
   self.primary_key = [:shop_id, :id]
 end
 
+class Event < ActiveRecord::Base
+end
+
 mysql_host = ENV.fetch("MYSQL_HOST") { "localhost" }
 mysql_port = ENV.fetch("MYSQL_PORT") { 3306 }
 
@@ -83,6 +86,11 @@ ActiveRecord::Migration.suppress_messages do
     create_table(:orders, force: true) do |t|
       t.integer(:shop_id)
       t.string(:name)
+    end
+
+    create_table(:events, force: true) do |t|
+      t.string(:name)
+      t.date(:occurred_on)
     end
   end
 end
@@ -157,6 +165,7 @@ class IterationUnitTest < ActiveSupport::TestCase
     ActiveRecord::Base.connection.truncate(Product.table_name)
     ActiveRecord::Base.connection.truncate(Comment.table_name)
     ActiveRecord::Base.connection.truncate(Order.table_name)
+    ActiveRecord::Base.connection.truncate(Event.table_name)
   end
 
   def with_global_default_retry_backoff(backoff)

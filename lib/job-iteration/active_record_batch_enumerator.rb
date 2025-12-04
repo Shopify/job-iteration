@@ -120,10 +120,15 @@ module JobIteration
     end
 
     def column_value(value)
-      return value unless value.is_a?(Time)
-
-      value = value.in_time_zone(@timezone) unless @timezone.nil?
-      value.strftime(SQL_DATETIME_WITH_NSEC)
+      case value
+      when Time
+        value = value.in_time_zone(@timezone) unless @timezone.nil?
+        value.strftime(SQL_DATETIME_WITH_NSEC)
+      when Date
+        value.iso8601
+      else
+        value
+      end
     end
   end
 end

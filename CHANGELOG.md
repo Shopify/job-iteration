@@ -14,7 +14,7 @@ nil
 
 ### Bug fixes
 
-nil
+- [652](https://github.com/Shopify/job-iteration/pull/652) Fix ISO8601 serialization for `Date` columns in ActiveRecord enumerators.
 
 ## v1.11.0 (Jul 14, 2025)
 

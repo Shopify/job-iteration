@@ -118,6 +118,28 @@ module JobIteration
       assert_equal([shops, cursor], enum.first)
     end
 
+    test "columns with date type are serialized to ISO8601 format" do
+      Event.create!(name: "Conference", occurred_on: Date.new(2025, 10, 15))
+      Event.create!(name: "Workshop", occurred_on: Date.new(2025, 10, 20))
+
+      enum = build_enumerator(relation: Event.all, columns: [:occurred_on])
+      events = Event.order(:occurred_on).take(2)
+
+      assert_equal([events, "2025-10-20"], enum.first)
+    end
+
+    test "cursor can be used to resume on date column" do
+      Event.create!(name: "Event 1", occurred_on: Date.new(2025, 1, 10))
+      Event.create!(name: "Event 2", occurred_on: Date.new(2025, 1, 20))
+      Event.create!(name: "Event 3", occurred_on: Date.new(2025, 1, 30))
+
+      enum = build_enumerator(relation: Event.all, columns: [:occurred_on, :id], cursor: ["2025-01-10", Event.first.id])
+      events = Event.order(:occurred_on, :id).offset(1).take(2)
+
+      cursor = [events.last.occurred_on.iso8601, events.last.id]
+      assert_equal([events, cursor], enum.first)
+    end
+
     test "cursor can be used to resume on multiple columns" do
       enum = build_enumerator(columns: [:created_at, :id])
       products = Product.order(:created_at, :id).take(2)

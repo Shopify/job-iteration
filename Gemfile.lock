@@ -59,7 +59,7 @@ GEM
     builder (3.3.0)
     coderay (1.1.3)
     concurrent-ruby (1.3.5)
-    connection_pool (2.5.4)
+    connection_pool (3.0.1)
     crass (1.0.6)
     csv (3.3.5)
     date (3.5.0)
@@ -190,7 +190,7 @@ GEM
     ruby-progressbar (1.13.0)
     ruby2_keywords (0.0.5)
     securerandom (0.4.1)
-    sidekiq (8.0.9)
+    sidekiq (8.0.10)
       connection_pool (>= 2.5.0)
       json (>= 2.9.0)
       logger (>= 1.6.2)
@@ -255,6 +255,7 @@ PLATFORMS
 
 DEPENDENCIES
   activerecord
+  connection_pool (>= 3.0.0)
   csv
   delayed_job
   globalid
@@ -270,7 +271,7 @@ DEPENDENCIES
   redis
   resque
   rubocop-shopify
-  sidekiq
+  sidekiq (>= 8.0.9)
   sorbet-runtime (>= 0.6.12698)
   tapioca (>= 0.17.9)
   yard

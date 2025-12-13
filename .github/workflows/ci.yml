@@ -16,7 +16,7 @@ jobs:
       fail-fast: false
       matrix:
         ruby: ["3.0", "3.1", "3.2", "3.3", "3.4"]
-        rails: ["6.1", "7.0", "7.1", "7.2", "8.0", "edge"]
+        rails: ["6.1", "7.0", "7.1", "7.2", "8.0", "8.1", "edge"]
         gemfile: [rails_gems]
         exclude:
           - ruby: "3.0"
@@ -26,9 +26,13 @@ jobs:
           - ruby: "3.0"
             rails: "8.0"
           - ruby: "3.0"
+            rails: "8.1"
+          - ruby: "3.0"
             rails: "edge"
           - ruby: "3.1"
             rails: "8.0"
+          - ruby: "3.1"
+            rails: "8.1"
           - ruby: "3.1"
             rails: "edge"
           - ruby: "3.2"

@@ -165,11 +165,14 @@ GEM
     reline (0.6.3)
       io-console (~> 0.5)
     require-hooks (0.2.2)
-    resque (2.7.0)
+    resque (3.0.0)
+      base64 (~> 0.1)
+      logger
       mono_logger (~> 1)
       multi_json (~> 1.0)
+      redis (>= 4.0)
       redis-namespace (~> 1.6)
-      sinatra (>= 0.9.2)
+      sinatra (>= 2.0)
     rexml (3.4.4)
     rubocop (1.81.7)
       json (~> 2.3)
@@ -269,7 +272,7 @@ DEPENDENCIES
   railties
   rake
   redis
-  resque
+  resque (>= 3.0.0)
   rubocop-shopify
   sidekiq (>= 8.0.9)
   sorbet-runtime (>= 0.6.12698)

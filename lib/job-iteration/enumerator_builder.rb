@@ -16,7 +16,7 @@ module JobIteration
     # `enumerator_builder` is _always_ the type that is returned from
     # `build_enumerator`. This prevents people from implementing custom
     # Enumerators without wrapping them in
-    # `enumerator_builder.wrap(custom_enum)`. Think of these wrappers
+    # `enumerator_builder.wrap(enumerator_builder, custom_enum)`. Think of these wrappers
     # the way you should a middleware.
     class Wrapper < Enumerator
       class << self

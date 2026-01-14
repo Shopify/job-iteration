@@ -222,7 +222,7 @@ module JobIteration
       if enum.is_a?(Enumerator)
         unless enum.is_a?(JobIteration.enumerator_builder::Wrapper)
           JobIteration::Deprecation.warn("Returning an unwrapped enumerator from build_enumerator is deprecated. " \
-            "Wrap the enumerator using enumerator_builder.wrap(my_enumerator) instead.")
+            "Wrap the enumerator using enumerator_builder.wrap(enumerator_builder, my_enumerator) instead.")
         end
 
         return

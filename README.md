@@ -166,8 +166,8 @@ Job-iteration currently supports the following queue adapters (in order of imple
 
 It supports the following platforms:
 
-- Ruby 3.0 and later
-- Rails 6.1 and later
+- Ruby 3.1 and later
+- Rails 7.0 and later
 
 Support for older platforms that have reached end of life may occasionally be dropped if maintaining backwards compatibility is cumbersome.
 

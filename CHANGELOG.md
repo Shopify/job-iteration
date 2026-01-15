@@ -2,7 +2,7 @@
 
 ### Breaking Changes
 
-nil
+- [673](https://github.com/Shopify/job-iteration/pull/673) - Drop support for Ruby 3.0 and Rails 6.1. The minimum supported Ruby version is now 3.1 and the minimum supported Rails version is now 7.0.
 
 ### Changes
 

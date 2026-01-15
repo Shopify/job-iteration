@@ -18,9 +18,15 @@ else
   connection_pool_version = "< 3.0.0"
 end
 
+resque_version = if rails_version < Gem::Version.new("7.2")
+  "< 3.0.0" # Resque 3.0.0 requires Rails 7.2 or later
+else
+  ">= 3.0.0"
+end
+
 # for integration testing
 gem "sidekiq", sidekiq_version
-gem "resque"
+gem "resque", resque_version
 gem "delayed_job"
 gem "connection_pool", connection_pool_version
 

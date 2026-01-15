@@ -1,4 +1,4 @@
-### Main (unreleased)
+## Main (unreleased)
 
 ### Breaking Changes
 
@@ -7,6 +7,16 @@ nil
 ### Changes
 
 nil
+
+### Features
+
+nil
+
+### Bug fixes
+
+nil
+
+## v1.12.0 (Jan 16, 2026)
 
 ### Features
 

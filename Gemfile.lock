@@ -8,7 +8,7 @@ GIT
 PATH
   remote: .
   specs:
-    job-iteration (1.11.0)
+    job-iteration (1.12.0)
       activejob (>= 6.1)
 
 GEM
@@ -280,4 +280,4 @@ DEPENDENCIES
   yard
 
 BUNDLED WITH
-   4.0.4
+  4.0.4

@@ -188,10 +188,12 @@ module JobIteration
           self.cursor_position = cursor_from_enumerator
         end
 
-        next unless job_should_exit?
+        reason = job_should_exit?
+        next unless reason
 
         self.executions -= 1 if executions > 1
         @needs_reenqueue = true
+        @interrupt_reason = reason.is_a?(String) ? reason : "unknown"
         return false
       end
 
@@ -206,7 +208,10 @@ module JobIteration
     end
 
     def reenqueue_iteration_job
-      ActiveSupport::Notifications.instrument("interrupted.iteration", instrumentation_tags)
+      ActiveSupport::Notifications.instrument(
+        "interrupted.iteration",
+        instrumentation_tags.merge(reason: @interrupt_reason),
+      )
 
       self.times_interrupted += 1
 
@@ -289,9 +294,13 @@ module JobIteration
 
     def job_should_exit?
       max_job_runtime = job_iteration_max_job_runtime
-      return true if max_job_runtime && start_time && (Time.now.utc - start_time) > max_job_runtime
+      if max_job_runtime && start_time && (Time.now.utc - start_time) > max_job_runtime
+        return "max_job_runtime_exceeded"
+      end
 
-      interruption_adapter.call || (defined?(super) && super)
+      return "interrupted" if interruption_adapter.call
+
+      (defined?(super) && super) || false
     end
 
     def job_iteration_max_job_runtime

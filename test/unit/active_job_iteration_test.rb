@@ -634,6 +634,28 @@ module JobIteration
       end
     end
 
+    def test_log_interruption_with_reason
+      iterate_exact_times(1.times)
+      push(ActiveRecordIterationJob)
+
+      assert_logged("reason=interrupted") do
+        work_one_job
+      end
+    end
+
+    def test_log_interruption_with_max_job_runtime_reason
+      push(ActiveRecordIterationJob)
+
+      assert_logged("reason=max_job_runtime_exceeded") do
+        freeze_time do
+          JobIteration.max_job_runtime = 0
+          work_one_job
+        end
+      end
+    ensure
+      JobIteration.max_job_runtime = nil
+    end
+
     def test_aborting_in_each_iteration_job_will_execute_on_complete_callback
       push(AbortingActiveRecordIterationJob)
       work_one_job

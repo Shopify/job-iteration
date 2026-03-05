@@ -644,13 +644,11 @@ module JobIteration
     end
 
     def test_log_interruption_with_max_job_runtime_reason
+      JobIteration.max_job_runtime = 0.seconds
       push(ActiveRecordIterationJob)
 
       assert_logged("reason=max_job_runtime_exceeded") do
-        freeze_time do
-          JobIteration.max_job_runtime = 0
-          work_one_job
-        end
+        work_one_job
       end
     ensure
       JobIteration.max_job_runtime = nil

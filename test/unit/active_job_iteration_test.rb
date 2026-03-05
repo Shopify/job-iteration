@@ -644,11 +644,25 @@ module JobIteration
     end
 
     def test_log_interruption_with_max_job_runtime_reason
-      JobIteration.max_job_runtime = 0.seconds
-      push(ActiveRecordIterationJob)
+      JobIteration.max_job_runtime = 1.second
+
+      slow_job_class = Class.new(ActiveJob::Base) do
+        include JobIteration::Iteration
+        include ActiveSupport::Testing::TimeHelpers
+
+        def build_enumerator(cursor:)
+          enumerator_builder.build_times_enumerator(3, cursor: cursor)
+        end
+
+        def each_iteration(*)
+          travel(2.seconds)
+        end
+      end
 
       assert_logged("reason=max_job_runtime_exceeded") do
-        work_one_job
+        freeze_time do
+          slow_job_class.perform_now
+        end
       end
     ensure
       JobIteration.max_job_runtime = nil

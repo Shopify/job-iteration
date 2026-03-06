@@ -298,8 +298,7 @@ module JobIteration
         return "max_job_runtime_exceeded"
       end
 
-      adapter_result = interruption_adapter.call
-      return adapter_result.is_a?(String) ? adapter_result : "interrupted" if adapter_result
+      return "interrupted" if interruption_adapter.call
 
       defined?(super) && super
     end

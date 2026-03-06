@@ -25,6 +25,11 @@ module JobIteration
 
       # Registers adapter for specified name.
       #
+      # The adapter must respond to +call+ and return a falsy value to continue iterating,
+      # or a truthy value to signal interruption. If the adapter returns a String, it will
+      # be used as the interruption reason in logs and the +interrupted.iteration+
+      # notification. Otherwise, the reason defaults to +"interrupted"+.
+      #
       #   JobIteration::InterruptionAdapters.register(:sidekiq, MyCustomSidekiqAdapter)
       def register(name, adapter)
         raise ArgumentError, "adapter must be callable" unless adapter.respond_to?(:call)

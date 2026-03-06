@@ -668,6 +668,18 @@ module JobIteration
       JobIteration.max_job_runtime = nil
     end
 
+    def test_log_interruption_with_custom_adapter_reason
+      adapter = mock
+      adapter.stubs(:call).returns("process_shutdown")
+      JobIteration.stubs(:interruption_adapter).returns(adapter)
+
+      push(ActiveRecordIterationJob)
+
+      assert_logged("reason=process_shutdown") do
+        work_one_job
+      end
+    end
+
     def test_aborting_in_each_iteration_job_will_execute_on_complete_callback
       push(AbortingActiveRecordIterationJob)
       work_one_job

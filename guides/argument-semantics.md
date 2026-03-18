@@ -56,21 +56,21 @@ ArgumentativeJob.perform_later(_arg1 = "One", _arg2 = "Two", _arg3 = "Three")
 
 ### Jobs with keyword arguments
 
-Jobs with keyword arguments will have the keyword arguments available to both `build_enumerator` and `each_iteration`, but these arguments come packaged into a Hash in both cases. You will need to `fetch` or `[]` your parameter from the `Hash` you get passed in:
+Keyword arguments passed to `perform_later` are captured and available to both `build_enumerator` and `each_iteration`. Due to how Ruby handles keyword arguments, use a splat parameter (`*args`) to capture the arguments hash:
 
 ```ruby
 class ParameterizedJob < ActiveJob::Base
   include JobIteration::Iteration
 
-  def build_enumerator(kwargs, cursor:)
-    name = kwargs.fetch(:name)
-    email = kwargs.fetch(:email)
+  def build_enumerator(*args, cursor:)
+    name = args.dig(0, :name)
+    email = args.dig(0, :email)
     # ...
   end
 
-  def each_iteration(object_yielded_from_enumerator, kwargs)
-    name = kwargs.fetch(:name)
-    email = kwargs.fetch(:email)
+  def each_iteration(object_yielded_from_enumerator, *args)
+    name = args.dig(0, :name)
+    email = args.dig(0, :email)
     # ...
   end
 end
@@ -86,21 +86,21 @@ Note that you cannot use `ruby2_keywords` at present, and the keyword arguments 
 
 ### Jobs with both positional and keyword arguments
 
-Jobs with keyword arguments will have the keyword arguments available to both `build_enumerator` and `each_iteration`, but these arguments come packaged into a Hash in both cases. You will need to `fetch` or `[]` your parameter from the `Hash` you get passed in. Positional arguments get passed first and "unsplatted" (not combined into an array), the `Hash` containing keyword arguments comes after:
+Positional arguments get passed first and "unsplatted" (not combined into an array), and keyword arguments come as a Hash that can be captured using a splat parameter:
 
 ```ruby
 class HighlyConfigurableGreetingJob < ActiveJob::Base
   include JobIteration::Iteration
 
-  def build_enumerator(subject_line, kwargs, cursor:)
-    name = kwargs.fetch(:sender_name)
-    email = kwargs.fetch(:sender_email)
+  def build_enumerator(subject_line, *args, cursor:)
+    name = args.dig(0, :sender_name)
+    email = args.dig(0, :sender_email)
     # ...
   end
 
-  def each_iteration(object_yielded_from_enumerator, subject_line, kwargs)
-    name = kwargs.fetch(:sender_name)
-    email = kwargs.fetch(:sender_email)
+  def each_iteration(object_yielded_from_enumerator, subject_line, *args)
+    name = args.dig(0, :sender_name)
+    email = args.dig(0, :sender_email)
     # ...
   end
 end

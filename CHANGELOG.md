@@ -1,4 +1,22 @@
 ## Main (unreleased)
+ 
+### Breaking Changes
+
+nil
+
+### Changes
+
+nil
+
+### Features
+
+nil
+
+### Bug fixes
+
+nil
+
+## v1.13.0 (Mar 23, 2026)
 
 ### Breaking Changes
 

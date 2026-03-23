@@ -634,6 +634,52 @@ module JobIteration
       end
     end
 
+    def test_log_interruption_with_reason
+      iterate_exact_times(1.times)
+      push(ActiveRecordIterationJob)
+
+      assert_logged("reason=interrupted") do
+        work_one_job
+      end
+    end
+
+    def test_log_interruption_with_max_job_runtime_reason
+      JobIteration.max_job_runtime = 1.second
+
+      slow_job_class = Class.new(ActiveJob::Base) do
+        include JobIteration::Iteration
+        include ActiveSupport::Testing::TimeHelpers
+
+        def build_enumerator(cursor:)
+          enumerator_builder.build_times_enumerator(3, cursor: cursor)
+        end
+
+        def each_iteration(*)
+          travel(2.seconds)
+        end
+      end
+
+      assert_logged("reason=max_job_runtime_exceeded") do
+        freeze_time do
+          slow_job_class.perform_now
+        end
+      end
+    ensure
+      JobIteration.max_job_runtime = nil
+    end
+
+    def test_log_interruption_with_custom_adapter_reason
+      adapter = mock
+      adapter.stubs(:call).returns("process_shutdown")
+      JobIteration.stubs(:interruption_adapter).returns(adapter)
+
+      push(ActiveRecordIterationJob)
+
+      assert_logged("reason=process_shutdown") do
+        work_one_job
+      end
+    end
+
     def test_aborting_in_each_iteration_job_will_execute_on_complete_callback
       push(AbortingActiveRecordIterationJob)
       work_one_job

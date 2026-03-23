@@ -22,7 +22,7 @@ module JobIteration
     def interrupted(event)
       info do
         "[JobIteration::Iteration] Interrupting and re-enqueueing the job " \
-          "cursor_position=#{event.payload[:cursor_position]}"
+          "cursor_position=#{event.payload[:cursor_position]} reason=#{event.payload[:reason] || "nil"}"
       end
     end
 

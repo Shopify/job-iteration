@@ -10,7 +10,7 @@ nil
 
 ### Features
 
-nil
+- [683](https://github.com/Shopify/job-iteration/pull/683) Add support for logging interruption reasons from the interruption_adapters and job_should_exit? hooks
 
 ### Bug fixes
 

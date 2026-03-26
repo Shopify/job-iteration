@@ -201,21 +201,25 @@ class JobIterationTest < IterationUnitTest
   def test_jobs_that_define_build_enumerator_and_each_iteration_will_not_raise
     push(JobWithRightMethods, "walrus" => "best")
     work_one_job
+    assert_empty(ActiveJob::Base.queue_adapter.enqueued_jobs)
   end
 
   def test_jobs_that_define_build_enumerator_and_each_iteration_with_sigs_will_not_raise
     push(JobWithRightMethodsButWithSorbetSignatures, "walrus" => "best")
     work_one_job
+    assert_empty(ActiveJob::Base.queue_adapter.enqueued_jobs)
   end
 
   def test_jobs_that_pass_splat_argument_to_build_enumerator_will_not_raise
     push(JobWithRightMethodsUsingSplatInTheArguments, {})
     work_one_job
+    assert_empty(ActiveJob::Base.queue_adapter.enqueued_jobs)
   end
 
   def test_jobs_that_pass_default_keyword_argument_to_build_enumerator_will_not_raise
     push(JobWithRightMethodsUsingDefaultKeywordArgument, {})
     work_one_job
+    assert_empty(ActiveJob::Base.queue_adapter.enqueued_jobs)
   end
 
   def test_jobs_that_do_not_define_build_enumerator_or_each_iteration_raises

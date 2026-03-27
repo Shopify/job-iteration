@@ -372,6 +372,7 @@ module JobIteration
     def test_build_enumerator_returns_nil
       push(NilEnumeratorIterationJob)
       work_one_job
+      assert_jobs_in_queue(0)
     end
 
     def test_works_with_private_methods

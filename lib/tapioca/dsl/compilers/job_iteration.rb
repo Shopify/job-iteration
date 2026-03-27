@@ -39,8 +39,8 @@ module Tapioca
               expanded_parameters = parameters.flat_map do |typed_param|
                 if (hash_type = fixed_hash_args[typed_param.param.name.to_sym])
                   hash_type.types.map do |key, value|
-                    if value.name.start_with?("T.nilable")
-                      create_kw_opt_param(key.to_s, type: value.to_s, default: "nil")
+                    if (default = nilable_fixed_hash_keyword_default(value))
+                      create_kw_opt_param(key.to_s, type: value.to_s, default: default)
                     else
                       create_kw_param(key.to_s, type: value.to_s)
                     end
@@ -88,6 +88,29 @@ module Tapioca
         end
 
         private
+
+        # FixedHash values for optional keys are represented as T.nilable(inner). The non-nil default
+        # for a Hash keyword is `{}`; other types use `nil`.
+        sig { params(value: T::Types::Base).returns(T.nilable(String)) }
+        def nilable_fixed_hash_keyword_default(value)
+          return unless value.is_a?(T::Types::Union)
+
+          inner = value.unwrap_nilable
+          return if inner.nil?
+
+          if hash_like_fixed_hash_value_type?(inner)
+            "{}"
+          else
+            "nil"
+          end
+        end
+
+        sig { params(type: T::Types::Base).returns(T::Boolean) }
+        def hash_like_fixed_hash_value_type?(type)
+          return true if T::Types::TypedHash === type
+
+          T::Types::Simple === type && type.raw_type.equal?(Hash)
+        end
 
         sig do
           params(

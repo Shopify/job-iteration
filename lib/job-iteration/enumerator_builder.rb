@@ -65,6 +65,44 @@ module JobIteration
       wrap(self, enumerable.each_with_index.drop(drop).to_enum { enumerable.size - drop })
     end
 
+    class EnqueueParallelJobs
+      def initialize(instances)
+        @instances = instances
+      end
+
+      def enqueue_jobs(job_class, arguments)
+        jobs = @instances.times.map do |index|
+          job_class.new(*arguments).tap { |job| job.cursor_position = { instance: index, cursor_position: nil } }
+        end
+        ActiveJob.perform_all_later(jobs)
+      end
+    end
+
+    def build_parallel_array_enumerator(enumerable, instances:, cursor:)
+      unless enumerable.is_a?(Array)
+        raise ArgumentError, "enumerable must be an Array"
+      end
+
+      if cursor.nil? || cursor.empty?
+        return EnqueueParallelJobs.new(instances) # Tell caller to enqueue instances jobs
+      end
+
+      instance = cursor[:instance]
+      slice_size = (enumerable.size / instances.to_f).ceil
+      slice_start = slice_size * instance
+      drop = cursor[:cursor_position] ? cursor[:cursor_position] + 1 : 0
+
+      enum = Enumerator.new(slice_size - drop) do |yielder|
+        enumerable.drop(slice_start).each_with_index.drop(drop).each do |item, index|
+          break if index >= slice_size
+
+          yielder.yield(item, { instance: instance, cursor_position: index })
+        end
+      end
+
+      wrap(self, enum)
+    end
+
     # Builds Enumerator from Active Record Relation. Each Enumerator tick moves the cursor one row forward.
     #
     # +columns:+ argument is used to build the actual query for iteration. +columns+: defaults to primary key:

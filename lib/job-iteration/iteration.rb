@@ -141,6 +141,11 @@ module JobIteration
         return
       end
 
+      if enumerator.is_a?(EnumeratorBuilder::EnqueueParallelJobs)
+        enumerator.enqueue_jobs(self.class, arguments)
+        return
+      end
+
       assert_enumerator!(enumerator)
 
       if executions == 1 && times_interrupted == 0

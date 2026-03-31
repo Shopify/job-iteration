@@ -454,6 +454,47 @@ module Tapioca
           assert_equal(expected, rbi_for(:NotifyJob))
         end
 
+        def test_generates_empty_hash_default_for_nilable_hash_keyword_in_fixed_hash
+          add_ruby_file("job.rb", <<~RUBY)
+            class NotifyJob < ActiveJob::Base
+              include JobIteration::Iteration
+
+              # Optional hash keys in a shape type are T.nilable(inner) at runtime; FixedHash#types
+              # includes them with a T::Types::Union whose unwrap_nilable is the inner Hash type.
+              Params = T.type_alias { { user_id: Integer, flags: T.nilable(T::Hash[Symbol, T::Boolean]) } }
+
+              extend T::Sig
+              sig { params(params: Params, cursor: T.untyped).returns(T::Array[T.untyped]) }
+              def build_enumerator(params, cursor:)
+                # ...
+              end
+            end
+          RUBY
+
+          expected = template(<<~RBI)
+            # typed: strong
+
+            class NotifyJob
+              sig { params(user_id: ::Integer, flags: T.nilable(T::Hash[::Symbol, T::Boolean])).void }
+              def perform(user_id:, flags: {}); end
+
+              class << self
+            <% if rails_version(">= 7.0") %>
+                sig { params(user_id: ::Integer, flags: T.nilable(T::Hash[::Symbol, T::Boolean]), block: T.nilable(T.proc.params(job: NotifyJob).void)).returns(T.any(NotifyJob, FalseClass)) }
+                def perform_later(user_id:, flags: {}, &block); end
+            <% else %>
+                sig { params(user_id: ::Integer, flags: T.nilable(T::Hash[::Symbol, T::Boolean])).returns(T.any(NotifyJob, FalseClass)) }
+                def perform_later(user_id:, flags: {}); end
+            <% end %>
+
+                sig { params(user_id: ::Integer, flags: T.nilable(T::Hash[::Symbol, T::Boolean])).returns(T.any(NilClass, Exception)) }
+                def perform_now(user_id:, flags: {}); end
+              end
+            end
+          RBI
+          assert_equal(expected, rbi_for(:NotifyJob))
+        end
+
         def test_generates_correct_rbi_file_for_job_with_build_enumerator_method_with_nested_hash_parameter
           add_ruby_file("job.rb", <<~RUBY)
             class ResourceType; end

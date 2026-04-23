@@ -50,6 +50,9 @@ connection_config = {
 }
 connection_config[:password] = "root" if ENV["CI"]
 
+if ActiveRecord.respond_to?(:async_query_executor)
+  ActiveRecord.async_query_executor = :global_thread_pool
+end
 ActiveRecord::Base.establish_connection(connection_config)
 
 redis_url = ENV.fetch("REDIS_URL") { "redis://localhost:6379/0" }

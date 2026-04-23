@@ -547,6 +547,85 @@ module Tapioca
           assert_equal(expected, rbi_for(:NotifyJob))
         end
 
+        def test_generates_correct_rbi_file_for_job_with_empty_fixed_hash_parameter
+          add_ruby_file("job.rb", <<~RUBY)
+            class NotifyJob < ActiveJob::Base
+              include JobIteration::Iteration
+
+              extend T::Sig
+              sig { params(params: {}, cursor: T.untyped).returns(T::Array[T.untyped]) }
+              def build_enumerator(params, cursor:)
+                # ...
+              end
+            end
+          RUBY
+
+          expected = template(<<~RBI)
+            # typed: strong
+
+            class NotifyJob
+              sig { params(params: {}).void }
+              def perform(params = {}); end
+
+              class << self
+            <% if rails_version(">= 7.0") %>
+                sig { params(params: {}, block: T.nilable(T.proc.params(job: NotifyJob).void)).returns(T.any(NotifyJob, FalseClass)) }
+                def perform_later(params = {}, &block); end
+            <% else %>
+                sig { params(params: {}).returns(T.any(NotifyJob, FalseClass)) }
+                def perform_later(params = {}); end
+            <% end %>
+
+                sig { params(params: {}).returns(T.any(NilClass, Exception)) }
+                def perform_now(params = {}); end
+              end
+            end
+          RBI
+          assert_equal(expected, rbi_for(:NotifyJob))
+        end
+
+        def test_generates_correct_rbi_file_for_job_with_all_nilable_fixed_hash_keys
+          add_ruby_file("job.rb", <<~RUBY)
+            class NotifyJob < ActiveJob::Base
+              include JobIteration::Iteration
+
+              extend T::Sig
+              sig do
+                params(
+                  params: { tag: T.nilable(String) },
+                  cursor: T.untyped
+                ).returns(T::Array[T.untyped])
+              end
+              def build_enumerator(params, cursor:)
+                # ...
+              end
+            end
+          RUBY
+
+          expected = template(<<~RBI)
+            # typed: strong
+
+            class NotifyJob
+              sig { params(tag: T.nilable(::String)).void }
+              def perform(tag: nil); end
+
+              class << self
+            <% if rails_version(">= 7.0") %>
+                sig { params(tag: T.nilable(::String), block: T.nilable(T.proc.params(job: NotifyJob).void)).returns(T.any(NotifyJob, FalseClass)) }
+                def perform_later(tag: nil, &block); end
+            <% else %>
+                sig { params(tag: T.nilable(::String)).returns(T.any(NotifyJob, FalseClass)) }
+                def perform_later(tag: nil); end
+            <% end %>
+
+                sig { params(tag: T.nilable(::String)).returns(T.any(NilClass, Exception)) }
+                def perform_now(tag: nil); end
+              end
+            end
+          RBI
+          assert_equal(expected, rbi_for(:NotifyJob))
+        end
+
         def test_generates_correct_rbi_file_for_generic_jobs_with_one_generic_variable
           add_ruby_file("job.rb", <<~RUBY)
             class GenericJob < ActiveJob::Base

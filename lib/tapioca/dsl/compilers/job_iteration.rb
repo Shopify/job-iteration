@@ -38,13 +38,7 @@ module Tapioca
               fixed_hash_args = signature.arg_types.select { |arg_type| T::Types::FixedHash === arg_type[1] }.to_h
               expanded_parameters = parameters.flat_map do |typed_param|
                 if (hash_type = fixed_hash_args[typed_param.param.name.to_sym])
-                  hash_type.types.map do |key, value|
-                    if value.name.start_with?("T.nilable")
-                      create_kw_opt_param(key.to_s, type: value.to_s, default: "nil")
-                    else
-                      create_kw_param(key.to_s, type: value.to_s)
-                    end
-                  end
+                  expand_fixed_hash(typed_param, hash_type)
                 else
                   typed_param
                 end
@@ -88,6 +82,21 @@ module Tapioca
         end
 
         private
+
+        sig { params(typed_param: RBI::TypedParam, hash_type: T::Types::FixedHash).returns(T.any(RBI::TypedParam, T::Array[RBI::TypedParam])) }
+        def expand_fixed_hash(typed_param, hash_type)
+          if hash_type.types.empty?
+            create_opt_param(typed_param.param.name, type: "{}", default: "{}")
+          else
+            hash_type.types.map do |key, value|
+              if value.name.start_with?("T.nilable")
+                create_kw_opt_param(key.to_s, type: value.to_s, default: "nil")
+              else
+                create_kw_param(key.to_s, type: value.to_s)
+              end
+            end
+          end
+        end
 
         sig do
           params(

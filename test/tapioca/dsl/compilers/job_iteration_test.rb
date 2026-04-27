@@ -565,19 +565,19 @@ module Tapioca
 
             class NotifyJob
               sig { params(params: {}).void }
-              def perform(params = {}); end
+              def perform(params); end
 
               class << self
             <% if rails_version(">= 7.0") %>
                 sig { params(params: {}, block: T.nilable(T.proc.params(job: NotifyJob).void)).returns(T.any(NotifyJob, FalseClass)) }
-                def perform_later(params = {}, &block); end
+                def perform_later(params, &block); end
             <% else %>
                 sig { params(params: {}).returns(T.any(NotifyJob, FalseClass)) }
-                def perform_later(params = {}); end
+                def perform_later(params); end
             <% end %>
 
                 sig { params(params: {}).returns(T.any(NilClass, Exception)) }
-                def perform_now(params = {}); end
+                def perform_now(params); end
               end
             end
           RBI

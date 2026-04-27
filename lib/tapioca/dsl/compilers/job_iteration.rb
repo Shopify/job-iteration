@@ -86,7 +86,7 @@ module Tapioca
         sig { params(typed_param: RBI::TypedParam, hash_type: T::Types::FixedHash).returns(T.any(RBI::TypedParam, T::Array[RBI::TypedParam])) }
         def expand_fixed_hash(typed_param, hash_type)
           if hash_type.types.empty?
-            create_opt_param(typed_param.param.name, type: "{}", default: "{}")
+            typed_param
           else
             hash_type.types.map do |key, value|
               if value.name.start_with?("T.nilable")

@@ -40,10 +40,12 @@ end
 
 mysql_host = ENV.fetch("MYSQL_HOST") { "localhost" }
 mysql_port = ENV.fetch("MYSQL_PORT") { 3306 }
+service_namespace = ENV.fetch("SERVICE_NAMESPACE") { nil }
+db_name = "job_iteration_test#{service_namespace ? "_#{service_namespace}" : ""}"
 
 connection_config = {
   adapter: "mysql2",
-  database: "job_iteration_test",
+  database: db_name,
   username: "root",
   host: mysql_host,
   port: mysql_port,

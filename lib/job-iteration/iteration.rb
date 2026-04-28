@@ -141,6 +141,14 @@ module JobIteration
         return
       end
 
+      if enumerator.is_a?(ParallelEnumerator::EnqueueJobs)
+        tags = instrumentation_tags.merge(instances: enumerator.instances)
+        ActiveSupport::Notifications.instrument("enqueue_parallel_jobs.iteration", tags) do
+          enumerator.enqueue_jobs(self)
+        end
+        return
+      end
+
       assert_enumerator!(enumerator)
 
       if executions == 1 && times_interrupted == 0

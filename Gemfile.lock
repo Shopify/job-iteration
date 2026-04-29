@@ -9,7 +9,7 @@ PATH
   remote: .
   specs:
     job-iteration (1.13.1)
-      activejob (>= 7.0)
+      activejob (>= 7.1)
 
 GEM
   remote: https://rubygems.org/

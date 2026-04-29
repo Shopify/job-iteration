@@ -70,13 +70,8 @@ module Tapioca
               def perform(user_id); end
 
               class << self
-            <% if rails_version(">= 7.0") %>
                 sig { params(user_id: T.untyped, block: T.nilable(T.proc.params(job: NotifyJob).void)).returns(T.any(NotifyJob, FalseClass)) }
                 def perform_later(user_id, &block); end
-            <% else %>
-                sig { params(user_id: T.untyped).returns(T.any(NotifyJob, FalseClass)) }
-                def perform_later(user_id); end
-            <% end %>
 
                 sig { params(user_id: T.untyped).returns(T.any(NilClass, Exception)) }
                 def perform_now(user_id); end
@@ -105,13 +100,8 @@ module Tapioca
               def perform(user_id, foo_id = T.unsafe(nil)); end
 
               class << self
-            <% if rails_version(">= 7.0") %>
                 sig { params(user_id: T.untyped, foo_id: T.untyped, block: T.nilable(T.proc.params(job: NotifyJob).void)).returns(T.any(NotifyJob, FalseClass)) }
                 def perform_later(user_id, foo_id = T.unsafe(nil), &block); end
-            <% else %>
-                sig { params(user_id: T.untyped, foo_id: T.untyped).returns(T.any(NotifyJob, FalseClass)) }
-                def perform_later(user_id, foo_id = T.unsafe(nil)); end
-            <% end %>
 
                 sig { params(user_id: T.untyped, foo_id: T.untyped).returns(T.any(NilClass, Exception)) }
                 def perform_now(user_id, foo_id = T.unsafe(nil)); end
@@ -140,13 +130,8 @@ module Tapioca
               def perform(user_id:, profile_id:); end
 
               class << self
-            <% if rails_version(">= 7.0") %>
                 sig { params(user_id: T.untyped, profile_id: T.untyped, block: T.nilable(T.proc.params(job: NotifyJob).void)).returns(T.any(NotifyJob, FalseClass)) }
                 def perform_later(user_id:, profile_id:, &block); end
-            <% else %>
-                sig { params(user_id: T.untyped, profile_id: T.untyped).returns(T.any(NotifyJob, FalseClass)) }
-                def perform_later(user_id:, profile_id:); end
-            <% end %>
 
                 sig { params(user_id: T.untyped, profile_id: T.untyped).returns(T.any(NilClass, Exception)) }
                 def perform_now(user_id:, profile_id:); end
@@ -175,13 +160,8 @@ module Tapioca
               def perform(user_id:, profile_id: T.unsafe(nil)); end
 
               class << self
-            <% if rails_version(">= 7.0") %>
                 sig { params(user_id: T.untyped, profile_id: T.untyped, block: T.nilable(T.proc.params(job: NotifyJob).void)).returns(T.any(NotifyJob, FalseClass)) }
                 def perform_later(user_id:, profile_id: T.unsafe(nil), &block); end
-            <% else %>
-                sig { params(user_id: T.untyped, profile_id: T.untyped).returns(T.any(NotifyJob, FalseClass)) }
-                def perform_later(user_id:, profile_id: T.unsafe(nil)); end
-            <% end %>
 
                 sig { params(user_id: T.untyped, profile_id: T.untyped).returns(T.any(NilClass, Exception)) }
                 def perform_now(user_id:, profile_id: T.unsafe(nil)); end
@@ -212,13 +192,8 @@ module Tapioca
               def perform(user_id); end
 
               class << self
-            <% if rails_version(">= 7.0") %>
                 sig { params(user_id: ::Integer, block: T.nilable(T.proc.params(job: NotifyJob).void)).returns(T.any(NotifyJob, FalseClass)) }
                 def perform_later(user_id, &block); end
-            <% else %>
-                sig { params(user_id: ::Integer).returns(T.any(NotifyJob, FalseClass)) }
-                def perform_later(user_id); end
-            <% end %>
 
                 sig { params(user_id: ::Integer).returns(T.any(NilClass, Exception)) }
                 def perform_now(user_id); end
@@ -249,13 +224,8 @@ module Tapioca
               def perform(user_id, foo_id = T.unsafe(nil)); end
 
               class << self
-            <% if rails_version(">= 7.0") %>
                 sig { params(user_id: ::Integer, foo_id: T.nilable(::String), block: T.nilable(T.proc.params(job: NotifyJob).void)).returns(T.any(NotifyJob, FalseClass)) }
                 def perform_later(user_id, foo_id = T.unsafe(nil), &block); end
-            <% else %>
-                sig { params(user_id: ::Integer, foo_id: T.nilable(::String)).returns(T.any(NotifyJob, FalseClass)) }
-                def perform_later(user_id, foo_id = T.unsafe(nil)); end
-            <% end %>
 
                 sig { params(user_id: ::Integer, foo_id: T.nilable(::String)).returns(T.any(NilClass, Exception)) }
                 def perform_now(user_id, foo_id = T.unsafe(nil)); end
@@ -286,13 +256,8 @@ module Tapioca
               def perform(user_id:, profile_id:); end
 
               class << self
-            <% if rails_version(">= 7.0") %>
                 sig { params(user_id: ::Integer, profile_id: ::Integer, block: T.nilable(T.proc.params(job: NotifyJob).void)).returns(T.any(NotifyJob, FalseClass)) }
                 def perform_later(user_id:, profile_id:, &block); end
-            <% else %>
-                sig { params(user_id: ::Integer, profile_id: ::Integer).returns(T.any(NotifyJob, FalseClass)) }
-                def perform_later(user_id:, profile_id:); end
-            <% end %>
 
                 sig { params(user_id: ::Integer, profile_id: ::Integer).returns(T.any(NilClass, Exception)) }
                 def perform_now(user_id:, profile_id:); end
@@ -323,13 +288,8 @@ module Tapioca
               def perform(user_id:, profile_id: T.unsafe(nil)); end
 
               class << self
-            <% if rails_version(">= 7.0") %>
                 sig { params(user_id: ::Integer, profile_id: T.nilable(::Integer), block: T.nilable(T.proc.params(job: NotifyJob).void)).returns(T.any(NotifyJob, FalseClass)) }
                 def perform_later(user_id:, profile_id: T.unsafe(nil), &block); end
-            <% else %>
-                sig { params(user_id: ::Integer, profile_id: T.nilable(::Integer)).returns(T.any(NotifyJob, FalseClass)) }
-                def perform_later(user_id:, profile_id: T.unsafe(nil)); end
-            <% end %>
 
                 sig { params(user_id: ::Integer, profile_id: T.nilable(::Integer)).returns(T.any(NilClass, Exception)) }
                 def perform_now(user_id:, profile_id: T.unsafe(nil)); end
@@ -360,13 +320,8 @@ module Tapioca
               def perform(user_id, name); end
 
               class << self
-            <% if rails_version(">= 7.0") %>
                 sig { params(user_id: ::Integer, name: ::String, block: T.nilable(T.proc.params(job: NotifyJob).void)).returns(T.any(NotifyJob, FalseClass)) }
                 def perform_later(user_id, name, &block); end
-            <% else %>
-                sig { params(user_id: ::Integer, name: ::String).returns(T.any(NotifyJob, FalseClass)) }
-                def perform_later(user_id, name); end
-            <% end %>
 
                 sig { params(user_id: ::Integer, name: ::String).returns(T.any(NilClass, Exception)) }
                 def perform_now(user_id, name); end
@@ -399,13 +354,8 @@ module Tapioca
               def perform(user_id:, name:); end
 
               class << self
-            <% if rails_version(">= 7.0") %>
                 sig { params(user_id: ::Integer, name: ::String, block: T.nilable(T.proc.params(job: NotifyJob).void)).returns(T.any(NotifyJob, FalseClass)) }
                 def perform_later(user_id:, name:, &block); end
-            <% else %>
-                sig { params(user_id: ::Integer, name: ::String).returns(T.any(NotifyJob, FalseClass)) }
-                def perform_later(user_id:, name:); end
-            <% end %>
 
                 sig { params(user_id: ::Integer, name: ::String).returns(T.any(NilClass, Exception)) }
                 def perform_now(user_id:, name:); end
@@ -438,13 +388,8 @@ module Tapioca
               def perform(name:, user_id: nil); end
 
               class << self
-            <% if rails_version(">= 7.0") %>
                 sig { params(name: ::String, user_id: T.nilable(::Integer), block: T.nilable(T.proc.params(job: NotifyJob).void)).returns(T.any(NotifyJob, FalseClass)) }
                 def perform_later(name:, user_id: nil, &block); end
-            <% else %>
-                sig { params(name: ::String, user_id: T.nilable(::Integer)).returns(T.any(NotifyJob, FalseClass)) }
-                def perform_later(name:, user_id: nil); end
-            <% end %>
 
                 sig { params(name: ::String, user_id: T.nilable(::Integer)).returns(T.any(NilClass, Exception)) }
                 def perform_now(name:, user_id: nil); end
@@ -483,13 +428,8 @@ module Tapioca
               def perform(shop_id:, resource_types:, locale:, metadata: nil); end
 
               class << self
-            <% if rails_version(">= 7.0") %>
                 sig { params(shop_id: ::Integer, resource_types: T::Array[::ResourceType], locale: ::Locale, metadata: T.nilable(::String), block: T.nilable(T.proc.params(job: NotifyJob).void)).returns(T.any(NotifyJob, FalseClass)) }
                 def perform_later(shop_id:, resource_types:, locale:, metadata: nil, &block); end
-            <% else %>
-                sig { params(shop_id: ::Integer, resource_types: T::Array[::ResourceType], locale: ::Locale, metadata: T.nilable(::String)).returns(T.any(NotifyJob, FalseClass)) }
-                def perform_later(shop_id:, resource_types:, locale:, metadata: nil); end
-            <% end %>
 
                 sig { params(shop_id: ::Integer, resource_types: T::Array[::ResourceType], locale: ::Locale, metadata: T.nilable(::String)).returns(T.any(NilClass, Exception)) }
                 def perform_now(shop_id:, resource_types:, locale:, metadata: nil); end
@@ -531,13 +471,8 @@ module Tapioca
               def perform(shop_ids:, profile_ids:, extension_ids:, foo:, bar:); end
 
               class << self
-            <% if rails_version(">= 7.0") %>
                 sig { params(shop_ids: T.any(::Integer, T::Array[::Integer]), profile_ids: T.any(::Integer, T::Array[::Integer]), extension_ids: T.any(::Integer, T::Array[::Integer]), foo: ::Symbol, bar: ::String, block: T.nilable(T.proc.params(job: NotifyJob).void)).returns(T.any(NotifyJob, FalseClass)) }
                 def perform_later(shop_ids:, profile_ids:, extension_ids:, foo:, bar:, &block); end
-            <% else %>
-                sig { params(shop_ids: T.any(::Integer, T::Array[::Integer]), profile_ids: T.any(::Integer, T::Array[::Integer]), extension_ids: T.any(::Integer, T::Array[::Integer]), foo: ::Symbol, bar: ::String).returns(T.any(NotifyJob, FalseClass)) }
-                def perform_later(shop_ids:, profile_ids:, extension_ids:, foo:, bar:); end
-            <% end %>
 
                 sig { params(shop_ids: T.any(::Integer, T::Array[::Integer]), profile_ids: T.any(::Integer, T::Array[::Integer]), extension_ids: T.any(::Integer, T::Array[::Integer]), foo: ::Symbol, bar: ::String).returns(T.any(NilClass, Exception)) }
                 def perform_now(shop_ids:, profile_ids:, extension_ids:, foo:, bar:); end
@@ -568,13 +503,8 @@ module Tapioca
               def perform(params); end
 
               class << self
-            <% if rails_version(">= 7.0") %>
                 sig { params(params: {}, block: T.nilable(T.proc.params(job: NotifyJob).void)).returns(T.any(NotifyJob, FalseClass)) }
                 def perform_later(params, &block); end
-            <% else %>
-                sig { params(params: {}).returns(T.any(NotifyJob, FalseClass)) }
-                def perform_later(params); end
-            <% end %>
 
                 sig { params(params: {}).returns(T.any(NilClass, Exception)) }
                 def perform_now(params); end
@@ -610,13 +540,8 @@ module Tapioca
               def perform(tag: nil); end
 
               class << self
-            <% if rails_version(">= 7.0") %>
                 sig { params(tag: T.nilable(::String), block: T.nilable(T.proc.params(job: NotifyJob).void)).returns(T.any(NotifyJob, FalseClass)) }
                 def perform_later(tag: nil, &block); end
-            <% else %>
-                sig { params(tag: T.nilable(::String)).returns(T.any(NotifyJob, FalseClass)) }
-                def perform_later(tag: nil); end
-            <% end %>
 
                 sig { params(tag: T.nilable(::String)).returns(T.any(NilClass, Exception)) }
                 def perform_now(tag: nil); end
@@ -650,13 +575,8 @@ module Tapioca
               def perform(val:); end
 
               class << self
-            <% if rails_version(">= 7.0") %>
                 sig { params(val: Elem, block: T.nilable(T.proc.params(job: GenericJob[T.untyped]).void)).returns(T.any(GenericJob[T.untyped], FalseClass)) }
                 def perform_later(val:, &block); end
-            <% else %>
-                sig { params(val: Elem).returns(T.any(GenericJob[T.untyped], FalseClass)) }
-                def perform_later(val:); end
-            <% end %>
 
                 sig { params(val: Elem).returns(T.any(NilClass, Exception)) }
                 def perform_now(val:); end
@@ -691,13 +611,8 @@ module Tapioca
               def perform(val:, some_value:); end
 
               class << self
-            <% if rails_version(">= 7.0") %>
                 sig { params(val: Elem, some_value: SomeValue, block: T.nilable(T.proc.params(job: GenericJob[T.untyped, T.untyped]).void)).returns(T.any(GenericJob[T.untyped, T.untyped], FalseClass)) }
                 def perform_later(val:, some_value:, &block); end
-            <% else %>
-                sig { params(val: Elem, some_value: SomeValue).returns(T.any(GenericJob[T.untyped, T.untyped], FalseClass)) }
-                def perform_later(val:, some_value:); end
-            <% end %>
 
                 sig { params(val: Elem, some_value: SomeValue).returns(T.any(NilClass, Exception)) }
                 def perform_now(val:, some_value:); end

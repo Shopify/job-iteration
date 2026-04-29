@@ -105,15 +105,11 @@ module Tapioca
           ).returns(T::Array[RBI::TypedParam])
         end
         def perform_later_parameters(parameters, returned_job_class)
-          if ::Gem::Requirement.new(">= 7.0").satisfied_by?(::ActiveJob.gem_version)
-            parameters.reject! { |typed_param| RBI::BlockParam === typed_param.param }
-            parameters + [create_block_param(
-              "block",
-              type: "T.nilable(T.proc.params(job: #{returned_job_class}).void)",
-            )]
-          else
-            parameters
-          end
+          parameters.reject! { |typed_param| RBI::BlockParam === typed_param.param }
+          parameters + [create_block_param(
+            "block",
+            type: "T.nilable(T.proc.params(job: #{returned_job_class}).void)",
+          )]
         end
 
         class << self

@@ -16,6 +16,12 @@ nil
 
 nil
 
+## v1.13.1 (Apr 28, 2026)
+
+### Bug fixes
+
+- [#699](https://github.com/Shopify/job-iteration/pull/699) - Fix tapioca compiler dropping empty FixedHash `{}` params.
+
 ## v1.13.0 (Mar 23, 2026)
 
 ### Breaking Changes

@@ -5,6 +5,7 @@ require_relative "active_record_enumerator"
 require_relative "csv_enumerator"
 require_relative "throttle_enumerator"
 require_relative "nested_enumerator"
+require_relative "parallel_enumerator"
 require "forwardable"
 
 module JobIteration
@@ -185,6 +186,17 @@ module JobIteration
       wrap(self, enum)
     end
 
+    def build_parallel_enumerator(instances:, cursor:, &block)
+      unless instances.is_a?(Integer) && instances.positive?
+        raise ArgumentError, "instances must be a positive Integer"
+      end
+
+      return ParallelEnumerator::EnqueueJobs.new(instances) if cursor.nil?
+
+      enum = ParallelEnumerator.new(block, instances: instances, cursor: cursor).to_enum
+      wrap(self, enum)
+    end
+
     alias_method :once, :build_once_enumerator
     alias_method :times, :build_times_enumerator
     alias_method :array, :build_array_enumerator
@@ -195,6 +207,7 @@ module JobIteration
     alias_method :csv, :build_csv_enumerator
     alias_method :csv_on_batches, :build_csv_enumerator_on_batches
     alias_method :nested, :build_nested_enumerator
+    alias_method :parallel, :build_parallel_enumerator
 
     private
 

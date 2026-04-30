@@ -11,8 +11,12 @@ up:
   - redis
   - custom:
       name: Create Job Iteration database
-      meet: mysql -uroot -h $MYSQL_HOST -P $MYSQL_PORT -e "CREATE DATABASE job_iteration_test"
-      met?: mysql -uroot -h $MYSQL_HOST -P $MYSQL_PORT job_iteration_test -e "SELECT 1" &> /dev/null
+      meet: |
+        DB_NAME="job_iteration_test${SERVICE_NAMESPACE:+_$SERVICE_NAMESPACE}"
+        mysql -uroot -h $MYSQL_HOST -P $MYSQL_PORT -e "CREATE DATABASE IF NOT EXISTS \`$DB_NAME\`"
+      met?: |
+        DB_NAME="job_iteration_test${SERVICE_NAMESPACE:+_$SERVICE_NAMESPACE}"
+        mysql -uroot -h $MYSQL_HOST -P $MYSQL_PORT "$DB_NAME" -e "SELECT 1" &> /dev/null
 
 commands:
   test:

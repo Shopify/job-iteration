@@ -19,6 +19,12 @@ module JobIteration
       end
     end
 
+    def enqueue_parallel_jobs(event)
+      info do
+        "[JobIteration::Iteration] Enqueued #{event.payload[:instances]} parallel jobs."
+      end
+    end
+
     def interrupted(event)
       info do
         "[JobIteration::Iteration] Interrupting and re-enqueueing the job " \

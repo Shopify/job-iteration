@@ -238,10 +238,57 @@ module JobIteration
       assert_equal({ "instance" => 2, "inner_cursor" => 2 }, job.cursor_position)
     end
 
+    test "build_parallel_array_enumerator splits the array evenly when size divides by instances" do
+      array = (0...12).to_a
+
+      partitions = collect_array_partitions(array, instances: 3)
+
+      assert_equal([4, 4, 4], partitions.map(&:size))
+      assert_equal(array, partitions.flatten.sort)
+    end
+
+    test "build_parallel_array_enumerator covers the array with near-equal partitions when size does not divide by instances" do
+      array = (0...10).to_a
+
+      partitions = collect_array_partitions(array, instances: 3)
+
+      assert_equal(array, partitions.flatten.sort)
+      partition_sizes = partitions.map(&:size)
+      assert_operator(partition_sizes.max - partition_sizes.min, :<=, 1)
+    end
+
+    test "build_parallel_array_enumerator resumes from a partial inner_cursor" do
+      array = (0...10).to_a
+
+      enum = enumerator_builder.build_parallel_array_enumerator(
+        array,
+        instances: 3,
+        cursor: { "instance" => 1, "inner_cursor" => 0 },
+      )
+
+      assert_equal(
+        [
+          [4, { "instance" => 1, "inner_cursor" => 1 }],
+          [5, { "instance" => 1, "inner_cursor" => 2 }],
+        ],
+        enum.to_a,
+      )
+    end
+
     private
 
     def enumerator_builder
       JobIteration::EnumeratorBuilder.new(nil)
+    end
+
+    def collect_array_partitions(array, instances:)
+      (0...instances).map do |instance|
+        enumerator_builder.build_parallel_array_enumerator(
+          array,
+          instances: instances,
+          cursor: { "instance" => instance, "inner_cursor" => nil },
+        ).map { |record, _cursor| record }
+      end
     end
   end
 end

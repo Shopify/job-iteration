@@ -66,6 +66,23 @@ module JobIteration
       wrap(self, enumerable.each_with_index.drop(drop).to_enum { enumerable.size - drop })
     end
 
+    # Builds an Enumerator that iterates over a given array, across +instances+ parallel jobs.
+    #
+    # Child job i iterates over the slice of the array starting at
+    # index (array.size / instances * i).floor and ending at index (array.size / instances * (i + 1)).floor - 1.
+    def build_parallel_array_enumerator(array, instances:, cursor:)
+      unless array.is_a?(Array)
+        raise ArgumentError, "array must be an Array"
+      end
+
+      build_parallel_enumerator(instances: instances, cursor: cursor) do |instance, instances, inner_cursor|
+        slice_start = (array.size.to_f / instances * instance).floor
+        next_slice_start = (array.size.to_f / instances * (instance + 1)).floor
+        slice = array[slice_start...next_slice_start]
+        build_array_enumerator(slice, cursor: inner_cursor)
+      end
+    end
+
     # Builds Enumerator from Active Record Relation. Each Enumerator tick moves the cursor one row forward.
     #
     # +columns:+ argument is used to build the actual query for iteration. +columns+: defaults to primary key:
@@ -200,6 +217,7 @@ module JobIteration
     alias_method :once, :build_once_enumerator
     alias_method :times, :build_times_enumerator
     alias_method :array, :build_array_enumerator
+    alias_method :parallel_array, :build_parallel_array_enumerator
     alias_method :active_record_on_records, :build_active_record_enumerator_on_records
     alias_method :active_record_on_batches, :build_active_record_enumerator_on_batches
     alias_method :active_record_on_batch_relations, :build_active_record_enumerator_on_batch_relations

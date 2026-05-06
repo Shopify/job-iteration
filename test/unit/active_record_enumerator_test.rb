@@ -196,15 +196,44 @@ module JobIteration
       end
     end
 
+    test "parallel partition covers the relation with near-equal partitions" do
+      ids = Product.pluck(:id).sort
+
+      partitions = (0...3).map do |instance|
+        enum = build_enumerator(instance: instance, instances: 3)
+        enum.records.map { |record, _cursor| record.id }
+      end
+
+      assert_equal(ids, partitions.flatten.sort)
+      partition_sizes = partitions.map(&:size)
+      assert_operator(partition_sizes.max - partition_sizes.min, :<=, 1)
+    end
+
+    test "parallel partition raises ArgumentError for non-integer primary key" do
+      Product.stubs(:column_for_attribute).returns(stub(type: :string))
+
+      enum = build_enumerator(instance: 0, instances: 3)
+      error = assert_raises(ArgumentError) { enum.records.first }
+      assert_match(/integer primary key/, error.message)
+    end
+
+    test "parallel partition raises ArgumentError for composite primary key" do
+      enum = build_enumerator(relation: TravelRoute.all, instance: 0, instances: 3)
+      error = assert_raises(ArgumentError) { enum.records.first }
+      assert_match(/integer primary key/, error.message)
+    end
+
     private
 
-    def build_enumerator(relation: Product.all, batch_size: 2, timezone: nil, columns: nil, cursor: nil)
+    def build_enumerator(relation: Product.all, batch_size: 2, timezone: nil, columns: nil, cursor: nil, instance: nil, instances: nil)
       JobIteration::ActiveRecordEnumerator.new(
         relation,
         batch_size: batch_size,
         timezone: timezone,
         columns: columns,
         cursor: cursor,
+        instance: instance,
+        instances: instances,
       )
     end
   end

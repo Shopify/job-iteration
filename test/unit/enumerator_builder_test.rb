@@ -87,6 +87,14 @@ module JobIteration
       end
     end
 
+    test_builder_method(:build_parallel_array_enumerator) do
+      enumerator_builder(wraps: 2).build_parallel_array_enumerator(
+        [1, 2, 3, 4],
+        instances: 2,
+        cursor: { "instance" => 0, "inner_cursor" => nil },
+      )
+    end
+
     # checks that all the non-alias methods were tested
     raise "methods not tested: #{methods.inspect}" unless methods.empty?
 

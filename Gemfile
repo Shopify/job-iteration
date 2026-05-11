@@ -10,8 +10,8 @@ gemspec
 ruby_version = Gem::Version.new(RUBY_VERSION)
 rails_version = ENV.fetch("RAILS_VERSION", "edge") == "edge" ? Gem::Version.new("8.2") : Gem::Version.new(ENV.fetch("RAILS_VERSION"))
 
-if ruby_version >= Gem::Version.new("3.2") && rails_version >= Gem::Version.new("7.1")
-  sidekiq_version = ">= 8.0.9" # Fixes incompatibility with connection_pool >= 3.0.0, but is not compatible with Rails 7.0
+if ruby_version >= Gem::Version.new("3.2")
+  sidekiq_version = ">= 8.0.9" # Fixes incompatibility with connection_pool >= 3.0.0
   connection_pool_version = ">= 3.0.0"
 else
   sidekiq_version = ">= 7.0.0"

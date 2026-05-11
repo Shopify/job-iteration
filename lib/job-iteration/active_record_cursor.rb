@@ -56,7 +56,7 @@ module JobIteration
       self.position = @columns.map do |column|
         method = column.to_s.split(".").last
 
-        if ActiveRecord.version >= Gem::Version.new("7.1.0.alpha") && method == "id"
+        if method == "id"
           record.id_value
         else
           record.send(method.to_sym)

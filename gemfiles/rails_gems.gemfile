@@ -8,11 +8,3 @@ else                raise "Unsupported RAILS_VERSION: #{rails_version}"
 end
 
 eval_gemfile "../Gemfile"
-
-# https://github.com/rails/rails/pull/44083
-if Gem::Version.new(RUBY_VERSION) >= Gem::Version.new("3.1") &&
-    rails_version != "edge" && Gem::Version.new(rails_version) < Gem::Version.new("7")
-  gem "net-imap", require: false
-  gem "net-pop", require: false
-  gem "net-smtp", require: false
-end

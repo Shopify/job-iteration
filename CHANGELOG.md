@@ -11,6 +11,8 @@ nil
 ### Features
 
 - [702](https://github.com/Shopify/job-iteration/pull/702) - Add support for parallel iteration with `enumerator_builder.parallel`. This enqueues multiple jobs, allowing you to split up the work across multiple instances.
+- [705](https://github.com/Shopify/job-iteration/pull/705) - Add support for parallel array iteration with `enumerator_builder.parallel_array`.
+- [706](https://github.com/Shopify/job-iteration/pull/706) - Add support for parallel Active Record relation iteration with `enumerator_builder.parallel_active_record_on_records` and `enumerator_builder.parallel_active_record_on_batches`.
 
 ### Bug fixes
 

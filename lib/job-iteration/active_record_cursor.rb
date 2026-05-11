@@ -18,7 +18,7 @@ module JobIteration
       end
     end
 
-    def initialize(relation, columns = nil, position = nil)
+    def initialize(relation, columns, position, instance, instances)
       @columns = if columns
         Array(columns)
       else
@@ -35,6 +35,17 @@ module JobIteration
       end
 
       @base_relation = relation.reorder(@columns.join(","))
+
+      if instances.present?
+        pk = relation.primary_key
+        unless pk.is_a?(String) && relation.klass.column_for_attribute(pk).type == :integer
+          raise ArgumentError, "Parallel iteration requires a single integer primary key. " \
+            "For more complex cases, use the enumerator_builder.parallel primitive directly."
+        end
+
+        @base_relation = @base_relation.where("#{relation.table_name}.#{pk} % ? = ?", instances, instance)
+      end
+
       @reached_end = false
     end
 

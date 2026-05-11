@@ -95,6 +95,22 @@ module JobIteration
       )
     end
 
+    test_builder_method(:build_parallel_active_record_enumerator_on_records) do
+      enumerator_builder.build_parallel_active_record_enumerator_on_records(
+        Product.all,
+        instances: 2,
+        cursor: { "instance" => 0, "inner_cursor" => nil },
+      )
+    end
+
+    test_builder_method(:build_parallel_active_record_enumerator_on_batches) do
+      enumerator_builder.build_parallel_active_record_enumerator_on_batches(
+        Product.all,
+        instances: 2,
+        cursor: { "instance" => 0, "inner_cursor" => nil },
+      )
+    end
+
     # checks that all the non-alias methods were tested
     raise "methods not tested: #{methods.inspect}" unless methods.empty?
 

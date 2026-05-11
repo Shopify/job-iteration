@@ -121,6 +121,21 @@ module JobIteration
       wrap(self, enum)
     end
 
+    # Builds an Enumerator that iterates over a given Active Record Relation, across +instances+ parallel jobs.
+    #
+    # Child job i iterates over the records where the id is equal to (instance % instances).
+    def build_parallel_active_record_enumerator_on_records(scope, instances:, cursor:, **args)
+      build_parallel_enumerator(instances: instances, cursor: cursor) do |instance, instances, inner_cursor|
+        build_active_record_enumerator(
+          scope,
+          cursor: inner_cursor,
+          instances: instances,
+          instance: instance,
+          **args,
+        ).records
+      end
+    end
+
     # Builds Enumerator from Active Record Relation and enumerates on batches of records.
     # Each Enumerator tick moves the cursor +batch_size+ rows forward.
     #
@@ -134,6 +149,21 @@ module JobIteration
         **args,
       ).batches
       wrap(self, enum)
+    end
+
+    # Builds an Enumerator that iterates over a given Active Record Relation, across +instances+ parallel jobs, and enumerates on batches.
+    #
+    # Child job i iterates over the batches of records where the id is equal to (instance % instances).
+    def build_parallel_active_record_enumerator_on_batches(scope, instances:, cursor:, **args)
+      build_parallel_enumerator(instances: instances, cursor: cursor) do |instance, instances, inner_cursor|
+        build_active_record_enumerator(
+          scope,
+          cursor: inner_cursor,
+          instances: instances,
+          instance: instance,
+          **args,
+        ).batches
+      end
     end
 
     # Builds Enumerator from Active Record Relation and enumerates on batches, yielding Active Record Relations.
@@ -219,7 +249,9 @@ module JobIteration
     alias_method :array, :build_array_enumerator
     alias_method :parallel_array, :build_parallel_array_enumerator
     alias_method :active_record_on_records, :build_active_record_enumerator_on_records
+    alias_method :parallel_active_record_on_records, :build_parallel_active_record_enumerator_on_records
     alias_method :active_record_on_batches, :build_active_record_enumerator_on_batches
+    alias_method :parallel_active_record_on_batches, :build_parallel_active_record_enumerator_on_batches
     alias_method :active_record_on_batch_relations, :build_active_record_enumerator_on_batch_relations
     alias_method :throttle, :build_throttle_enumerator
     alias_method :csv, :build_csv_enumerator
@@ -229,14 +261,20 @@ module JobIteration
 
     private
 
-    def build_active_record_enumerator(scope, cursor:, **args)
+    def build_active_record_enumerator(scope, cursor:, instance: nil, instances: nil, **args)
       unless scope.is_a?(ActiveRecord::Relation)
         raise ArgumentError, "scope must be an ActiveRecord::Relation"
+      end
+
+      if (instance.nil? && instances.present?) || (instance.present? && instances.nil?)
+        raise ArgumentError, "instance and instances must both be provided or both be nil"
       end
 
       JobIteration::ActiveRecordEnumerator.new(
         scope,
         cursor: cursor,
+        instance: instance,
+        instances: instances,
         **args,
       )
     end

@@ -172,7 +172,6 @@ module JobIteration
     end
 
     test "(composite primary key) #each yields batches as relation with the last record's cursor position" do
-      skip_until_active_record_version("7.1")
       seed_orders!
 
       enum = build_enumerator(relation: Order.all)
@@ -186,7 +185,6 @@ module JobIteration
     end
 
     test "(composite primary key) columns without a primary key column yields cursors without the unspecified value" do
-      skip_until_active_record_version("7.1")
       seed_orders!
 
       enum = build_enumerator(relation: Order.all, columns: [:name, :shop_id])
@@ -197,7 +195,6 @@ module JobIteration
     end
 
     test "(composite primary key) cursor can be used to resume on multiple columns" do
-      skip_until_active_record_version("7.1")
       seed_orders!
 
       enum = build_enumerator(relation: Order.all, columns: [:name, :id])
@@ -214,8 +211,6 @@ module JobIteration
     end
 
     test "(composite primary key) columns missing primary key column still queries for primary key values" do
-      skip_until_active_record_version("7.1")
-
       queries = track_queries do
         enum = build_enumerator(relation: Order.all, columns: [:name])
         enum.first
@@ -224,8 +219,6 @@ module JobIteration
     end
 
     test "(composite primary key) columns with only one primary key column still queries for all primary key values" do
-      skip_until_active_record_version("7.1")
-
       queries = track_queries do
         enum = build_enumerator(relation: Order.all, columns: ["orders.id", :name])
         enum.first
@@ -234,8 +227,6 @@ module JobIteration
     end
 
     test "(composite primary key) columns configured with primary key only queries primary key columns once" do
-      skip_until_active_record_version("7.1")
-
       queries = track_queries do
         enum = build_enumerator(relation: Order.all, columns: [:name, :id, "orders.shop_id"])
         enum.first
@@ -244,7 +235,6 @@ module JobIteration
     end
 
     test "(composite primary key) one query performed per batch, plus an additional one for the empty cursor" do
-      skip_until_active_record_version("7.1")
       seed_orders!
 
       enum = build_enumerator(relation: Order.all)

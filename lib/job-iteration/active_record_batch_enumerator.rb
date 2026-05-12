@@ -66,10 +66,6 @@ module JobIteration
       pkey = @column_mgr.primary_key
       pkey_values = primary_key_values
 
-      # If the primary key is only composed of a single column, simplify the
-      # query. This keeps us compatible with Rails prior to 7.1 where composite
-      # primary keys were introduced along with the syntax that allows you to
-      # query for multi-column values.
       if pkey.size <= 1
         pkey = pkey.first
         pkey_values = pkey_values.map(&:first)

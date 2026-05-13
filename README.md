@@ -183,15 +183,15 @@ For more detailed documentation, see [rubydoc](https://www.rubydoc.info/gems/job
 
 ## Requirements
 
-ActiveJob is the primary requirement for Iteration. While there's nothing that prevents it, Iteration is not yet compatible with [vanilla](https://github.com/mperham/sidekiq/wiki/Active-Job) Sidekiq API.
+Active Job is the primary requirement for Iteration. For iteration without Active Job in Sidekiq, see [Sidekiq Iteration](https://github.com/sidekiq/sidekiq/wiki/Iteration).
 
 ### API
 
-Iteration job must respond to `build_enumerator` and `each_iteration` methods. `build_enumerator` must return [Enumerator](http://ruby-doc.org/core-2.5.1/Enumerator.html) object that respects the `cursor` value.
+Iteration job must respond to `build_enumerator` and `each_iteration` methods. `build_enumerator` must return an [Enumerator](http://ruby-doc.org/core-2.5.1/Enumerator.html) object that respects the `cursor` value.
 
 ### Sidekiq adapter
 
-Unless you are running on Heroku, we recommend you to tune Sidekiq's [timeout](https://github.com/mperham/sidekiq/wiki/Deployment#overview) option from the default 8 seconds to 25-30 seconds, to allow the last `each_iteration` to complete and gracefully shutdown.
+Running iterating jobs on Sidekiq should work with the default configuration. The most important setting is Sidekiq's [timeout](https://github.com/mperham/sidekiq/wiki/Deployment#overview) option, which defaults to 25 seconds. That allows the last `each_iteration` to complete and gracefully shutdown.
 
 ### Resque adapter
 
@@ -203,11 +203,11 @@ There a few configuration assumptions that are required for Iteration to work wi
 
 **What happens when my job is interrupted?** A checkpoint will be persisted to Redis after the current `each_iteration`, and the job will be re-enqueued. Once it's popped off the queue, the worker will work off from the next iteration.
 
-**What happens with retries?** An interruption of a job does not count as a retry. If an exception occurs, the job will retry or be discarded as normal using Active Job configuration for the job. If the job retries, it processes the iteration that originally failed and progress will continue from there on if successful.
+**What happens with retries?** An interruption of a job does not count as a retry. If an exception occurs, the job will retry or be discarded as normal using Active Job configuration for the job. If the job retries, it re-processes the iteration that originally failed and progress will continue from there on if successful.
 
 **What happens if my iteration takes a long time?** We recommend that a single `each_iteration` should take no longer than 30 seconds. In the future, this may raise an exception.
 
-**Why is it important that `each_iteration` takes less than 30 seconds?** When the job worker is scheduled for restart or shutdown, it gets a notice to finish remaining unit of work. To guarantee that no progress is lost we need to make sure that `each_iteration` completes within a reasonable amount of time.
+**Why is it important that `each_iteration` runs quickly?** When the job worker is scheduled for restart or shutdown, it gets a notice to finish remaining unit of work. To guarantee that no progress is lost we need to make sure that `each_iteration` completes within a reasonable amount of time. The exact timeout depends on your queue adapter configuration.
 
 **Why do I use have to use this ugly helper in `build_enumerator`? Why can't you automatically infer it?** This is how the first version of the API worked. We checked the type of object returned by `build_enumerable`, and whether it was ActiveRecord Relation or an Array, we used the matching adapter. This caused opaque type branching in Iteration internals and it didn’t allow developers to craft their own Enumerators and control the cursor value. We made a decision to _always_ return Enumerator instance from `build_enumerator`. Now we provide explicit helpers to convert ActiveRecord Relation or an Array to Enumerator, and for more complex iteration flows developers can build their own `Enumerator` objects.
 

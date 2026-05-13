@@ -79,7 +79,7 @@ module JobIteration
     test "build_parallel_enumerator returns a wrapped enumerator when cursor is given" do
       enum = enumerator_builder.build_parallel_enumerator(
         instances: 2,
-        cursor: { "instance" => 0, "inner_cursor" => nil },
+        cursor: { "instance" => 0, "instances" => 2, "inner_cursor" => nil },
       ) do |_, _, inner_cursor|
         enumerator_builder.build_array_enumerator([1, 2, 3], cursor: inner_cursor)
       end
@@ -94,24 +94,40 @@ module JobIteration
         [].each
       }
 
-      ParallelEnumerator.new(block, instances: 4, cursor: { "instance" => 2, "inner_cursor" => "abc" })
+      ParallelEnumerator.new(block, cursor: { "instance" => 2, "instances" => 4, "inner_cursor" => "abc" })
 
       assert_equal([[2, 4, "abc"]], received)
+    end
+
+    test "ParallelEnumerator reads instances from the cursor, even if build_parallel_enumerator's argument has changed" do
+      received = []
+      block = ->(instance, instances, inner_cursor) {
+        received << [instance, instances, inner_cursor]
+        [].each
+      }
+
+      enumerator_builder.build_parallel_enumerator(
+        instances: 10,
+        cursor: { "instance" => 2, "instances" => 4, "inner_cursor" => nil },
+        &block
+      )
+
+      assert_equal([[2, 4, nil]], received)
     end
 
     test "ParallelEnumerator yields each value with a parallel cursor wrapping the inner cursor" do
       block = ->(_instance, _instances, inner_cursor) {
         enumerator_builder.build_array_enumerator(["a", "b", "c"], cursor: inner_cursor)
       }
-      enum = ParallelEnumerator.new(block, instances: 2, cursor: { "instance" => 1, "inner_cursor" => nil }).to_enum
+      enum = ParallelEnumerator.new(block, cursor: { "instance" => 1, "instances" => 2, "inner_cursor" => nil }).to_enum
 
       yielded = enum.to_a
 
       assert_equal(
         [
-          ["a", { "instance" => 1, "inner_cursor" => 0 }],
-          ["b", { "instance" => 1, "inner_cursor" => 1 }],
-          ["c", { "instance" => 1, "inner_cursor" => 2 }],
+          ["a", { "instance" => 1, "instances" => 2, "inner_cursor" => 0 }],
+          ["b", { "instance" => 1, "instances" => 2, "inner_cursor" => 1 }],
+          ["c", { "instance" => 1, "instances" => 2, "inner_cursor" => 2 }],
         ],
         yielded,
       )
@@ -121,12 +137,12 @@ module JobIteration
       block = ->(_instance, _instances, inner_cursor) {
         enumerator_builder.build_array_enumerator(["a", "b", "c"], cursor: inner_cursor)
       }
-      enum = ParallelEnumerator.new(block, instances: 2, cursor: { "instance" => 0, "inner_cursor" => 0 }).to_enum
+      enum = ParallelEnumerator.new(block, cursor: { "instance" => 0, "instances" => 2, "inner_cursor" => 0 }).to_enum
 
       assert_equal(
         [
-          ["b", { "instance" => 0, "inner_cursor" => 1 }],
-          ["c", { "instance" => 0, "inner_cursor" => 2 }],
+          ["b", { "instance" => 0, "instances" => 2, "inner_cursor" => 1 }],
+          ["c", { "instance" => 0, "instances" => 2, "inner_cursor" => 2 }],
         ],
         enum.to_a,
       )
@@ -136,7 +152,7 @@ module JobIteration
       block = ->(_instance, _instances, inner_cursor) {
         enumerator_builder.build_array_enumerator([1, 2, 3, 4, 5], cursor: inner_cursor)
       }
-      enum = ParallelEnumerator.new(block, instances: 2, cursor: { "instance" => 0, "inner_cursor" => nil }).to_enum
+      enum = ParallelEnumerator.new(block, cursor: { "instance" => 0, "instances" => 2, "inner_cursor" => nil }).to_enum
 
       assert_equal(5, enum.size)
     end
@@ -149,7 +165,7 @@ module JobIteration
 
       cursor_positions = enqueued.map { |job| job.fetch("cursor_position") }
       assert_equal(
-        INSTANCES.times.map { |i| { "instance" => i, "inner_cursor" => nil } },
+        INSTANCES.times.map { |i| { "instance" => i, "instances" => INSTANCES, "inner_cursor" => nil } },
         cursor_positions,
       )
     end
@@ -220,7 +236,7 @@ module JobIteration
 
     test "iteration with parallel enumerator runs iteration callbacks on the child job" do
       job = IterationParallelJob.new({})
-      job.cursor_position = { "instance" => 1, "inner_cursor" => nil }
+      job.cursor_position = { "instance" => 1, "instances" => INSTANCES, "inner_cursor" => nil }
       job.perform_now
 
       assert_equal([1, 4, 7], IterationParallelJob.iterations_performed)
@@ -232,10 +248,10 @@ module JobIteration
 
     test "iteration with parallel enumerator updates cursor_position with the parallel cursor" do
       job = IterationParallelJob.new({})
-      job.cursor_position = { "instance" => 2, "inner_cursor" => nil }
+      job.cursor_position = { "instance" => 2, "instances" => INSTANCES, "inner_cursor" => nil }
       job.perform_now
 
-      assert_equal({ "instance" => 2, "inner_cursor" => 2 }, job.cursor_position)
+      assert_equal({ "instance" => 2, "instances" => INSTANCES, "inner_cursor" => 2 }, job.cursor_position)
     end
 
     test "build_parallel_array_enumerator splits the array evenly when size divides by instances" do
@@ -263,13 +279,13 @@ module JobIteration
       enum = enumerator_builder.build_parallel_array_enumerator(
         array,
         instances: 3,
-        cursor: { "instance" => 1, "inner_cursor" => 0 },
+        cursor: { "instance" => 1, "instances" => 3, "inner_cursor" => 0 },
       )
 
       assert_equal(
         [
-          [4, { "instance" => 1, "inner_cursor" => 1 }],
-          [5, { "instance" => 1, "inner_cursor" => 2 }],
+          [4, { "instance" => 1, "instances" => 3, "inner_cursor" => 1 }],
+          [5, { "instance" => 1, "instances" => 3, "inner_cursor" => 2 }],
         ],
         enum.to_a,
       )
@@ -286,7 +302,7 @@ module JobIteration
         enumerator_builder.build_parallel_array_enumerator(
           array,
           instances: instances,
-          cursor: { "instance" => instance, "inner_cursor" => nil },
+          cursor: { "instance" => instance, "instances" => instances, "inner_cursor" => nil },
         ).map { |record, _cursor| record }
       end
     end

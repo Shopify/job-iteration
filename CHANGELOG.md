@@ -16,7 +16,7 @@ nil
 
 ### Bug fixes
 
-nil
+- [709](https://github.com/Shopify/job-iteration/pull/709) - Fix an issue with parallel iteration when `instances` changed after child jobs were enqueued.
 
 ## v1.13.1 (Apr 28, 2026)
 

@@ -81,7 +81,7 @@ module JobIteration
     test_builder_method(:build_parallel_enumerator) do
       enumerator_builder.build_parallel_enumerator(
         instances: 2,
-        cursor: { "instance" => 0, "inner_cursor" => nil },
+        cursor: { "instance" => 0, "instances" => 2, "inner_cursor" => nil },
       ) do |_instance, _instances, inner_cursor|
         enumerator_builder.build_array_enumerator([1, 2, 3], cursor: inner_cursor)
       end
@@ -91,7 +91,7 @@ module JobIteration
       enumerator_builder(wraps: 2).build_parallel_array_enumerator(
         [1, 2, 3, 4],
         instances: 2,
-        cursor: { "instance" => 0, "inner_cursor" => nil },
+        cursor: { "instance" => 0, "instances" => 2, "inner_cursor" => nil },
       )
     end
 
@@ -99,7 +99,7 @@ module JobIteration
       enumerator_builder.build_parallel_active_record_enumerator_on_records(
         Product.all,
         instances: 2,
-        cursor: { "instance" => 0, "inner_cursor" => nil },
+        cursor: { "instance" => 0, "instances" => 2, "inner_cursor" => nil },
       )
     end
 
@@ -107,7 +107,7 @@ module JobIteration
       enumerator_builder.build_parallel_active_record_enumerator_on_batches(
         Product.all,
         instances: 2,
-        cursor: { "instance" => 0, "inner_cursor" => nil },
+        cursor: { "instance" => 0, "instances" => 2, "inner_cursor" => nil },
       )
     end
 

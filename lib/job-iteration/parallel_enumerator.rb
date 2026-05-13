@@ -16,7 +16,7 @@ module JobIteration
       def enqueue_jobs(job)
         child_jobs = instances.times.map do |index|
           job.class.new(*job.arguments).tap do |child_job|
-            child_job.cursor_position = { "instance" => index, "inner_cursor" => nil }
+            child_job.cursor_position = { "instance" => index, "instances" => instances, "inner_cursor" => nil }
 
             # Carry forward potential overrides from the parent job
             child_job.queue_name = job.queue_name
@@ -33,16 +33,17 @@ module JobIteration
       end
     end
 
-    def initialize(block, instances:, cursor:)
+    def initialize(block, cursor:)
       @instance = cursor["instance"]
+      @instances = cursor["instances"]
       inner_cursor = cursor["inner_cursor"]
-      @inner_enum = block.call(@instance, instances, inner_cursor)
+      @inner_enum = block.call(@instance, @instances, inner_cursor)
     end
 
     def to_enum
       Enumerator.new(-> { @inner_enum.size }) do |yielder|
         @inner_enum.each do |object_from_enumerator, cursor_from_enumerator|
-          parallel_cursor = { "instance" => @instance, "inner_cursor" => cursor_from_enumerator }
+          parallel_cursor = { "instance" => @instance, "instances" => @instances, "inner_cursor" => cursor_from_enumerator }
           yielder.yield(object_from_enumerator, parallel_cursor)
         end
       end

@@ -240,7 +240,7 @@ module JobIteration
 
       return ParallelEnumerator::EnqueueJobs.new(instances) if cursor.nil?
 
-      enum = ParallelEnumerator.new(block, instances: instances, cursor: cursor).to_enum
+      enum = ParallelEnumerator.new(block, cursor: cursor).to_enum
       wrap(self, enum)
     end
 

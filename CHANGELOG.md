@@ -2,11 +2,25 @@
  
 ### Breaking Changes
 
-- [704](https://github.com/Shopify/job-iteration/pull/704) - Drop support for Rails 7.0. The minimum supported Rails version is now 7.1.
+nil
 
 ### Changes
 
 nil
+
+### Features
+
+nil
+
+### Bug fixes
+
+nil
+
+## v1.14.0 (May 14, 2026)
+
+### Breaking Changes
+
+- [704](https://github.com/Shopify/job-iteration/pull/704) - Drop support for Rails 7.0. The minimum supported Rails version is now 7.1.
 
 ### Features
 

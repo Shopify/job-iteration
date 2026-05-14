@@ -102,6 +102,21 @@ end
 ```
 
 ```ruby
+class ParallelIterationJob < ApplicationJob
+  include JobIteration::Iteration
+  
+  def build_enumerator(cursor:)
+    enumerator_builder.parallel_active_record_on_records(User.all, instances: 5, cursor: cursor)
+  end
+
+  # Runs in 5 separate jobs, with each job processing a subset of the users
+  def each_iteration(user)
+    user.notify_about_something
+  end
+end
+```
+
+```ruby
 class ArrayJob < ApplicationJob
   include JobIteration::Iteration
 
@@ -178,6 +193,7 @@ Support for older platforms that have reached end of life may occasionally be dr
 * [Best practices](guides/best-practices.md)
 * [Writing custom enumerator](guides/custom-enumerator.md)
 * [Throttling](guides/throttling.md)
+* [Parallel iteration](guides/parallel-iteration.md)
 
 For more detailed documentation, see [rubydoc](https://www.rubydoc.info/gems/job-iteration).
 

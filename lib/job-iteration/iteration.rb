@@ -107,8 +107,8 @@ module JobIteration
       self.total_time = Float(job_data["total_time"] || 0.0)
     end
 
-    def perform(*params) # @private
-      interruptible_perform(*params)
+    def perform(...) # @private
+      interruptible_perform(...)
 
       nil
     end
@@ -128,12 +128,12 @@ module JobIteration
       JobIteration.enumerator_builder.new(self)
     end
 
-    def interruptible_perform(*arguments)
+    def interruptible_perform(*args, **kwargs)
       self.start_time = Time.now.utc
 
       enumerator = nil
       ActiveSupport::Notifications.instrument("build_enumerator.iteration", instrumentation_tags) do
-        enumerator = build_enumerator(*arguments, cursor: cursor_position)
+        enumerator = call_job_iteration_build_enumerator(args, kwargs)
       end
 
       unless enumerator
@@ -161,7 +161,7 @@ module JobIteration
       end
 
       completed = catch(:abort) do
-        iterate_with_enumerator(enumerator, arguments)
+        iterate_with_enumerator(enumerator, args, kwargs)
       end
 
       run_callbacks(:shutdown)
@@ -178,8 +178,7 @@ module JobIteration
       end
     end
 
-    def iterate_with_enumerator(enumerator, arguments)
-      arguments = arguments.dup.freeze
+    def iterate_with_enumerator(enumerator, args, kwargs)
       found_record = false
       @needs_reenqueue = false
 
@@ -191,7 +190,7 @@ module JobIteration
         ActiveSupport::Notifications.instrument("each_iteration.iteration", tags) do
           found_record = true
           run_callbacks(:iterate) do
-            each_iteration(object_from_enumerator, *arguments)
+            call_job_iteration_each_iteration(object_from_enumerator, args, kwargs)
           end
           self.cursor_position = cursor_from_enumerator
         end
@@ -213,6 +212,64 @@ module JobIteration
       true
     ensure
       adjust_total_time
+    end
+
+    def call_job_iteration_build_enumerator(args, kwargs)
+      positional_args, keyword_args = normalize_job_iteration_arguments(args, kwargs, :build_enumerator)
+
+      if keyword_args&.key?(:cursor)
+        raise ArgumentError, "The keyword argument `cursor` is reserved for the job iteration framework. " \
+          "Please remove `cursor` from the arguments passed to the job or rename it"
+      end
+
+      # `keyword_args || {}` because splatting `nil` raises on Ruby < 3.4; it only
+      # became a no-op in 3.4 (https://bugs.ruby-lang.org/issues/20064).
+      build_enumerator(*positional_args, **(keyword_args || {}), cursor: cursor_position)
+    end
+
+    def call_job_iteration_each_iteration(object_from_enumerator, args, kwargs)
+      positional_args, keyword_args = normalize_job_iteration_arguments(args, kwargs, :each_iteration)
+      # `keyword_args || {}` because splatting `nil` raises on Ruby < 3.4; it only
+      # became a no-op in 3.4 (https://bugs.ruby-lang.org/issues/20064).
+      each_iteration(object_from_enumerator, *positional_args, **(keyword_args || {}))
+    end
+
+    # Normalize Active Job kwargs for job-iteration dispatch. If the target method
+    # accepts job keyword parameters other than build_enumerator's reserved cursor:,
+    # keep kwargs separate so they can be splatted. Otherwise, append kwargs as a
+    # positional params Hash for transitional compatibility with existing jobs
+    # enqueued with keyword syntax.
+    #: (Array[top], Hash[Symbol, top], Symbol) -> [Array[top], Hash[Symbol, top]?]
+    def normalize_job_iteration_arguments(args, kwargs, method_name)
+      if kwargs.empty?
+        [args.dup.freeze, nil]
+      elsif job_has_keyword_parameters?(method_name)
+        [args.dup.freeze, kwargs.dup.freeze]
+      else
+        params_hash_args = args + [kwargs]
+        [params_hash_args.dup.freeze, nil]
+      end
+    end
+
+    #: (Symbol) -> bool
+    def job_has_keyword_parameters?(method_name)
+      @job_has_keyword_parameters ||= {}
+      return @job_has_keyword_parameters[method_name] if @job_has_keyword_parameters.key?(method_name)
+
+      @job_has_keyword_parameters[method_name] = method_parameters(method_name).any? do |type, name|
+        job_keyword_argument?(method_name, type, name)
+      end
+    end
+
+    def job_keyword_argument?(method_name, type, name)
+      # Match keyword parameters: double-splat (**kwargs), required (key:) or optional (key: default).
+      return false unless type == :keyrest || type == :keyreq || type == :key
+
+      # Ignore the `cursor:` argument, which is part of the `job-iteration`
+      # framework, and not a argument in the job's serialized argument list.
+      return false if method_name == :build_enumerator && name == :cursor
+
+      true
     end
 
     def reenqueue_iteration_job

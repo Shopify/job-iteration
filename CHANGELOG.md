@@ -10,7 +10,7 @@ nil
 
 ### Features
 
-nil
+- Add support for keyword arguments in `build_enumerator` and `each_iteration` while preserving positional params Hash compatibility for existing jobs. This compatibility path is transitional; migrate jobs away from positional params Hash signatures paired with `perform_later(keyword: value)`.
 
 ### Bug fixes
 

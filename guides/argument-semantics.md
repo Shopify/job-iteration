@@ -56,21 +56,17 @@ ArgumentativeJob.perform_later(_arg1 = "One", _arg2 = "Two", _arg3 = "Three")
 
 ### Jobs with keyword arguments
 
-Jobs with keyword arguments will have the keyword arguments available to both `build_enumerator` and `each_iteration`, but these arguments come packaged into a Hash in both cases. You will need to `fetch` or `[]` your parameter from the `Hash` you get passed in:
+Jobs with keyword arguments can declare those keyword arguments directly on both `build_enumerator` and `each_iteration`:
 
 ```ruby
 class ParameterizedJob < ActiveJob::Base
   include JobIteration::Iteration
 
-  def build_enumerator(kwargs, cursor:)
-    name = kwargs.fetch(:name)
-    email = kwargs.fetch(:email)
+  def build_enumerator(name:, email:, cursor:)
     # ...
   end
 
-  def each_iteration(object_yielded_from_enumerator, kwargs)
-    name = kwargs.fetch(:name)
-    email = kwargs.fetch(:email)
+  def each_iteration(object_yielded_from_enumerator, name:, email:)
     # ...
   end
 end
@@ -82,37 +78,27 @@ To enqueue the job:
 ParameterizedJob.perform_later(name: "Jane", email: "jane@host.example")
 ```
 
-Note that you cannot use `ruby2_keywords` at present, and the keyword arguments syntax is not supported in `each_iteration` / `build_enumerator`.
+The `cursor:` keyword argument on `build_enumerator` is reserved for `job-iteration`; do not pass a job argument named `cursor` when using keyword arguments.
 
-### Jobs with both positional and keyword arguments
-
-Jobs with keyword arguments will have the keyword arguments available to both `build_enumerator` and `each_iteration`, but these arguments come packaged into a Hash in both cases. You will need to `fetch` or `[]` your parameter from the `Hash` you get passed in. Positional arguments get passed first and "unsplatted" (not combined into an array), the `Hash` containing keyword arguments comes after:
+For compatibility with existing jobs, keyword arguments are still passed as a positional params Hash after any positional arguments when `build_enumerator` and `each_iteration` do not declare keyword arguments (other than `cursor` for `build_enumerator`). This compatibility path is transitional and will be removed in a future release; prefer declaring keyword arguments directly instead of combining a positional params Hash with `perform_later(keyword: value)`:
 
 ```ruby
-class HighlyConfigurableGreetingJob < ActiveJob::Base
+class LegacyParameterizedJob < ActiveJob::Base
   include JobIteration::Iteration
 
-  def build_enumerator(subject_line, kwargs, cursor:)
-    name = kwargs.fetch(:sender_name)
-    email = kwargs.fetch(:sender_email)
+  def build_enumerator(params, cursor:)
+    name = params.fetch(:name)
+    email = params.fetch(:email)
     # ...
   end
 
-  def each_iteration(object_yielded_from_enumerator, subject_line, kwargs)
-    name = kwargs.fetch(:sender_name)
-    email = kwargs.fetch(:sender_email)
+  def each_iteration(object_yielded_from_enumerator, params)
+    name = params.fetch(:name)
+    email = params.fetch(:email)
     # ...
   end
 end
 ```
-
-To enqueue the job:
-
-```ruby
-HighlyConfigurableGreetingJob.perform_later(_subject_line = "Greetings everybody!", sender_name: "Jane", sender_email: "jane@host.example")
-```
-
-Note that you cannot use `ruby2_keywords` at present, and the keyword arguments syntax is not supported in `each_iteration` / `build_enumerator`.
 
 ### Returning (yielding) from enumerators
 

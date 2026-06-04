@@ -48,6 +48,122 @@ module JobIteration
       end
     end
 
+    class KwargsIterationJob < SimpleIterationJob
+      def build_enumerator(one_arg:, another_arg:, cursor:)
+        enumerator_builder.build_times_enumerator(2, cursor: cursor)
+      end
+
+      def each_iteration(item, one_arg:, another_arg:)
+        self.class.records_performed << [item, one_arg, another_arg]
+      end
+    end
+
+    class MixedArgumentsIterationJob < SimpleIterationJob
+      def build_enumerator(positional_arg, kwarg1:, kwarg2:, cursor:)
+        enumerator_builder.build_times_enumerator(2, cursor: cursor)
+      end
+
+      def each_iteration(item, positional_arg, kwarg1:, kwarg2:)
+        self.class.records_performed << [item, positional_arg, kwarg1, kwarg2]
+      end
+    end
+
+    class KeyrestIterationJob < SimpleIterationJob
+      def build_enumerator(cursor:, **_kwargs)
+        enumerator_builder.build_times_enumerator(2, cursor: cursor)
+      end
+
+      def each_iteration(item, **kwargs)
+        self.class.records_performed << [item, kwargs]
+      end
+    end
+
+    class PositionalOnlyIterationJob < SimpleIterationJob
+      def build_enumerator(cursor:)
+        enumerator_builder.build_times_enumerator(1, cursor: cursor)
+      end
+
+      def each_iteration(item)
+        self.class.records_performed << item
+      end
+    end
+
+    def test_supports_keyword_arguments
+      KwargsIterationJob.perform_later(one_arg: "foo", another_arg: "bar")
+      work_one_job
+      expected = [
+        [0, "foo", "bar"],
+        [1, "foo", "bar"],
+      ]
+      assert_equal(expected, KwargsIterationJob.records_performed)
+    end
+
+    def test_supports_mixed_arguments
+      MixedArgumentsIterationJob.perform_later("foo", kwarg1: "bar", kwarg2: "baz")
+      work_one_job
+      expected = [
+        [0, "foo", "bar", "baz"],
+        [1, "foo", "bar", "baz"],
+      ]
+      assert_equal(expected, MixedArgumentsIterationJob.records_performed)
+    end
+
+    def test_supports_keyword_arguments_after_interruption
+      iterate_exact_times(1.times)
+      KwargsIterationJob.perform_later(one_arg: "foo", another_arg: "bar")
+
+      work_one_job
+      assert_equal([[0, "foo", "bar"]], KwargsIterationJob.records_performed)
+
+      work_one_job
+      expected = [
+        [0, "foo", "bar"],
+        [1, "foo", "bar"],
+      ]
+      assert_equal(expected, KwargsIterationJob.records_performed)
+    end
+
+    def test_supports_mixed_arguments_after_interruption
+      iterate_exact_times(1.times)
+      MixedArgumentsIterationJob.perform_later("foo", kwarg1: "bar", kwarg2: "baz")
+
+      work_one_job
+      assert_equal([[0, "foo", "bar", "baz"]], MixedArgumentsIterationJob.records_performed)
+
+      work_one_job
+      expected = [
+        [0, "foo", "bar", "baz"],
+        [1, "foo", "bar", "baz"],
+      ]
+      assert_equal(expected, MixedArgumentsIterationJob.records_performed)
+    end
+
+    def test_supports_keyrest_arguments
+      KeyrestIterationJob.perform_later(one_arg: "foo", another_arg: "bar")
+      work_one_job
+      expected = [
+        [0, { one_arg: "foo", another_arg: "bar" }],
+        [1, { one_arg: "foo", another_arg: "bar" }],
+      ]
+      assert_equal(expected, KeyrestIterationJob.records_performed)
+    end
+
+    def test_supports_positional_only_each_iteration_without_keywords
+      PositionalOnlyIterationJob.perform_later
+      work_one_job
+      assert_equal([0], PositionalOnlyIterationJob.records_performed)
+    end
+
+    def test_rejects_reserved_cursor_keyword_argument
+      KwargsIterationJob.perform_later(one_arg: "foo", another_arg: "bar", cursor: "custom-cursor")
+
+      error = assert_raises(ArgumentError) do
+        work_one_job
+      end
+
+      assert_match(/keyword argument `cursor` is reserved/, error.message)
+    end
+
     class ParamsIterationJob < SimpleIterationJob
       def build_enumerator(params, cursor:)
         enumerator_builder.build_times_enumerator(params.fetch(:times, 2), cursor: cursor)
@@ -601,6 +717,13 @@ module JobIteration
     def test_passes_params_to_each_iteration
       params = { "walrus" => "best" }
       push(ParamsIterationJob, params)
+      work_one_job
+      assert_equal([params, params], ParamsIterationJob.records_performed)
+    end
+
+    def test_keeps_keyword_arguments_as_params_hash_when_methods_do_not_accept_keywords
+      params = { times: 2 }
+      ParamsIterationJob.perform_later(**params)
       work_one_job
       assert_equal([params, params], ParamsIterationJob.records_performed)
     end

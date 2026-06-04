@@ -9,6 +9,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # Fail fast if a job hangs (e.g. an integration worker that never self-terminates),
+    # instead of burning the GitHub Actions default 360-minute timeout.
+    timeout-minutes: 5
     name: Ruby ${{ matrix.ruby }} | Rails ${{ matrix.rails }} | Gemfile ${{ matrix.gemfile }}
     continue-on-error: ${{ matrix.rails == 'edge' }}
     services:

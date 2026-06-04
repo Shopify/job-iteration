@@ -10,11 +10,17 @@ nil
 
 ### Features
 
-- Add support for keyword arguments in `build_enumerator` and `each_iteration` while preserving positional params Hash compatibility for existing jobs. This compatibility path is transitional; migrate jobs away from positional params Hash signatures paired with `perform_later(keyword: value)`.
+nil
 
 ### Bug fixes
 
 nil
+
+## v1.15.0 (Jun 4, 2026)
+
+### Features
+
+- [715](https://github.com/Shopify/job-iteration/pull/715) - Add support for keyword arguments in `build_enumerator` and `each_iteration` while preserving positional params Hash compatibility for existing jobs. This compatibility path is transitional; migrate jobs away from positional params Hash signatures paired with `perform_later(keyword: value)`.
 
 ## v1.14.0 (May 14, 2026)
 

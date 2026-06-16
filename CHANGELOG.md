@@ -10,7 +10,7 @@ nil
 
 ### Features
 
-nil
+- Add interruption adapter for [Shoryuken](https://github.com/ruby-shoryuken/shoryuken).
 
 ### Bug fixes
 

@@ -178,6 +178,7 @@ Job-iteration currently supports the following queue adapters (in order of imple
 - [Solid Queue](https://github.com/rails/solid_queue)
 - [Amazon SQS](https://github.com/aws/aws-activejob-sqs-ruby)
 - [Delayed::Job](https://github.com/collectiveidea/delayed_job)
+- [Shoryuken](https://github.com/ruby-shoryuken/shoryuken)
 
 It supports the following platforms:
 

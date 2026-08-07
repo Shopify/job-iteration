@@ -28,6 +28,7 @@ end
 gem "sidekiq", sidekiq_version
 gem "resque", resque_version
 gem "delayed_job"
+gem "shoryuken"
 gem "connection_pool", connection_pool_version
 
 if defined?(@rails_gems_requirements) && @rails_gems_requirements

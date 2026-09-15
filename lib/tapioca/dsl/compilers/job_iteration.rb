@@ -37,7 +37,9 @@ module Tapioca
             if signature
               fixed_hash_args = signature.arg_types.select { |arg_type| T::Types::FixedHash === arg_type[1] }.to_h
               expanded_parameters = parameters.flat_map do |typed_param|
-                if (hash_type = fixed_hash_args[typed_param.param.name.to_sym])
+                param_name = typed_param.param.name
+
+                if param_name && (hash_type = fixed_hash_args[param_name.to_sym])
                   expand_fixed_hash(typed_param, hash_type)
                 else
                   typed_param

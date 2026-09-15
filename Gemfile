@@ -57,8 +57,11 @@ gem "rake"
 gem "csv" # required for Ruby 3.4+
 gem "mutex_m" # Required for Ruby 3.4+
 
-if ruby_version >= Gem::Version.new("3.2")
-  tapioca_version = ">= 0.19.1" # Fixes incompatibility with Sorbet >= 0.6.13149 (has_rest removal)
+if ruby_version >= Gem::Version.new("3.3")
+  tapioca_version = ">= 0.20"
+  sorbet_version = ">= 0.6.12698"
+elsif ruby_version >= Gem::Version.new("3.2")
+  tapioca_version = ">= 0.19.1", "< 0.20" # Fixes incompatibility with Sorbet >= 0.6.13149 (has_rest removal)
   sorbet_version = ">= 0.6.12698"
 else
   tapioca_version = ">= 0.10.0"

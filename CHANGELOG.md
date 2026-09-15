@@ -1,5 +1,5 @@
 ## Main (unreleased)
- 
+
 ### Breaking Changes
 
 nil
@@ -15,6 +15,12 @@ nil
 ### Bug fixes
 
 nil
+
+## v1.15.1 (Sep 15, 2026)
+
+### Bug fixes
+
+- [734](https://github.com/Shopify/job-iteration/pull/734) - Account for anonymous block parameters in DSL compiler.
 
 ## v1.15.0 (Jun 4, 2026)
 

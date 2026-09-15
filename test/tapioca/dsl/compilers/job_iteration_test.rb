@@ -365,6 +365,45 @@ module Tapioca
           assert_equal(expected, rbi_for(:NotifyJob))
         end
 
+        def test_generates_correct_rbi_file_for_job_with_fixed_hash_parameter_and_anonymous_block
+          add_ruby_file("job.rb", <<~RUBY)
+            class NotifyJob < ActiveJob::Base
+              include JobIteration::Iteration
+
+              extend T::Sig
+              sig do
+                params(
+                  params: { user_id: Integer, name: T.nilable(String) },
+                  cursor: T.untyped,
+                  "&": T.untyped
+                ).returns(T::Array[T.untyped])
+              end
+              def build_enumerator(params, cursor:, &)
+                # ...
+              end
+            end
+          RUBY
+
+          expected = template(<<~RBI)
+            # typed: strong
+
+            class NotifyJob
+              sig { params(user_id: ::Integer, name: T.nilable(::String)).void }
+              def perform(user_id:, name: nil); end
+
+              class << self
+                sig { params(user_id: ::Integer, name: T.nilable(::String), block: T.nilable(T.proc.params(job: NotifyJob).void)).returns(T.any(NotifyJob, FalseClass)) }
+                def perform_later(user_id:, name: nil, &block); end
+
+                sig { params(user_id: ::Integer, name: T.nilable(::String)).returns(T.any(NilClass, Exception)) }
+                def perform_now(user_id:, name: nil); end
+              end
+            end
+          RBI
+
+          assert_equal(expected, rbi_for(:NotifyJob))
+        end
+
         def test_generates_nil_default_value_for_nilable_parameters
           add_ruby_file("job.rb", <<~RUBY)
             class NotifyJob < ActiveJob::Base

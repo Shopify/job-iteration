@@ -30,6 +30,38 @@ module JobIteration
       refute_predicate relation, :loaded?
     end
 
+    test "around_query wraps cursor queries but not size or yielded relation loads" do
+      query_running = false
+      observed_queries = []
+      around_query = ->(&query) do
+        query_running = true
+        query.call
+      ensure
+        query_running = false
+      end
+      query_subscriber = ->(*, payload) do
+        next unless payload[:sql].include?("FROM `products`")
+
+        observed_queries << [payload[:name], query_running]
+      end
+
+      ActiveSupport::Notifications.subscribed(query_subscriber, "sql.active_record") do
+        enum = build_enumerator(around_query: around_query)
+        assert_equal(5, enum.size)
+        relation, _ = enum.first
+        relation.load
+      end
+
+      assert_equal(
+        [
+          ["Product Count", false],
+          ["Product Pluck", true],
+          ["Product Load", false],
+        ],
+        observed_queries,
+      )
+    end
+
     test "#each yields relations that preserve the existing conditions (like ActiveRecord::Batches)" do
       enum = build_enumerator(relation: Product.where("name LIKE 'lipstick%'"))
       relation, _ = enum.first
@@ -249,14 +281,23 @@ module JobIteration
 
     private
 
-    def build_enumerator(relation: Product.all, batch_size: 2, timezone: nil, columns: nil, cursor: nil)
-      JobIteration::ActiveRecordBatchEnumerator.new(
-        relation,
+    def build_enumerator(
+      relation: Product.all,
+      batch_size: 2,
+      timezone: nil,
+      columns: nil,
+      cursor: nil,
+      around_query: nil
+    )
+      options = {
         batch_size: batch_size,
         timezone: timezone,
         columns: columns,
         cursor: cursor,
-      )
+      }
+      options[:around_query] = around_query if around_query
+
+      JobIteration::ActiveRecordBatchEnumerator.new(relation, **options)
     end
 
     # Captures queries made against the database. Automatically filters out

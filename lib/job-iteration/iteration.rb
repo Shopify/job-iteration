@@ -43,6 +43,7 @@ module JobIteration
     included do |_base|
       define_callbacks :start
       define_callbacks :iterate
+      define_callbacks :active_record_query
       define_callbacks :shutdown
       define_callbacks :complete
 
@@ -73,6 +74,10 @@ module JobIteration
 
       def around_iterate(&blk)
         set_callback(:iterate, :around, &blk)
+      end
+
+      def around_active_record_query(&blk)
+        set_callback(:active_record_query, :around, &blk)
       end
 
       private

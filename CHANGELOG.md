@@ -10,7 +10,7 @@ nil
 
 ### Features
 
-nil
+- [740](https://github.com/Shopify/job-iteration/pull/740) - Add an `around_active_record_query` callback for wrapping Active Record page queries.
 
 ### Bug fixes
 

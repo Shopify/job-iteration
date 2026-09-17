@@ -10,9 +10,10 @@ module JobIteration
 
     SQL_DATETIME_WITH_NSEC = "%Y-%m-%d %H:%M:%S.%N"
 
-    def initialize(relation, columns: nil, batch_size: 100, timezone: nil, cursor: nil)
+    def initialize(relation, columns: nil, batch_size: 100, timezone: nil, cursor: nil, around_query: nil)
       @batch_size = batch_size
       @timezone = timezone
+      @around_query = around_query
       @column_mgr = ColumnManager.new(relation: relation, columns: columns)
       @cursor = Array.wrap(cursor)
       @initial_cursor = @cursor
@@ -44,8 +45,10 @@ module JobIteration
         relation = relation.where(*conditions)
       end
 
-      cursor_values, pkey_ids = relation.uncached do
-        pluck_columns(relation)
+      cursor_values, pkey_ids = execute_query do
+        relation.uncached do
+          pluck_columns(relation)
+        end
       end
 
       cursor = cursor_values.last
@@ -57,6 +60,12 @@ module JobIteration
       @cursor = @column_mgr.remove_missing_pkey_values(cursor)
 
       filter_relation_with_primary_key(pkey_ids)
+    end
+
+    def execute_query(&query)
+      return query.call unless @around_query
+
+      @around_query.call(&query)
     end
 
     # Yields relations by selecting the primary keys of records in the batch.

@@ -68,6 +68,8 @@ else
   sorbet_version = "< 0.6.12698"
 end
 
+gem "json", ruby_version < Gem::Version.new("3.2") ? "< 3" : ">= 3"
+
 # for unit testing optional sorbet support
 gem "sorbet-runtime", sorbet_version
 gem "tapioca", tapioca_version

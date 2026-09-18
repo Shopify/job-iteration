@@ -2,9 +2,13 @@
 # If you are an external contributor you don't have to bother with it.
 name: job-iteration
 
+nix: true
 up:
   - packages:
       - mysql_client
+      - libyaml
+      - zstd
+      - openssl
   - ruby
   - bundler
   - mysql

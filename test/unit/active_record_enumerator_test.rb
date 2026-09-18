@@ -156,6 +156,33 @@ module JobIteration
       assert_equal([events, cursor], enum.first)
     end
 
+    test "around_query wraps page queries but not size or record processing" do
+      query_running = false
+      observed_queries = []
+      processed_states = []
+      around_query = ->(&query) do
+        query_running = true
+        query.call
+      ensure
+        query_running = false
+      end
+      query_subscriber = ->(*, payload) do
+        next unless payload[:sql].include?("FROM `products`")
+
+        observed_queries << [payload[:name], query_running]
+      end
+
+      ActiveSupport::Notifications.subscribed(query_subscriber, "sql.active_record") do
+        enum = build_enumerator(around_query: around_query).records
+        assert_equal(10, enum.size)
+        enum.each { processed_states << query_running }
+      end
+
+      assert_equal([["Product Count", false]], observed_queries.reject(&:last))
+      assert_equal(["Product Load"], observed_queries.select(&:last).map(&:first).uniq)
+      assert_equal([false], processed_states.uniq)
+    end
+
     test "#size returns the number of items in the relation" do
       enum = build_enumerator(relation: Product.all)
 
@@ -223,16 +250,27 @@ module JobIteration
 
     private
 
-    def build_enumerator(relation: Product.all, batch_size: 2, timezone: nil, columns: nil, cursor: nil, instance: nil, instances: nil)
-      JobIteration::ActiveRecordEnumerator.new(
-        relation,
+    def build_enumerator(
+      relation: Product.all,
+      batch_size: 2,
+      timezone: nil,
+      columns: nil,
+      cursor: nil,
+      instance: nil,
+      instances: nil,
+      around_query: nil
+    )
+      options = {
         batch_size: batch_size,
         timezone: timezone,
         columns: columns,
         cursor: cursor,
         instance: instance,
         instances: instances,
-      )
+      }
+      options[:around_query] = around_query if around_query
+
+      JobIteration::ActiveRecordEnumerator.new(relation, **options)
     end
   end
 end

@@ -172,6 +172,7 @@ module JobIteration
       enum = JobIteration::ActiveRecordBatchEnumerator.new(
         scope,
         cursor: cursor,
+        around_query: method(:execute_active_record_query),
         **args,
       ).each
       enum = wrap(self, enum) if wrap
@@ -275,8 +276,15 @@ module JobIteration
         cursor: cursor,
         instance: instance,
         instances: instances,
+        around_query: method(:execute_active_record_query),
         **args,
       )
+    end
+
+    def execute_active_record_query(&query)
+      return query.call unless @job
+
+      @job.run_callbacks(:active_record_query, &query)
     end
   end
 end

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "test_helper"
+require "sorbet-runtime"
 
 class RactorTest < ActiveSupport::TestCase
   module CustomInterruptionAdapter
@@ -8,6 +9,22 @@ class RactorTest < ActiveSupport::TestCase
       def call
         false
       end
+    end
+  end
+
+  class JobWithSorbetSignatures < ActiveJob::Base
+    extend T::Sig
+    include JobIteration::Iteration
+
+    # sorbet-runtime replaces the wrappers of methods that are never checked with the original methods once it has
+    # built their signatures, which is what lets other Ractors call them.
+    sig { params(cursor: T.untyped).returns(T::Enumerator[T.untyped]).checked(:never) }
+    def build_enumerator(cursor:)
+      enumerator_builder.build_times_enumerator(2, cursor: cursor)
+    end
+
+    sig { params(number: Integer, name: String).void.checked(:never) }
+    def each_iteration(number, name:)
     end
   end
 
@@ -37,6 +54,15 @@ class RactorTest < ActiveSupport::TestCase
     adapter = in_ractor(prepare: register) { JobIteration::InterruptionAdapters.lookup(:ractor_test) }
 
     assert_equal(CustomInterruptionAdapter, adapter)
+  end
+
+  test "the parameters of methods with Sorbet signatures can be read in a non-main Ractor" do
+    parameters = in_ractor(prepare: -> { T::Utils.run_all_sig_blocks }) do
+      job = JobWithSorbetSignatures.allocate
+      [:build_enumerator, :each_iteration].map { |method_name| job.send(:method_parameters, method_name) }
+    end
+
+    assert_equal([[[:keyreq, :cursor]], [[:req, :number], [:keyreq, :name]]], parameters)
   end
 
   private

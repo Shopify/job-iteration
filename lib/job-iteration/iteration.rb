@@ -345,7 +345,9 @@ module JobIteration
     def method_parameters(method_name)
       method = method(method_name)
 
-      if defined?(T::Private::Methods)
+      # Sorbet's signatures can only be read in the main Ractor. Other Ractors can only call methods with signatures
+      # once sorbet-runtime has replaced its wrappers with the original methods, whose parameters these are.
+      if defined?(T::Private::Methods) && Ractor.current == Ractor.main
         signature = T::Private::Methods.signature_for_method(method)
         method = signature.method if signature
       end

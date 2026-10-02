@@ -34,7 +34,10 @@ module JobIteration
       def register(name, adapter)
         raise ArgumentError, "adapter must be callable" unless adapter.respond_to?(:call)
 
-        registry[name.to_sym] = adapter
+        # Jobs look adapters up in whichever Ractor runs them, so the registry is replaced rather than changed, and
+        # it's shareable as long as the adapters are.
+        @registry = registry.merge(name.to_sym => adapter).freeze
+        adapter
       end
 
       private
@@ -42,7 +45,7 @@ module JobIteration
       attr_reader :registry
     end
 
-    @registry = {}
+    @registry = {}.freeze
 
     # Built-in Rails adapters. It doesn't make sense to interrupt for these.
     register(:async, NullAdapter)

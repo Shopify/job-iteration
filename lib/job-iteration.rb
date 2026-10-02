@@ -45,7 +45,12 @@ module JobIteration
   #   class ChildJob < MyJob
   #     self.job_iteration_max_job_runtime = 3.minutes # MyJob's 1.minute will be discarded.
   #     # ...
-  attr_accessor :max_job_runtime
+  attr_reader :max_job_runtime
+
+  def max_job_runtime=(max_job_runtime)
+    # Jobs read it in whichever Ractor runs them, which only works if it's shareable.
+    @max_job_runtime = Ractor.make_shareable(max_job_runtime)
+  end
 
   # Configures a delay duration to wait before resuming an interrupted job.
   # @example
@@ -55,7 +60,11 @@ module JobIteration
   # Defaults to nil which means interrupted jobs will be retried immediately.
   # This value will be ignored when an interruption is raised by a throttle enumerator,
   # where the throttle backoff value will take precedence over this setting.
-  attr_accessor :default_retry_backoff
+  attr_reader :default_retry_backoff
+
+  def default_retry_backoff=(default_retry_backoff)
+    @default_retry_backoff = Ractor.make_shareable(default_retry_backoff)
+  end
 
   attr_reader :interruption_adapter
 

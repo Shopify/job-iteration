@@ -215,6 +215,116 @@ module JobIteration
       end
     end
 
+    class AroundActiveRecordQueryJob < SimpleIterationJob
+      cattr_accessor :active_record_queries, instance_accessor: false
+      self.active_record_queries = 0
+
+      attr_accessor :active_record_query_running
+
+      def build_enumerator(batch_relations = false, cursor:)
+        if batch_relations
+          enumerator_builder.active_record_on_batch_relations(
+            Product.all,
+            cursor: cursor,
+            batch_size: 3,
+            around_query: method(:around_active_record_query),
+          )
+        else
+          enumerator_builder.active_record_on_records(
+            Product.all,
+            cursor: cursor,
+            batch_size: 3,
+            around_query: method(:around_active_record_query),
+          )
+        end
+      end
+
+      def each_iteration(item, batch_relations = false)
+        item_loaded = !!item.loaded? if batch_relations
+        self.class.records_performed << [active_record_query_running, item_loaded]
+        item.load if batch_relations
+      end
+
+      private
+
+      def around_active_record_query
+        self.class.active_record_queries += 1
+        self.active_record_query_running = true
+        yield
+      ensure
+        self.active_record_query_running = false
+      end
+    end
+
+    class ParallelAroundActiveRecordQueryJob < AroundActiveRecordQueryJob
+      def build_enumerator(cursor:)
+        enumerator_builder.parallel_active_record_on_records(
+          Product.all,
+          cursor: cursor,
+          instances: 2,
+          batch_size: 3,
+          around_query: method(:around_active_record_query),
+        )
+      end
+
+      def each_iteration(item)
+        self.class.records_performed << [active_record_query_running, item.id]
+      end
+    end
+
+    class NestedAroundActiveRecordQueryJob < AroundActiveRecordQueryJob
+      def build_enumerator(cursor:)
+        enumerator_builder.nested(
+          [
+            ->(cursor) { enumerator_builder.active_record_on_records(Product.all, cursor: cursor) },
+            ->(product, cursor) do
+              enumerator_builder.active_record_on_records(
+                product.comments,
+                cursor: cursor,
+                around_query: method(:around_active_record_query),
+              )
+            end,
+          ],
+          cursor: cursor,
+        )
+      end
+
+      def each_iteration(comment)
+        self.class.records_performed << [active_record_query_running, comment.id]
+      end
+    end
+
+    module FailFirstActiveRecordQuery
+      mattr_accessor :failed, default: false
+
+      def exec_queries
+        unless FailFirstActiveRecordQuery.failed
+          FailFirstActiveRecordQuery.failed = true
+          raise ActiveRecord::ConnectionNotEstablished
+        end
+
+        super
+      end
+    end
+
+    class RetryingAroundActiveRecordQueryJob < SimpleIterationJob
+      def build_enumerator(cursor:)
+        enumerator_builder.active_record_on_records(
+          Product.all.extending(FailFirstActiveRecordQuery),
+          cursor: cursor,
+          around_query: ->(&query) do
+            query.call
+          rescue ActiveRecord::ConnectionNotEstablished
+            query.call
+          end,
+        )
+      end
+
+      def each_iteration(item)
+        self.class.records_performed << item
+      end
+    end
+
     class AbortingActiveRecordIterationJob < ActiveRecordIterationJob
       def each_iteration(*)
         abort_strategy if self.class.records_performed.size == 2
@@ -467,6 +577,8 @@ module JobIteration
         klass.on_shutdown_called = 0
         klass.around_iterate_called = 0
       end
+      AroundActiveRecordQueryJob.active_record_queries = 0
+      FailFirstActiveRecordQuery.failed = false
       JobShouldExitJob.records_performed = []
       super
     end
@@ -628,6 +740,44 @@ module JobIteration
       assert_equal([3, 3, 3, 1], records_performed.map(&:count))
       assert(records_performed.all? { |relation| relation.is_a?(ActiveRecord::Relation) })
       assert(records_performed.none?(&:loaded?))
+    end
+
+    def test_around_query_wraps_record_pages_but_not_processing
+      AroundActiveRecordQueryJob.perform_now(false)
+
+      assert_equal(4, AroundActiveRecordQueryJob.active_record_queries)
+      assert_equal([[false, nil]], AroundActiveRecordQueryJob.records_performed.uniq)
+    end
+
+    def test_around_query_wraps_batch_relation_cursors_but_not_relation_loads
+      AroundActiveRecordQueryJob.perform_now(true)
+
+      assert_equal(5, AroundActiveRecordQueryJob.active_record_queries)
+      assert_equal([[false, false]], AroundActiveRecordQueryJob.records_performed.uniq)
+    end
+
+    def test_around_query_wraps_parallel_record_pages
+      job = ParallelAroundActiveRecordQueryJob.new
+      job.cursor_position = { "instance" => 0, "instances" => 2, "inner_cursor" => nil }
+      job.perform_now
+
+      assert_equal(2, ParallelAroundActiveRecordQueryJob.active_record_queries)
+      assert_equal([false], ParallelAroundActiveRecordQueryJob.records_performed.map(&:first).uniq)
+    end
+
+    def test_around_query_wraps_only_the_nested_enumerator_it_is_passed_to
+      NestedAroundActiveRecordQueryJob.perform_now
+
+      assert_equal(10, NestedAroundActiveRecordQueryJob.active_record_queries)
+      assert_equal(6, NestedAroundActiveRecordQueryJob.records_performed.size)
+      assert_equal([false], NestedAroundActiveRecordQueryJob.records_performed.map(&:first).uniq)
+    end
+
+    def test_around_query_can_retry_a_failed_page_query
+      RetryingAroundActiveRecordQueryJob.perform_now
+
+      assert_predicate(FailFirstActiveRecordQuery, :failed)
+      assert_equal(10, RetryingAroundActiveRecordQueryJob.records_performed.size)
     end
 
     def test_multiple_columns

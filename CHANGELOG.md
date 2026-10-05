@@ -10,7 +10,7 @@ nil
 
 ### Features
 
-nil
+- [740](https://github.com/Shopify/job-iteration/pull/740) - Add an `around_query:` option to Active Record enumerators for wrapping the queries they execute.
 
 ### Bug fixes
 

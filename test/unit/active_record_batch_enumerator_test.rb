@@ -265,7 +265,7 @@ module JobIteration
     def track_queries(&block)
       queries = []
       query_cb = ->(*, payload) {
-        return if /SHOW FULL FIELDS FROM `\w+`/.match?(payload[:sql])
+        return if payload[:name] == "SCHEMA"
 
         queries << payload[:sql]
       }

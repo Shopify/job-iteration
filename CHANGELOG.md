@@ -10,7 +10,7 @@ nil
 
 ### Features
 
-- [#TBD](https://github.com/Shopify/job-iteration/pull/TBD) - `build_parallel_enumerator` accepts `tolerated_enqueue_errors:`, a list of enqueue error classes that do not fail the parent job. A child job that fails to enqueue with one of them is skipped and reported through the `skipped_parallel_jobs.iteration` event.
+- [#746](https://github.com/Shopify/job-iteration/pull/746) - `build_parallel_enumerator` accepts `tolerated_enqueue_errors:`, a list of enqueue error classes that do not fail the parent job. A child job that fails to enqueue with one of them is skipped and reported through the `skipped_parallel_jobs.iteration` event.
 
 ### Bug fixes
 

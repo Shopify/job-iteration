@@ -80,7 +80,7 @@ There are a few subtle things to keep in mind when working with parallel enumera
 - The parallel enumerators must be the outermost enumerator, they cannot be wrapped in a throttling or nested enumerator.
 - Callbacks (`on_start`, `on_complete`, etc.) fire for each instance independently. There is no "all instances have completed" callback.
 - Instance jobs have the same class, arguments, `queue_name`, and `priority` as the parent job. Other custom attributes are not automatically copied over.
-- If any instance job fails to enqueue, the parent job raises a `ParallelEnumerator::EnqueueError`. Because `perform_all_later` is all-or-nothing in most adapters, it is likely that all instance jobs failed to enqueue, so retrying the parent job is usually appropriate. However, it is technically possible that only some of the instance jobs failed to enqueue, which could lead to unexpected behavior where multiple jobs are running for the same instance.
+- By default, if any instance job fails to enqueue, the parent job raises a `ParallelEnumerator::EnqueueError`. Because `perform_all_later` is all-or-nothing in most adapters, it is likely that all instance jobs failed to enqueue, so retrying the parent job is usually appropriate. However, it is technically possible that only some of the instance jobs failed to enqueue, which could lead to unexpected behavior where multiple jobs are running for the same instance.
 
 ### Tolerating enqueue errors
 
@@ -98,7 +98,9 @@ def build_enumerator(cursor:)
 end
 ```
 
-An instance job that fails to enqueue with a tolerated error, or a subclass of one, is skipped, and the parent job instruments `skipped_parallel_jobs.iteration` with the skipped `instance` numbers and error class names. Any other failure still raises `ParallelEnumerator::EnqueueError`, counting only the untolerated failures. Errors are matched against the child job's `enqueue_error`, so only errors your adapter raises as an `ActiveJob::EnqueueError` can be tolerated.
+An instance job that fails to enqueue with a tolerated error, or a subclass of one, is skipped, and the parent job instruments `skipped_parallel_jobs.iteration` with the skipped `instance` numbers and error class names. Any other failure still raises `ParallelEnumerator::EnqueueError`, counting only the untolerated failures. Errors are matched against the child job's `enqueue_error`; a failure without a matching error still fails the parent, and exceptions raised directly by the bulk enqueue call still propagate.
+
+Tolerating an error skips that child; it does not enqueue or retry it. Opt in only when the workload can safely leave that work to an existing instance or another recovery mechanism.
 
 ## Internals
 

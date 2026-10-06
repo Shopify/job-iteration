@@ -50,6 +50,7 @@ to notify you what it's doing. You can subscribe to the following events (listed
 - `build_enumerator.iteration`
 - `throttled.iteration` (when using ThrottleEnumerator)
 - `nil_enumerator.iteration`
+- `skipped_parallel_jobs.iteration` (when a parallel instance job fails to enqueue with a tolerated error)
 - `resumed.iteration`
 - `each_iteration.iteration`
 - `not_found.iteration`

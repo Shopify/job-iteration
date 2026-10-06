@@ -7,6 +7,22 @@ module JobIteration
   class ParallelEnumeratorTest < IterationUnitTest
     INSTANCES = 3
 
+    class LaneAlreadyRunning < ActiveJob::EnqueueError; end
+
+    class FailingEnqueueAdapter < ActiveJob::QueueAdapters::TestAdapter
+      def initialize(errors_by_instance)
+        super()
+        @errors_by_instance = errors_by_instance
+      end
+
+      def enqueue(job)
+        error = @errors_by_instance[job.cursor_position.fetch("instance")]
+        raise error if error
+
+        super
+      end
+    end
+
     class IterationParallelJob < ActiveJob::Base
       include JobIteration::Iteration
 
@@ -212,6 +228,104 @@ module JobIteration
       end
     end
 
+    test "build_parallel_enumerator passes tolerated_enqueue_errors to EnqueueJobs" do
+      result = enumerator_builder.build_parallel_enumerator(
+        instances: 3,
+        cursor: nil,
+        tolerated_enqueue_errors: [ActiveJob::EnqueueError],
+      ) { |_, _, _| [] }
+
+      assert_equal([ActiveJob::EnqueueError], result.tolerated_enqueue_errors)
+    end
+
+    test "build_parallel_enumerator raises ArgumentError when tolerated_enqueue_errors is not an Array of Exception classes" do
+      [nil, ActiveJob::EnqueueError, ["ActiveJob::EnqueueError"], [String]].each do |bad_value|
+        error = assert_raises(ArgumentError, "expected ArgumentError for tolerated_enqueue_errors: #{bad_value.inspect}") do
+          enumerator_builder.build_parallel_enumerator(instances: 3, cursor: nil, tolerated_enqueue_errors: bad_value) do |_, _, _|
+            []
+          end
+        end
+        assert_equal("tolerated_enqueue_errors must be an Array of Exception classes", error.message)
+      end
+    end
+
+    test "EnqueueJobs does not raise when every failed child job failed with a tolerated error" do
+      with_child_enqueue_errors(1 => LaneAlreadyRunning.new) do |adapter|
+        ParallelEnumerator::EnqueueJobs.new(INSTANCES, tolerated_enqueue_errors: [LaneAlreadyRunning])
+          .enqueue_jobs(IterationParallelJob.new({}))
+
+        enqueued_instances = adapter.enqueued_jobs.map { |job| job.fetch("cursor_position").fetch("instance") }
+        assert_equal([0, 2], enqueued_instances)
+      end
+    end
+
+    test "EnqueueJobs tolerates subclasses of a tolerated error" do
+      with_child_enqueue_errors(0 => Class.new(LaneAlreadyRunning).new) do
+        assert_nothing_raised do
+          ParallelEnumerator::EnqueueJobs.new(INSTANCES, tolerated_enqueue_errors: [LaneAlreadyRunning])
+            .enqueue_jobs(IterationParallelJob.new({}))
+        end
+      end
+    end
+
+    test "EnqueueJobs raises EnqueueError counting only the child jobs that failed with an untolerated error" do
+      with_child_enqueue_errors(0 => LaneAlreadyRunning.new, 2 => ActiveJob::EnqueueError.new("queue paused")) do
+        error = assert_raises(ParallelEnumerator::EnqueueError) do
+          ParallelEnumerator::EnqueueJobs.new(INSTANCES, tolerated_enqueue_errors: [LaneAlreadyRunning])
+            .enqueue_jobs(IterationParallelJob.new({}))
+        end
+        assert_equal("Failed to enqueue 1 out of #{INSTANCES} child jobs", error.message)
+      end
+    end
+
+    test "EnqueueJobs raises EnqueueError for any failed child job when no errors are tolerated" do
+      with_child_enqueue_errors(1 => LaneAlreadyRunning.new) do
+        error = assert_raises(ParallelEnumerator::EnqueueError) do
+          ParallelEnumerator::EnqueueJobs.new(INSTANCES).enqueue_jobs(IterationParallelJob.new({}))
+        end
+        assert_equal("Failed to enqueue 1 out of #{INSTANCES} child jobs", error.message)
+      end
+    end
+
+    test "skipped_parallel_jobs event reports the skipped instances and their errors" do
+      payloads = []
+      callback = ->(_event, _started, _finished, _id, payload) { payloads << payload }
+
+      with_child_enqueue_errors(0 => LaneAlreadyRunning.new, 2 => LaneAlreadyRunning.new) do
+        ActiveSupport::Notifications.subscribed(callback, "skipped_parallel_jobs.iteration") do
+          ParallelEnumerator::EnqueueJobs.new(INSTANCES, tolerated_enqueue_errors: [LaneAlreadyRunning])
+            .enqueue_jobs(IterationParallelJob.new({}))
+        end
+      end
+
+      assert_equal(1, payloads.size)
+      assert_equal(IterationParallelJob.name, payloads.first[:job_class])
+      assert_equal(INSTANCES, payloads.first[:instances])
+      assert_equal([0, 2], payloads.first[:skipped_instances])
+      assert_equal([LaneAlreadyRunning.name] * 2, payloads.first[:enqueue_errors])
+    end
+
+    test "skipped_parallel_jobs is logged" do
+      with_child_enqueue_errors(1 => LaneAlreadyRunning.new) do
+        assert_logged(/Skipped 1 of #{INSTANCES} parallel jobs that failed to enqueue with a tolerated error/) do
+          ParallelEnumerator::EnqueueJobs.new(INSTANCES, tolerated_enqueue_errors: [LaneAlreadyRunning])
+            .enqueue_jobs(IterationParallelJob.new({}))
+        end
+      end
+    end
+
+    test "skipped_parallel_jobs event is not instrumented when every child job enqueues" do
+      called = false
+      callback = ->(*) { called = true }
+
+      ActiveSupport::Notifications.subscribed(callback, "skipped_parallel_jobs.iteration") do
+        ParallelEnumerator::EnqueueJobs.new(INSTANCES, tolerated_enqueue_errors: [LaneAlreadyRunning])
+          .enqueue_jobs(IterationParallelJob.new({}))
+      end
+
+      refute(called)
+    end
+
     test "enqueue_parallel_jobs event is instrumented" do
       called = false
       callback = ->(_event, _started, _finished, _job_id, payload) {
@@ -295,6 +409,18 @@ module JobIteration
 
     def enumerator_builder
       JobIteration::EnumeratorBuilder.new(nil)
+    end
+
+    # Swaps in an adapter that fails the enqueue of the child jobs for the given instances
+    # the way a real adapter does: by raising an ActiveJob::EnqueueError, which ActiveJob
+    # records on the job's enqueue_error and reports through successfully_enqueued?.
+    def with_child_enqueue_errors(errors_by_instance)
+      original_adapter = IterationParallelJob.queue_adapter
+      adapter = FailingEnqueueAdapter.new(errors_by_instance)
+      IterationParallelJob.queue_adapter = adapter
+      yield adapter
+    ensure
+      IterationParallelJob.queue_adapter = original_adapter
     end
 
     def collect_array_partitions(array, instances:)

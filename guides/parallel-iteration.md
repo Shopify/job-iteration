@@ -82,6 +82,24 @@ There are a few subtle things to keep in mind when working with parallel enumera
 - Instance jobs have the same class, arguments, `queue_name`, and `priority` as the parent job. Other custom attributes are not automatically copied over.
 - If any instance job fails to enqueue, the parent job raises a `ParallelEnumerator::EnqueueError`. Because `perform_all_later` is all-or-nothing in most adapters, it is likely that all instance jobs failed to enqueue, so retrying the parent job is usually appropriate. However, it is technically possible that only some of the instance jobs failed to enqueue, which could lead to unexpected behavior where multiple jobs are running for the same instance.
 
+### Tolerating enqueue errors
+
+Some enqueue failures are expected. A recurring parallel job whose instances can outlive its schedule interval, for example, has an instance job rejected on the next tick by a concurrency limit while the previous run of that instance is still working. Pass the error classes to tolerate to `build_parallel_enumerator`:
+
+```ruby
+def build_enumerator(cursor:)
+  enumerator_builder.parallel(
+    instances: 4,
+    cursor: cursor,
+    tolerated_enqueue_errors: [MyAdapter::ConcurrencyLimitError],
+  ) do |instance, instances, inner_cursor|
+    # ...
+  end
+end
+```
+
+An instance job that fails to enqueue with a tolerated error, or a subclass of one, is skipped, and the parent job instruments `skipped_parallel_jobs.iteration` with the skipped `instance` numbers and error class names. Any other failure still raises `ParallelEnumerator::EnqueueError`, counting only the untolerated failures. Errors are matched against the child job's `enqueue_error`, so only errors your adapter raises as an `ActiveJob::EnqueueError` can be tolerated.
+
 ## Internals
 
 When a parallel iteration job is enqueued, it first runs with a `nil` cursor. That triggers it to enqueue all the instance jobs, each with a cursor that looks like `{ "instance" => x, "instances" => y, "inner_cursor" => nil }`, where `x` ranges from 0 to `y - 1`. When those jobs start, they build the inner enumerator and run as normal, except that the outer enumerator ensures that the cursor stays wrapped in this hash with `instance`, `instances`, and `inner_cursor`.

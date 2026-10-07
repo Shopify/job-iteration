@@ -10,7 +10,7 @@ nil
 
 ### Features
 
-nil
+- Support running iteration jobs in non-main Ractors. `JobIteration.max_job_runtime=` and `JobIteration.default_retry_backoff=` now make their values Ractor-shareable, which deep-freezes them.
 
 ### Bug fixes
 

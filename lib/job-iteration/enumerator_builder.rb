@@ -233,12 +233,19 @@ module JobIteration
       wrap(self, enum)
     end
 
-    def build_parallel_enumerator(instances:, cursor:, &block)
+    def build_parallel_enumerator(instances:, cursor:, tolerated_enqueue_errors: [], &block)
       unless instances.is_a?(Integer) && instances.positive?
         raise ArgumentError, "instances must be a positive Integer"
       end
 
-      return ParallelEnumerator::EnqueueJobs.new(instances) if cursor.nil?
+      unless tolerated_enqueue_errors.is_a?(Array) &&
+          tolerated_enqueue_errors.all? { |error_class| error_class.is_a?(Class) && error_class <= Exception }
+        raise ArgumentError, "tolerated_enqueue_errors must be an Array of Exception classes"
+      end
+
+      if cursor.nil?
+        return ParallelEnumerator::EnqueueJobs.new(instances, tolerated_enqueue_errors: tolerated_enqueue_errors)
+      end
 
       enum = ParallelEnumerator.new(block, cursor: cursor).to_enum
       wrap(self, enum)

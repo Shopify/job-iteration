@@ -34,7 +34,8 @@ module JobIteration
       def register(name, adapter)
         raise ArgumentError, "adapter must be callable" unless adapter.respond_to?(:call)
 
-        registry[name.to_sym] = adapter
+        @registry = registry.merge(name.to_sym => adapter).freeze
+        nil
       end
 
       private
@@ -42,7 +43,7 @@ module JobIteration
       attr_reader :registry
     end
 
-    @registry = {}
+    @registry = {}.freeze
 
     # Built-in Rails adapters. It doesn't make sense to interrupt for these.
     register(:async, NullAdapter)

@@ -345,7 +345,7 @@ module JobIteration
     def method_parameters(method_name)
       method = method(method_name)
 
-      if defined?(T::Private::Methods)
+      if defined?(T::Private::Methods) && Ractor.current == Ractor.main
         signature = T::Private::Methods.signature_for_method(method)
         method = signature.method if signature
       end

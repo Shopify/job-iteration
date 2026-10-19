@@ -21,7 +21,15 @@ module JobIteration
 
     def enqueue_parallel_jobs(event)
       info do
-        "[JobIteration::Iteration] Enqueued #{event.payload[:instances]} parallel jobs."
+        "[JobIteration::Iteration] Attempted to enqueue #{event.payload[:instances]} parallel jobs."
+      end
+    end
+
+    def skipped_parallel_jobs(event)
+      info do
+        "[JobIteration::Iteration] Skipped #{event.payload[:skipped_instances].size} of " \
+          "#{event.payload[:instances]} parallel jobs that failed to enqueue with a tolerated error. " \
+          "skipped_instances=#{event.payload[:skipped_instances]} enqueue_errors=#{event.payload[:enqueue_errors].uniq}"
       end
     end
 

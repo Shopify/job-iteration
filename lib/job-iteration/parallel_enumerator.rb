@@ -7,11 +7,12 @@ module JobIteration
     class EnqueueError < StandardError; end
 
     class EnqueueJobs
-      def initialize(instances)
+      def initialize(instances, tolerated_enqueue_errors: [])
         @instances = instances
+        @tolerated_enqueue_errors = tolerated_enqueue_errors
       end
 
-      attr_reader :instances
+      attr_reader :instances, :tolerated_enqueue_errors
 
       def enqueue_jobs(job)
         child_jobs = instances.times.map do |index|
@@ -26,10 +27,30 @@ module JobIteration
 
         ActiveJob.perform_all_later(child_jobs)
 
-        unless child_jobs.all?(&:successfully_enqueued?)
-          failed_count = instances - child_jobs.count(&:successfully_enqueued?)
-          raise EnqueueError, "Failed to enqueue #{failed_count} out of #{instances} child jobs"
-        end
+        failed_jobs = child_jobs.reject(&:successfully_enqueued?)
+        return if failed_jobs.empty?
+
+        skipped_jobs, failed_jobs = failed_jobs.partition { |child_job| tolerated?(child_job.enqueue_error) }
+        instrument_skipped_jobs(job, skipped_jobs) if skipped_jobs.any?
+        return if failed_jobs.empty?
+
+        raise EnqueueError, "Failed to enqueue #{failed_jobs.size} out of #{instances} child jobs"
+      end
+
+      private
+
+      def tolerated?(enqueue_error)
+        tolerated_enqueue_errors.any? { |error_class| enqueue_error.is_a?(error_class) }
+      end
+
+      def instrument_skipped_jobs(job, skipped_jobs)
+        ActiveSupport::Notifications.instrument(
+          "skipped_parallel_jobs.iteration",
+          job_class: job.class.name,
+          instances: instances,
+          skipped_instances: skipped_jobs.map { |child_job| child_job.cursor_position.fetch("instance") },
+          enqueue_errors: skipped_jobs.map { |child_job| child_job.enqueue_error.class.name },
+        )
       end
     end
 

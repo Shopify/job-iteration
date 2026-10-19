@@ -326,6 +326,23 @@ module JobIteration
       refute(called)
     end
 
+    test "enqueue_parallel_jobs logs the attempt count when every child enqueues" do
+      assert_logged(/Attempted to enqueue #{INSTANCES} parallel jobs\./) do
+        IterationParallelJob.perform_now({})
+      end
+    end
+
+    test "enqueue_parallel_jobs logs the attempt count when children are skipped" do
+      with_child_enqueue_errors(1 => LaneAlreadyRunning.new) do
+        assert_logged(/Skipped 1 of #{INSTANCES} parallel jobs.*Attempted to enqueue #{INSTANCES} parallel jobs\./m) do
+          ActiveSupport::Notifications.instrument("enqueue_parallel_jobs.iteration", instances: INSTANCES) do
+            ParallelEnumerator::EnqueueJobs.new(INSTANCES, tolerated_enqueue_errors: [LaneAlreadyRunning])
+              .enqueue_jobs(IterationParallelJob.new({}))
+          end
+        end
+      end
+    end
+
     test "enqueue_parallel_jobs event is instrumented" do
       called = false
       callback = ->(_event, _started, _finished, _job_id, payload) {

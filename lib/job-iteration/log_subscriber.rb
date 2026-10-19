@@ -21,7 +21,7 @@ module JobIteration
 
     def enqueue_parallel_jobs(event)
       info do
-        "[JobIteration::Iteration] Enqueued #{event.payload[:instances]} parallel jobs."
+        "[JobIteration::Iteration] Attempted to enqueue #{event.payload[:instances]} parallel jobs."
       end
     end
 

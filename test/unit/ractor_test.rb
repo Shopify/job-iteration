@@ -83,7 +83,7 @@ class RactorTest < ActiveSupport::TestCase
       prepare&.call
       ractor = Ractor.new(*arguments, &block)
       result = [:value, ractor.respond_to?(:value) ? ractor.value : ractor.take]
-    rescue Exception => error # rubocop:disable Lint/RescueException
+    rescue Exception => error
       error = error.cause if error.is_a?(Ractor::RemoteError)
       result = [:error, "#{error.class}: #{error.message}"]
     ensure

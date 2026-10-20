@@ -2,7 +2,7 @@
 
 ### Breaking Changes
 
-nil
+- [752](https://github.com/Shopify/job-iteration/pull/752) - Drop support for Ruby 3.1 and 3.2, which have reached end of life. Ruby 3.3 or later is now required.
 
 ### Changes
 

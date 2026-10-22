@@ -102,6 +102,28 @@ An instance job that fails to enqueue with a tolerated error, or a subclass of o
 
 Tolerating an error skips that child; it does not enqueue or retry it. Opt in only when the workload can safely leave that work to an existing instance or another recovery mechanism.
 
+#### Customizing the default policy
+
+A custom `JobIteration::EnumeratorBuilder` can override the protected, zero-argument `default_tolerated_enqueue_errors` hook to supply an application-specific default:
+
+```ruby
+class ApplicationEnumeratorBuilder < JobIteration::EnumeratorBuilder
+  protected
+
+  def default_tolerated_enqueue_errors
+    [MyAdapter::ConcurrencyLimitError]
+  end
+end
+
+JobIteration.enumerator_builder = ApplicationEnumeratorBuilder
+```
+
+The base hook returns `[]`, preserving strict behavior. It is evaluated on each `build_parallel_enumerator` call that omits `tolerated_enqueue_errors:`, including child builds with a non-nil cursor. The `parallel` alias and built-in parallel array and Active Record helpers use the same hook; no alias rebinding is needed.
+
+An explicit array replaces the default rather than extending it. Pass `tolerated_enqueue_errors: []` to `build_parallel_enumerator` or `parallel` to opt out of a custom policy. Both hook results and explicit values must be arrays of exception classes; explicit `nil` remains invalid.
+
+This policy only controls bulk admission of instance jobs by a running parent. It does not change admission of the parent itself, instance execution, or interruption re-enqueue behavior.
+
 ## Internals
 
 When a parallel iteration job is enqueued, it first runs with a `nil` cursor. That triggers it to enqueue all the instance jobs, each with a cursor that looks like `{ "instance" => x, "instances" => y, "inner_cursor" => nil }`, where `x` ranges from 0 to `y - 1`. When those jobs start, they build the inner enumerator and run as normal, except that the outer enumerator ensures that the cursor stays wrapped in this hash with `instance`, `instances`, and `inner_cursor`.

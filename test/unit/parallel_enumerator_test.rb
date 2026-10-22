@@ -9,6 +9,14 @@ module JobIteration
 
     class LaneAlreadyRunning < ActiveJob::EnqueueError; end
 
+    class PolicyEnumeratorBuilder < EnumeratorBuilder
+      protected
+
+      def default_tolerated_enqueue_errors
+        [LaneAlreadyRunning]
+      end
+    end
+
     class FailingEnqueueAdapter < ActiveJob::QueueAdapters::TestAdapter
       def initialize(errors_by_instance)
         super()
@@ -246,6 +254,83 @@ module JobIteration
           end
         end
         assert_equal("tolerated_enqueue_errors must be an Array of Exception classes", error.message)
+      end
+    end
+
+    test "default enqueue policy is protected and strict" do
+      assert_includes(EnumeratorBuilder.protected_instance_methods, :default_tolerated_enqueue_errors)
+      assert_empty(enumerator_builder.parallel(instances: INSTANCES, cursor: nil).tolerated_enqueue_errors)
+    end
+
+    test "parallel builders and aliases use the overridden default enqueue policy" do
+      builder = PolicyEnumeratorBuilder.new(IterationParallelJob.new({}))
+      calls = [
+        -> { builder.build_parallel_enumerator(instances: INSTANCES, cursor: nil) },
+        -> { builder.parallel(instances: INSTANCES, cursor: nil) },
+        -> { builder.build_parallel_array_enumerator([], instances: INSTANCES, cursor: nil) },
+        -> { builder.parallel_array([], instances: INSTANCES, cursor: nil) },
+        -> { builder.build_parallel_active_record_enumerator_on_records(nil, instances: INSTANCES, cursor: nil) },
+        -> { builder.parallel_active_record_on_records(nil, instances: INSTANCES, cursor: nil) },
+        -> { builder.build_parallel_active_record_enumerator_on_batches(nil, instances: INSTANCES, cursor: nil) },
+        -> { builder.parallel_active_record_on_batches(nil, instances: INSTANCES, cursor: nil) },
+      ]
+
+      builder.expects(:default_tolerated_enqueue_errors).times(calls.size).returns([LaneAlreadyRunning])
+      calls.each do |build|
+        assert_equal([LaneAlreadyRunning], build.call.tolerated_enqueue_errors)
+      end
+    end
+
+    test "explicit enqueue policy replaces the default without evaluating the hook" do
+      builder = PolicyEnumeratorBuilder.new(IterationParallelJob.new({}))
+      builder.expects(:default_tolerated_enqueue_errors).never
+
+      [:build_parallel_enumerator, :parallel].each do |method|
+        [[], [ActiveJob::EnqueueError]].each do |policy|
+          result = builder.public_send(method, instances: INSTANCES, cursor: nil, tolerated_enqueue_errors: policy)
+          assert_equal(policy, result.tolerated_enqueue_errors)
+        end
+        assert_raises(ArgumentError) do
+          builder.public_send(method, instances: INSTANCES, cursor: nil, tolerated_enqueue_errors: nil)
+        end
+      end
+    end
+
+    test "default enqueue policy is validated on parent and child builds" do
+      builder = PolicyEnumeratorBuilder.new(IterationParallelJob.new({}))
+      [nil, ActiveJob::EnqueueError, [String]].each do |policy|
+        builder.stubs(:default_tolerated_enqueue_errors).returns(policy)
+        [nil, { "instance" => 0, "instances" => INSTANCES, "inner_cursor" => nil }].each do |cursor|
+          error = assert_raises(ArgumentError) do
+            builder.parallel(instances: INSTANCES, cursor: cursor) { [].each }
+          end
+          assert_equal("tolerated_enqueue_errors must be an Array of Exception classes", error.message)
+        end
+      end
+    end
+
+    test "default enqueue policy is evaluated on each omitted call including child builds" do
+      builder = PolicyEnumeratorBuilder.new(IterationParallelJob.new({}))
+      builder.expects(:default_tolerated_enqueue_errors).times(3).returns([LaneAlreadyRunning], [], [LaneAlreadyRunning])
+
+      assert_equal([LaneAlreadyRunning], builder.parallel(instances: INSTANCES, cursor: nil).tolerated_enqueue_errors)
+      assert_empty(builder.parallel(instances: INSTANCES, cursor: nil).tolerated_enqueue_errors)
+      cursor = { "instance" => 0, "instances" => 2, "inner_cursor" => nil }
+      enum = builder.parallel_array(["a", "b"], instances: 2, cursor: cursor)
+      assert_kind_of(EnumeratorBuilder::Wrapper, enum)
+      assert_equal([["a", cursor.merge("inner_cursor" => 0)]], enum.to_a)
+    end
+
+    test "overridden default controls child admission and explicit empty array restores strictness" do
+      builder = PolicyEnumeratorBuilder.new(IterationParallelJob.new({}))
+      with_child_enqueue_errors(1 => LaneAlreadyRunning.new) do |adapter|
+        builder.parallel(instances: INSTANCES, cursor: nil).enqueue_jobs(IterationParallelJob.new({}))
+        assert_equal([0, 2], adapter.enqueued_jobs.map { |job| job.fetch("cursor_position").fetch("instance") })
+
+        assert_raises(ParallelEnumerator::EnqueueError) do
+          builder.parallel(instances: INSTANCES, cursor: nil, tolerated_enqueue_errors: [])
+            .enqueue_jobs(IterationParallelJob.new({}))
+        end
       end
     end
 

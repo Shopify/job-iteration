@@ -5,8 +5,8 @@ require "csv"
 
 module JobIteration
   class EnumeratorBuilderTest < ActiveSupport::TestCase
-    # Find all the methods that build enumerators
-    methods = EnumeratorBuilder.instance_methods(false).reject do |method|
+    # Find all the public methods that build enumerators
+    methods = EnumeratorBuilder.public_instance_methods(false).reject do |method|
       method = EnumeratorBuilder.instance_method(method)
       # skip aliases
       method.name != method.original_name
@@ -111,7 +111,7 @@ module JobIteration
       )
     end
 
-    # checks that all the non-alias methods were tested
+    # checks that all the public non-alias methods were tested
     raise "methods not tested: #{methods.inspect}" unless methods.empty?
 
     private

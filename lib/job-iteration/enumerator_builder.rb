@@ -233,7 +233,7 @@ module JobIteration
       wrap(self, enum)
     end
 
-    def build_parallel_enumerator(instances:, cursor:, tolerated_enqueue_errors: [], &block)
+    def build_parallel_enumerator(instances:, cursor:, tolerated_enqueue_errors: default_tolerated_enqueue_errors, &block)
       unless instances.is_a?(Integer) && instances.positive?
         raise ArgumentError, "instances must be a positive Integer"
       end
@@ -265,6 +265,14 @@ module JobIteration
     alias_method :csv_on_batches, :build_csv_enumerator_on_batches
     alias_method :nested, :build_nested_enumerator
     alias_method :parallel, :build_parallel_enumerator
+
+    protected
+
+    # Override to supply the policy used when tolerated_enqueue_errors is omitted.
+    # Explicit arrays replace this default; an empty array keeps enqueue failures strict.
+    def default_tolerated_enqueue_errors
+      []
+    end
 
     private
 

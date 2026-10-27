@@ -10,11 +10,17 @@ nil
 
 ### Features
 
-- [753](https://github.com/Shopify/job-iteration/pull/753) - Custom enumerator builders can override the protected `default_tolerated_enqueue_errors` hook to set the default parallel child-admission policy. Explicit arrays still replace the default, including `[]` for strict behavior.
+nil
 
 ### Bug fixes
 
 nil
+
+## v1.17.0 (Oct 27, 2026)
+
+### Features
+
+- [753](https://github.com/Shopify/job-iteration/pull/753) - Custom enumerator builders can override the protected `default_tolerated_enqueue_errors` hook to set the default parallel child-admission policy. Explicit arrays still replace the default, including `[]` for strict behavior.
 
 ## v1.16.0 (Oct 20, 2026)
 

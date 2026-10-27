@@ -10,7 +10,7 @@ nil
 
 ### Features
 
-nil
+- [753](https://github.com/Shopify/job-iteration/pull/753) - Custom enumerator builders can override the protected `default_tolerated_enqueue_errors` hook to set the default parallel child-admission policy. Explicit arrays still replace the default, including `[]` for strict behavior.
 
 ### Bug fixes
 

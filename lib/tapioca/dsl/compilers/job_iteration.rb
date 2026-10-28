@@ -23,7 +23,7 @@ module Tapioca
 
         sig { override.void }
         def decorate
-          return unless constant.instance_methods(false).include?(:build_enumerator)
+          return unless constant.method_defined?(:build_enumerator, false)
 
           root.create_path(constant) do |job|
             method = constant.instance_method(:build_enumerator)

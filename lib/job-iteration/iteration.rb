@@ -51,6 +51,12 @@ module JobIteration
         instance_accessor: false,
         instance_predicate: false,
       )
+      class_attribute(
+        :job_iteration_runtime_limit_behavior,
+        instance_accessor: false,
+        instance_predicate: false,
+        default: :resume,
+      )
     end
 
     module ClassMethods
@@ -129,6 +135,10 @@ module JobIteration
     end
 
     def interruptible_perform(*args, **kwargs)
+      unless [:resume, :complete].include?(self.class.job_iteration_runtime_limit_behavior)
+        raise ArgumentError, "job_iteration_runtime_limit_behavior must be :resume or :complete"
+      end
+
       self.start_time = Time.now.utc
 
       enumerator = nil
@@ -195,8 +205,11 @@ module JobIteration
           self.cursor_position = cursor_from_enumerator
         end
 
+        # Track the runtime stop separately: overrides may coerce super to a boolean.
+        @runtime_limit_exceeded = false
         reason = job_should_exit?
         next unless reason
+        return true if @runtime_limit_exceeded && self.class.job_iteration_runtime_limit_behavior == :complete
 
         self.executions -= 1 if executions > 1
         @needs_reenqueue = true
@@ -360,6 +373,7 @@ module JobIteration
     def job_should_exit?
       max_job_runtime = job_iteration_max_job_runtime
       if max_job_runtime && start_time && (Time.now.utc - start_time) > max_job_runtime
+        @runtime_limit_exceeded = true
         return "max_job_runtime_exceeded"
       end
 

@@ -10,7 +10,7 @@ nil
 
 ### Features
 
-nil
+- Add the inheritable `job_iteration_runtime_limit_behavior` option. Jobs can opt into `:complete` to finish normally at the existing per-execution runtime limit instead of re-enqueuing; the default remains `:resume`.
 
 ### Bug fixes
 

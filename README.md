@@ -168,6 +168,33 @@ end
 
 Iteration hooks into most popular queue adapters out of the box to support graceful interruption. No extra configuration is required.
 
+## Runtime limits
+
+`JobIteration.max_job_runtime` sets a global runtime limit. A job can also set the inheritable `job_iteration_max_job_runtime` class attribute; when both are set, the lower limit applies. The limit uses time since the current execution started, including building the enumerator, but not time waiting in the queue or previous executions. It is checked after each successful `each_iteration`, so it does not interrupt an iteration in progress.
+
+By default, exceeding the limit interrupts and re-enqueues the job with its latest cursor. For periodic maintenance where it is acceptable to leave some work for a future run, a job can opt into successful completion instead:
+
+```ruby
+class PeriodicMaintenanceJob < ApplicationJob
+  include JobIteration::Iteration
+
+  self.job_iteration_max_job_runtime = 5.minutes
+  self.job_iteration_runtime_limit_behavior = :complete
+
+  def build_enumerator(cursor:)
+    enumerator_builder.active_record_on_records(Record.needing_maintenance, cursor: cursor)
+  end
+
+  def each_iteration(record)
+    record.perform_maintenance
+  end
+end
+```
+
+`job_iteration_runtime_limit_behavior` is inherited and accepts only `:resume` (the default) or `:complete`; invalid values raise `ArgumentError` before the job performs any work. With `:complete`, a runtime stop runs the normal `on_shutdown` and `on_complete` callbacks without automatically re-enqueuing. The last cursor is retained, but completion does **not** mean that all records were processed or that remaining work was marked done. The caller is responsible for scheduling future visits to any remaining work. Jobs that must exhaust their enumerator should keep `:resume`.
+
+Other interruptions, including adapter shutdown and throttling, still resume normally, and exceptions retain the usual Active Job handling. If the runtime limit and adapter shutdown coincide at a check, the existing runtime-first precedence applies, so `:complete` completes in that case. For parallel iteration, the parent still enqueues its children as usual; the runtime limit and behavior apply independently to each child's execution.
+
 ## Supported dependencies
 
 Job-iteration currently supports the following queue adapters (in order of implementation):

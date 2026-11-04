@@ -205,11 +205,14 @@ module JobIteration
           self.cursor_position = cursor_from_enumerator
         end
 
-        # Track the runtime stop separately: overrides may coerce super to a boolean.
+        # Track the runtime stop separately: overrides may coerce super to a boolean
+        # or replace its reason with a custom interruption.
         @runtime_limit_exceeded = false
         reason = job_should_exit?
         next unless reason
-        return true if @runtime_limit_exceeded && self.class.job_iteration_runtime_limit_behavior == :complete
+
+        runtime_stop = @runtime_limit_exceeded && (reason == true || reason == "max_job_runtime_exceeded")
+        return true if runtime_stop && self.class.job_iteration_runtime_limit_behavior == :complete
 
         self.executions -= 1 if executions > 1
         @needs_reenqueue = true

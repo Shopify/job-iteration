@@ -57,6 +57,16 @@ module JobIteration
       end
     end
 
+    class ReplacementExitJob < CompleteJob
+      class_attribute :exit_reason, instance_accessor: false, default: "custom_shutdown"
+
+      private
+
+      def job_should_exit?
+        super ? self.class.exit_reason : false
+      end
+    end
+
     class SuppressedRuntimeExitJob < CompleteJob
       self.job_iteration_max_job_runtime = 1.second
 
@@ -263,6 +273,31 @@ module JobIteration
       assert_equal([0], job.records)
       assert_equal([:start, :shutdown], job.events)
       assert_equal(0, enqueued_jobs.fetch(0).fetch("cursor_position"))
+    end
+
+    def test_custom_string_replacing_super_still_resumes
+      job = ReplacementExitJob.new
+      job.perform_now
+
+      assert_equal([0, 1], job.records)
+      assert_equal([:start, :shutdown], job.events)
+      assert_equal(1, enqueued_jobs.fetch(0).fetch("cursor_position"))
+      assert_equal(1, job.times_interrupted)
+    end
+
+    def test_custom_truthy_values_replacing_super_still_resume
+      [:custom_shutdown, 1].each do |reason|
+        job_class = Class.new(ReplacementExitJob)
+        job_class.exit_reason = reason
+        job = job_class.new
+        job.perform_now
+
+        assert_equal([0, 1], job.records)
+        assert_equal([:start, :shutdown], job.events)
+        assert_equal(1, enqueued_jobs.fetch(0).fetch("cursor_position"))
+        assert_equal(1, job.times_interrupted)
+        enqueued_jobs.clear
+      end
     end
 
     def test_suppressed_runtime_stop_does_not_leak_into_a_later_custom_stop

@@ -94,7 +94,7 @@ module JobIteration
 
     def serialize # @private
       super.merge(
-        "cursor_position" => cursor_position,
+        "cursor_position" => serialize_cursor(cursor_position),
         "times_interrupted" => times_interrupted,
         "total_time" => total_time,
       )
@@ -102,9 +102,40 @@ module JobIteration
 
     def deserialize(job_data) # @private
       super
-      self.cursor_position = job_data["cursor_position"]
+      self.cursor_position = deserialize_cursor(job_data["cursor_position"])
       self.times_interrupted = Integer(job_data["times_interrupted"] || 0)
       self.total_time = Float(job_data["total_time"] || 0.0)
+    end
+
+    # Converts the cursor into the form stored in the job payload when the job is interrupted. The queue
+    # backend serializes that payload, typically as JSON, so by default a cursor has to be made of values
+    # JSON round-trips as the same objects: Strings, Integers, Floats, Arrays, Hashes, true, false, or nil.
+    #
+    # Override this method together with #deserialize_cursor to persist cursors of other types. Active Job's
+    # argument serialization is a natural choice: it already handles Time, Date, BigDecimal, Symbol and any
+    # class with an ActiveJob::Serializers::ObjectSerializer, and leaves JSON-native values untouched.
+    #
+    #   def serialize_cursor(cursor)
+    #     ActiveJob::Arguments.serialize([cursor]).first
+    #   end
+    #
+    #   def deserialize_cursor(cursor)
+    #     ActiveJob::Arguments.deserialize([cursor]).first
+    #   end
+    #
+    # @param cursor [Object] the cursor the enumerator yielded last
+    # @return [Object] what to store in the job payload
+    def serialize_cursor(cursor)
+      cursor
+    end
+
+    # Rebuilds the cursor from the form #serialize_cursor stored in the job payload, before it is passed to
+    # #build_enumerator as +cursor:+. The default returns it unchanged.
+    #
+    # @param cursor [Object] the stored cursor, as the queue backend deserialized it
+    # @return [Object] the cursor to resume from
+    def deserialize_cursor(cursor)
+      cursor
     end
 
     def perform(...) # @private
@@ -184,7 +215,7 @@ module JobIteration
 
       enumerator.each do |object_from_enumerator, cursor_from_enumerator|
         # Deferred until 2.0.0
-        # assert_valid_cursor!(cursor_from_enumerator)
+        # assert_valid_cursor!(serialize_cursor(cursor_from_enumerator))
 
         tags = instrumentation_tags.merge(cursor_position: cursor_from_enumerator)
         ActiveSupport::Notifications.instrument("each_iteration.iteration", tags) do
@@ -312,12 +343,14 @@ module JobIteration
 
     # The adapter must be able to serialize and deserialize the cursor back into an equivalent object.
     # https://github.com/mperham/sidekiq/wiki/Best-Practices#1-make-your-job-parameters-small-and-simple
+    # Validated on the result of #serialize_cursor, which is what reaches the adapter.
     def assert_valid_cursor!(cursor)
       return if serializable?(cursor)
 
       raise CursorError.new(
         "Cursor must be composed of objects capable of built-in (de)serialization: " \
-          "Strings, Integers, Floats, Arrays, Hashes, true, false, or nil.",
+          "Strings, Integers, Floats, Arrays, Hashes, true, false, or nil. " \
+          "Override #serialize_cursor and #deserialize_cursor to persist other types.",
         cursor: cursor,
       )
     end

@@ -8,7 +8,8 @@ your enumerator will be used by it. An enumerator must `yield` two things in the
 arguments:
 - An object to be processed in a job `each_iteration` method
 - A cursor position, which `Iteration` will persist if `each_iteration` returns successfully and the job is forced to shut
-  down. It can be any data type your job backend can serialize and deserialize correctly.
+  down. It can be any data type your job backend can serialize and deserialize correctly (see
+  [Cursor serialization](#cursor-serialization) for anything else).
 
 A job that includes `Iteration` is first started with `nil` as the cursor. When resuming an interrupted job, `Iteration`
 will deserialize the persisted cursor and pass it to the job's `build_enumerator` method, which your enumerator uses to
@@ -103,6 +104,36 @@ and you initiate the job with
 ```ruby
 LoadRefundsForChargeJob.perform_later(charge_id = "chrg_345")
 ```
+
+## Cursor serialization
+
+The cursor is stored in the job payload, which the queue backend typically serializes as JSON. JSON only round-trips
+Strings, Integers, Floats, Arrays, Hashes, `true`, `false` and `nil`, so any other object comes back changed: a `Time`
+becomes a String, and so does a custom id class whose `to_s` is its canonical form. An enumerator that resumes from such
+a cursor compares the wrong type (`Time > String`) or binds the wrong literal (text against a binary column), which can
+silently end an iteration early.
+
+Override `serialize_cursor` and `deserialize_cursor` on the job to decide what is stored and how it is rebuilt. Active
+Job's argument serialization is a natural choice: it already knows `Time`, `Date`, `BigDecimal`, `Symbol` and any class
+with an `ActiveJob::Serializers::ObjectSerializer`, and leaves JSON-native values untouched, so existing payloads keep
+deserializing.
+
+```ruby
+class ApplicationJob < ActiveJob::Base
+  include JobIteration::Iteration
+
+  def serialize_cursor(cursor)
+    ActiveJob::Arguments.serialize([cursor]).first
+  end
+
+  def deserialize_cursor(cursor)
+    ActiveJob::Arguments.deserialize([cursor]).first
+  end
+end
+```
+
+Both hooks see the whole cursor, so a composite cursor (an Array for several columns, or a Hash from the parallel
+enumerator) is handled as one value.
 
 ## Cursorless enumerator
 

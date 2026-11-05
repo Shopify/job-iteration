@@ -10,7 +10,7 @@ nil
 
 ### Features
 
-nil
+- [760](https://github.com/Shopify/job-iteration/pull/760) - Add the `serialize_cursor` and `deserialize_cursor` hooks, which a job overrides to decide how its cursor is stored in the job payload and rebuilt when it resumes; for example through `ActiveJob::Arguments`, so a `Time` or a custom id class survives the trip through JSON. The defaults keep the cursor as it is.
 
 ### Bug fixes
 

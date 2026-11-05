@@ -178,6 +178,59 @@ class JobIterationTest < IterationUnitTest
     end
   end
 
+  class JobWithWrappedCursor < ActiveJob::Base
+    include JobIteration::Iteration
+    cattr_accessor :cursors_received, instance_accessor: false
+    self.cursors_received = []
+
+    def build_enumerator(cursor:)
+      self.class.cursors_received << cursor
+      enumerator_builder.build_times_enumerator(2, cursor: cursor)
+    end
+
+    def each_iteration(*)
+    end
+
+    def serialize_cursor(cursor)
+      { "wrapped" => cursor }
+    end
+
+    def deserialize_cursor(cursor)
+      cursor.fetch("wrapped")
+    end
+
+    private
+
+    def job_should_exit?
+      cursor_position == 0 # interrupt on first run and never again.
+    end
+  end
+
+  class JobWithTimeCursorSerializedByActiveJob < ActiveJob::Base
+    include JobIteration::Iteration
+    cattr_accessor :cursors_received, instance_accessor: false
+    self.cursors_received = []
+
+    TIMES = [Time.utc(2026, 1, 1), Time.utc(2026, 1, 2)].freeze
+
+    def build_enumerator(cursor:)
+      self.class.cursors_received << cursor
+      remaining = cursor ? TIMES.select { |time| time > cursor } : TIMES
+      enumerator_builder.wrap(enumerator_builder, remaining.map { |time| [time, time] }.to_enum)
+    end
+
+    def each_iteration(*)
+    end
+
+    def serialize_cursor(cursor)
+      ActiveJob::Arguments.serialize([cursor]).first
+    end
+
+    def deserialize_cursor(cursor)
+      ActiveJob::Arguments.deserialize([cursor]).first
+    end
+  end
+
   class JobWithNestedEnumerator < ActiveJob::Base
     include JobIteration::Iteration
     def build_enumerator(_params, cursor:)
@@ -257,6 +310,33 @@ class JobIterationTest < IterationUnitTest
     end
 
     assert_includes(methods_added, :foo)
+  end
+
+  def test_serialize_cursor_shapes_the_stored_cursor_and_deserialize_cursor_restores_it
+    JobWithWrappedCursor.cursors_received = []
+    push(JobWithWrappedCursor)
+
+    work_one_job
+    assert_partially_completed_job(cursor_position: { "wrapped" => 0 })
+
+    work_one_job
+    assert_equal([nil, 0], JobWithWrappedCursor.cursors_received)
+    assert_empty(ActiveJob::Base.queue_adapter.enqueued_jobs)
+  end
+
+  def test_cursor_serialized_through_active_job_arguments_resumes_as_the_same_object
+    JobWithTimeCursorSerializedByActiveJob.cursors_received = []
+    push(JobWithTimeCursorSerializedByActiveJob)
+
+    iterate_once
+    work_one_job
+    stored_cursor = ActiveJob::Base.queue_adapter.enqueued_jobs.first.fetch("cursor_position")
+    assert_equal("ActiveJob::Serializers::TimeSerializer", stored_cursor.fetch("_aj_serialized"))
+
+    continue_iterating
+    work_one_job
+    assert_equal([nil, Time.utc(2026, 1, 1)], JobWithTimeCursorSerializedByActiveJob.cursors_received)
+    assert_empty(ActiveJob::Base.queue_adapter.enqueued_jobs)
   end
 
   def test_jobs_using_time_cursor_will_raise
@@ -531,6 +611,7 @@ class JobIterationTest < IterationUnitTest
     assert_equal(
       "Cursor must be composed of objects capable of built-in (de)serialization: " \
         "Strings, Integers, Floats, Arrays, Hashes, true, false, or nil. " \
+        "Override #serialize_cursor and #deserialize_cursor to persist other types. " \
         "(#{inspected_cursor})",
       error.message,
     )

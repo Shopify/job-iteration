@@ -319,7 +319,7 @@ class JobIterationTest < IterationUnitTest
     work_one_job
     assert_partially_completed_job(cursor_position: { "wrapped" => 0 })
 
-    work_one_job
+    work_one_job_through_json
     assert_equal([nil, 0], JobWithWrappedCursor.cursors_received)
     assert_empty(ActiveJob::Base.queue_adapter.enqueued_jobs)
   end
@@ -334,8 +334,11 @@ class JobIterationTest < IterationUnitTest
     assert_equal("ActiveJob::Serializers::TimeSerializer", stored_cursor.fetch("_aj_serialized"))
 
     continue_iterating
-    work_one_job
-    assert_equal([nil, Time.utc(2026, 1, 1)], JobWithTimeCursorSerializedByActiveJob.cursors_received)
+    work_one_job_through_json
+    cursors_received = JobWithTimeCursorSerializedByActiveJob.cursors_received
+    assert_equal([nil, Time.utc(2026, 1, 1)], cursors_received)
+    # Active Support compares a Time with a parseable String as equal, so the class is asserted on its own.
+    assert_instance_of(Time, cursors_received.fetch(1))
     assert_empty(ActiveJob::Base.queue_adapter.enqueued_jobs)
   end
 
@@ -631,6 +634,15 @@ class JobIterationTest < IterationUnitTest
   def work_one_job
     job = ActiveJob::Base.queue_adapter.enqueued_jobs.pop
     ActiveJob::Base.execute(job)
+  end
+
+  # The test adapter keeps the serialized job as a Ruby Hash, so a Time cursor would survive it
+  # untouched. A queue backend stores JSON; this resumes the job the way one would hand it back.
+  # The adapter also adds symbol-keyed copies of a few fields, which are not part of the payload.
+  def work_one_job_through_json
+    job = ActiveJob::Base.queue_adapter.enqueued_jobs.pop
+    payload = job.select { |key, _value| key.is_a?(String) }
+    ActiveJob::Base.execute(JSON.parse(JSON.generate(payload)))
   end
 
   def with_global_max_job_runtime(new)

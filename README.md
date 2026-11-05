@@ -168,6 +168,32 @@ end
 
 Iteration hooks into most popular queue adapters out of the box to support graceful interruption. No extra configuration is required.
 
+## Wrapping Active Record queries
+
+Pass `around_query:` to an Active Record enumerator when its queries need to execute in a specific database context. The proc receives each query as a block and must call it:
+
+```ruby
+class ReadFromReplicaJob < ApplicationJob
+  include JobIteration::Iteration
+
+  def build_enumerator(cursor:)
+    enumerator_builder.active_record_on_records(
+      User.all,
+      cursor: cursor,
+      around_query: ->(&query) { ActiveRecord::Base.connected_to(role: :reading, prevent_writes: true, &query) },
+    )
+  end
+
+  def each_iteration(user)
+    user.notify_about_something
+  end
+end
+```
+
+It wraps the queries the enumerator runs itself: the size query, and the query that fetches each record page or discovers the cursor for each batch relation. It does not wrap `each_iteration`, including queries caused by loading or updating a relation yielded from `active_record_on_batch_relations`.
+
+`around_query:` is accepted by every Active Record builder, including the parallel ones. With nested enumerators, pass it to each level that needs it.
+
 ## Supported dependencies
 
 Job-iteration currently supports the following queue adapters (in order of implementation):

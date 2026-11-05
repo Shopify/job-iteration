@@ -7,10 +7,20 @@ module JobIteration
   class ActiveRecordEnumerator
     SQL_DATETIME_WITH_NSEC = "%Y-%m-%d %H:%M:%S.%N"
 
-    def initialize(relation, columns: nil, batch_size: 100, timezone: nil, cursor: nil, instance: nil, instances: nil)
+    def initialize(
+      relation,
+      columns: nil,
+      batch_size: 100,
+      timezone: nil,
+      cursor: nil,
+      instance: nil,
+      instances: nil,
+      around_query: nil
+    )
       @relation = relation
       @batch_size = batch_size
       @timezone = timezone
+      @around_query = around_query
       @columns = if columns
         Array(columns)
       else
@@ -41,11 +51,17 @@ module JobIteration
     end
 
     def size
-      full_size = @relation.count(:all)
+      full_size = execute_query { @relation.count(:all) }
       @instances.present? ? full_size / @instances : full_size
     end
 
     private
+
+    def execute_query(&query)
+      return query.call unless @around_query
+
+      @around_query.call(&query)
+    end
 
     def instrument_next_batch(cursor)
       ActiveSupport::Notifications.instrument("active_record_cursor.iteration") do
@@ -64,7 +80,14 @@ module JobIteration
     end
 
     def finder_cursor
-      JobIteration::ActiveRecordCursor.new(@relation, @columns, @cursor, @instance, @instances)
+      JobIteration::ActiveRecordCursor.new(
+        @relation,
+        @columns,
+        @cursor,
+        @instance,
+        @instances,
+        around_query: @around_query,
+      )
     end
 
     def column_value(record, attribute)

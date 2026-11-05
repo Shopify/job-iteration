@@ -18,7 +18,8 @@ module JobIteration
       end
     end
 
-    def initialize(relation, columns, position, instance, instances)
+    def initialize(relation, columns, position, instance, instances, around_query: nil)
+      @around_query = around_query
       @columns = if columns
         Array(columns)
       else
@@ -84,14 +85,24 @@ module JobIteration
         relation = relation.where(*conditions)
       end
 
-      records = relation.uncached do
-        relation.to_a
+      records = execute_query do
+        relation.uncached do
+          relation.to_a
+        end
       end
 
       update_from_record(records.last) unless records.empty?
       @reached_end = records.size < batch_size
 
       records.empty? ? nil : records
+    end
+
+    private
+
+    def execute_query(&query)
+      return query.call unless @around_query
+
+      @around_query.call(&query)
     end
 
     protected

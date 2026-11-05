@@ -112,6 +112,11 @@ module JobIteration
     # iteration, they may be skipped or yielded multiple times depending on the nature of the update and the
     # cursor's value. If the value gets updated to a greater value than the cursor's value, it will get yielded
     # again. Similarly, if the value gets updated to a lesser value than the curor's value, it will get skipped.
+    #
+    # +around_query:+ takes a proc that receives a block for each query the enumerator executes (the size
+    # query and each page query) and must call it. Use it to run those queries in a specific database context:
+    #
+    #   around_query: ->(&query) { ActiveRecord::Base.connected_to(role: :reading, &query) }
     def build_active_record_enumerator_on_records(scope, cursor:, **args)
       enum = build_active_record_enumerator(
         scope,

@@ -10,11 +10,17 @@ nil
 
 ### Features
 
-- [760](https://github.com/Shopify/job-iteration/pull/760) - Add the `serialize_cursor` and `deserialize_cursor` hooks, which a job overrides to decide how its cursor is stored in the job payload and rebuilt when it resumes; for example through `ActiveJob::Arguments`, so a `Time` or a custom id class survives the trip through JSON. The defaults keep the cursor as it is.
+nil
 
 ### Bug fixes
 
 nil
+
+## v1.18.0 (Nov 6, 2026)
+
+### Features
+
+- [760](https://github.com/Shopify/job-iteration/pull/760) - Add the `serialize_cursor` and `deserialize_cursor` hooks, which a job overrides to decide how its cursor is stored in the job payload and rebuilt when it resumes; for example through `ActiveJob::Arguments`, so a `Time` or a custom id class survives the trip through JSON. The defaults keep the cursor as it is.
 
 ## v1.17.0 (Oct 27, 2026)
 

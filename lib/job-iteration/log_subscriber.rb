@@ -15,7 +15,7 @@ module JobIteration
     def not_found(event)
       info do
         "[JobIteration::Iteration] Enumerator found nothing to iterate! " \
-          "times_interrupted=#{event.payload[:times_interrupted]} cursor_position=#{event.payload[:cursor_position]}"
+          "times_interrupted=#{event.payload[:times_interrupted]}"
       end
     end
 
@@ -36,7 +36,7 @@ module JobIteration
     def interrupted(event)
       info do
         "[JobIteration::Iteration] Interrupting and re-enqueueing the job " \
-          "cursor_position=#{event.payload[:cursor_position]} reason=#{event.payload[:reason] || "nil"}"
+          "reason=#{event.payload[:reason] || "nil"}"
       end
     end
 

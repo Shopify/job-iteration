@@ -60,6 +60,10 @@ to notify you what it's doing. You can subscribe to the following events (listed
 All events have tags including the job class name and cursor position, some add the amount of times interrupted and/or
 total time the job spent running across interruptions.
 
+The default log subscriber omits cursor values from its messages. Cursors are still included in notification payloads
+and persisted in job payloads, so avoid putting secrets or personal data in them. If you need cursor details in logs,
+explicitly opt in through a custom notification subscriber and redact sensitive fields before logging.
+
 ```ruby
 # config/initializers/instrumentation.rb
 ActiveSupport::Notifications.monotonic_subscribe("each_iteration.iteration") do |_, started, finished, _, tags|

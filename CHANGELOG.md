@@ -14,7 +14,7 @@ nil
 
 ### Bug fixes
 
-nil
+- [763](https://github.com/Shopify/job-iteration/pull/763) - Omit cursor values from the default no-record and interruption log messages to avoid exposing sensitive cursor data.
 
 ## v1.18.0 (Nov 6, 2026)
 

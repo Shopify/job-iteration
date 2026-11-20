@@ -1,0 +1,3 @@
+ci:
+  hide:
+    - Dependabot

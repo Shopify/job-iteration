@@ -7,6 +7,7 @@ module JobIteration
     include Comparable
 
     attr_reader :position
+    attr_reader :next_relation
     attr_accessor :reached_end
 
     class ConditionNotSupportedError < ArgumentError
@@ -48,6 +49,7 @@ module JobIteration
       end
 
       @reached_end = false
+      @async_enabled = relation.connection.try(:async_enabled?)
     end
 
     def <=>(other)
@@ -79,11 +81,7 @@ module JobIteration
     def next_batch(batch_size)
       return if @reached_end
 
-      relation = @base_relation.limit(batch_size)
-
-      if (conditions = self.conditions).any?
-        relation = relation.where(*conditions)
-      end
+      relation = (@next_relation || build_relation(batch_size))
 
       records = execute_query do
         relation.uncached do
@@ -94,7 +92,12 @@ module JobIteration
       update_from_record(records.last) unless records.empty?
       @reached_end = records.size < batch_size
 
-      records.empty? ? nil : records
+      if records.empty?
+        nil
+      else
+        @next_relation = async_preload(batch_size)
+        records
+      end
     end
 
     private
@@ -123,6 +126,25 @@ module JobIteration
       ret = @position.reduce([conditions]) { |params, value| params << value << value }
       ret.pop
       ret
+    end
+
+    private
+
+    def build_relation(batch_size)
+      relation = @base_relation.limit(batch_size)
+
+      if (conditions = self.conditions).any?
+        relation = relation.where(*conditions)
+      end
+
+      relation
+    end
+
+    def async_preload(batch_size)
+      return unless @async_enabled
+
+      relation = build_relation(batch_size)
+      relation.uncached { relation.load_async }
     end
   end
 end

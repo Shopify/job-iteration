@@ -183,12 +183,23 @@ module JobIteration
       enum
     end
 
-    def build_throttle_enumerator(enumerable, throttle_on:, backoff:)
+    # Builds Enumerator that wraps another enumerator and re-enqueues the job with +backoff+ when +throttle_on+
+    # returns true. See {JobIteration::ThrottleEnumerator} and the throttling guide.
+    #
+    # @param enumerable [#each] the enumerator to throttle.
+    # @param throttle_on [#call] returns true when the job should stop and be re-enqueued.
+    # @param backoff [ActiveSupport::Duration, Numeric] how long to wait before the job runs again.
+    # @param check_before_fetch [Boolean] when true, +throttle_on+ is called once before iteration starts and then
+    #   after each value has been processed, before +enumerable+ is asked for the next value, so a throttled job does
+    #   not fetch a value only to discard it. When false (the default), +throttle_on+ is called after +enumerable+
+    #   has produced each value and before it is processed.
+    def build_throttle_enumerator(enumerable, throttle_on:, backoff:, check_before_fetch: false)
       enum = JobIteration::ThrottleEnumerator.new(
         enumerable,
         @job,
         throttle_on: throttle_on,
         backoff: backoff,
+        check_before_fetch: check_before_fetch,
       ).to_enum
       wrap(self, enum)
     end

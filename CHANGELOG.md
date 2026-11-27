@@ -10,7 +10,7 @@ nil
 
 ### Features
 
-nil
+- [772](https://github.com/Shopify/job-iteration/pull/772) - Add a `check_before_fetch:` option to `build_throttle_enumerator` that checks the throttle before the wrapped enumerator fetches its next value, so a throttled job no longer runs a query and discards the result. The default behaviour is unchanged.
 
 ### Bug fixes
 

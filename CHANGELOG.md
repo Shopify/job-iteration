@@ -10,11 +10,17 @@ nil
 
 ### Features
 
-- [740](https://github.com/Shopify/job-iteration/pull/740) - Add an `around_query:` option to Active Record enumerators for wrapping the queries they execute.
+nil
 
 ### Bug fixes
 
 nil
+
+## v1.19.0 (Nov 27, 2026)
+
+### Features
+
+- [740](https://github.com/Shopify/job-iteration/pull/740) - Add an `around_query:` option to Active Record enumerators for wrapping the queries they execute.
 
 ## v1.18.1 (Nov 20, 2026)
 
